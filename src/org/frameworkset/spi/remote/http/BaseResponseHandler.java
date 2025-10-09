@@ -1,6 +1,5 @@
 package org.frameworkset.spi.remote.http;
 
-import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.IOException;
