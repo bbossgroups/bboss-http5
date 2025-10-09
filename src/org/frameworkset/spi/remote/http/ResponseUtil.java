@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
@@ -341,13 +342,16 @@ public class ResponseUtil {
 		}
 	}
 
+    /**
+     * 判断响应报文是否为空
+     * @param entity
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
 	public static boolean entityEmpty(HttpEntity entity,InputStream inputStream) throws IOException {
-//        long contentLength = entity.getContentLength();
-//        if(contentLength <= 0){
-//            return true;
-//        }
-
-		if(inputStream instanceof EmptyInputStream)
+        
+		if(inputStream instanceof EmptyInputStream )
 			return true;
 		return false;
 
@@ -355,7 +359,6 @@ public class ResponseUtil {
 	public static <T> T converJson(HttpEntity entity, Class<T> clazz) throws IOException {
 		InputStream inputStream = null;
 
-		T var4;
 		try {
 
 			inputStream = entity.getContent();
@@ -363,84 +366,110 @@ public class ResponseUtil {
 				return null;
 			}
 
-			var4 = SimpleStringUtil.json2Object(inputStream, clazz);
-		} finally {
+			return SimpleStringUtil.json2Object(inputStream, clazz);
+		}catch (IllegalArgumentException e) {
+            String message = e.getMessage();//No content to map due to end-of-input
+            if (message != null && message.contains("No content to map")) {
+                // 处理空输入情况
+                return null; // 或返回默认实例
+            }
+            throw e;
+        } finally {
 			inputStream.close();
 		}
 
-		return var4;
 	}
 
 	public static <D,T> D converJson(HttpEntity entity, Class<D> containType ,Class<T> clazz) throws IOException {
 		InputStream inputStream = null;
 
-		D var4;
 		try {
 
 			inputStream = entity.getContent();
 			if(entityEmpty(entity,inputStream)){
 				return null;
 			}
-			var4 = SimpleStringUtil.json2TypeObject(inputStream,containType, clazz);
-		} finally {
+			return SimpleStringUtil.json2TypeObject(inputStream,containType, clazz);
+		} catch (IllegalArgumentException e) {
+            String message = e.getMessage();//No content to map due to end-of-input
+            if (message != null && message.contains("No content to map")) {
+                // 处理空输入情况
+                return null; // 或返回默认实例
+            }
+            throw e;
+        }finally {
 			inputStream.close();
 		}
 
-		return var4;
 	}
 
 	public static <T> List<T> converJson2List(HttpEntity entity, Class<T> clazz) throws IOException {
 		InputStream inputStream = null;
 
-		List<T> var4 = null;
 		try {
 
 			inputStream = entity.getContent();
 			if(entityEmpty(entity,inputStream)){
 				return null;
 			}
-			var4 = SimpleStringUtil.json2ListObject(inputStream, clazz);
-		} finally {
+			return SimpleStringUtil.json2ListObject(inputStream, clazz);
+		} catch (IllegalArgumentException e) {
+            String message = e.getMessage();//No content to map due to end-of-input
+            if (message != null && message.contains("No content to map")) {
+                // 处理空输入情况
+                return null; // 或返回默认实例
+            }
+            throw e;
+        }finally {
 			if(inputStream != null)
 				inputStream.close();
 		}
 
-		return var4;
 	}
 
 	public static <T> Set<T> converJson2Set(HttpEntity entity, Class<T> clazz) throws IOException {
 		InputStream inputStream = null;
 
-		Set<T> var4;
 		try {
 
 			inputStream = entity.getContent();
 			if(entityEmpty(entity,inputStream)){
 				return null;
 			}
-			var4 = SimpleStringUtil.json2LSetObject(inputStream, clazz);
-		} finally {
+			return SimpleStringUtil.json2LSetObject(inputStream, clazz);
+		} catch (IllegalArgumentException e) {
+            String message = e.getMessage();//No content to map due to end-of-input
+            if (message != null && message.contains("No content to map")) {
+                // 处理空输入情况
+                return null; // 或返回默认实例
+            }
+            throw e;
+        }finally {
 			inputStream.close();
 		}
 
-		return var4;
 	}
 
 	public static <K,T> Map<K,T> converJson2Map(HttpEntity entity, Class<K> keyType, Class<T> beanType) throws IOException {
 		InputStream inputStream = null;
 
-		Map<K,T> var4;
 		try {
 
 			inputStream = entity.getContent();
 			if(entityEmpty(entity,inputStream)){
 				return null;
 			}
-			var4 = SimpleStringUtil.json2LHashObject(inputStream,  keyType, beanType);
-		} finally {
+			return SimpleStringUtil.json2LHashObject(inputStream,  keyType, beanType);
+		} catch (IllegalArgumentException e) {
+            String message = e.getMessage();//No content to map due to end-of-input
+            if (message != null && message.contains("No content to map")) {
+                // 处理空输入情况
+                return null; // 或返回默认实例
+            }
+            throw e;
+        }finally {
 			inputStream.close();
 		}
 
-		return var4;
 	}
 }

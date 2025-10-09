@@ -4,10 +4,8 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
-import static org.frameworkset.spi.remote.http.ResponseUtil.entityEmpty;
 
 public abstract class BaseResponseHandler<T> extends StatusResponseHandler<T> {
 
@@ -22,35 +20,13 @@ public abstract class BaseResponseHandler<T> extends StatusResponseHandler<T> {
 
     protected boolean truncateLogBody;
 	protected <T> T converJson(HttpEntity entity,Class<T> clazz) throws IOException {
-		InputStream inputStream = null;
-		try {
-
-			inputStream = entity.getContent();
-
-			if(entityEmpty(entity,inputStream)){
-				return null;
-			}
-			return SimpleStringUtil.json2Object(inputStream, clazz);
-		}
-		finally {
-			inputStream.close();
-		}
+        return ResponseUtil.converJson(entity,clazz);
+		
 	}
 
     protected <T> List<T> converJson2List(HttpEntity entity, Class<T> clazz) throws IOException {
-        InputStream inputStream = null;
-        try {
+        return ResponseUtil.converJson2List(entity,clazz);
 
-            inputStream = entity.getContent();
-
-            if(entityEmpty(entity,inputStream)){
-                return null;
-            }
-            return SimpleStringUtil.json2ListObject(inputStream, clazz);
-        }
-        finally {
-            inputStream.close();
-        }
     }
 
     public boolean isEnableSetRequestBody() {
