@@ -16,14 +16,17 @@ package org.frameworkset.spi.remote.http.kerberos;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.apache.hc.client5.http.AuthenticationStrategy;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
-import org.apache.hc.client5.http.auth.AuthSchemeFactory;
-import org.apache.hc.client5.http.auth.StandardAuthScheme;
+import org.apache.hc.client5.http.auth.*;
+import org.apache.hc.client5.http.impl.auth.BasicSchemeFactory;
+import org.apache.hc.client5.http.impl.auth.DigestSchemeFactory;
 import org.apache.hc.client5.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.hc.client5.http.impl.auth.SystemDefaultCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.config.Lookup;
 import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.http.protocol.HttpContext;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 
@@ -31,6 +34,8 @@ import javax.security.auth.Subject;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 import java.security.PrivilegedAction;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Description: </p>
@@ -64,15 +69,21 @@ public abstract class BaseRequestKerberosUrlUtils implements HttpClientBuilderCa
     //模拟curl使用kerberos认证
     public  void buildSpengoHttpClient(HttpClientBuilder builder) {
 
+//        org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy s;
         
-        Lookup<AuthSchemeFactory> authSchemeRegistry = RegistryBuilder.<AuthSchemeFactory>create().register(StandardAuthScheme.SPNEGO, new SPNegoSchemeFactory(
-                org.apache.hc.client5.http.auth.KerberosConfig.custom()
-                        .setStripPort(org.apache.hc.client5.http.auth.KerberosConfig.Option.DEFAULT) // 默认情况下剥离端口
-                        .setUseCanonicalHostname(org.apache.hc.client5.http.auth.KerberosConfig.Option.DEFAULT) // 使用规范主机名
-                        .build(),
-                SystemDefaultDnsResolver.INSTANCE
-        )).build();
+
+        Lookup<AuthSchemeFactory> authSchemeRegistry = RegistryBuilder.<AuthSchemeFactory>create().register(StandardAuthScheme.BASIC, BasicSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.DIGEST, DigestSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.SPNEGO, SPNegoSchemeFactory.DEFAULT).build();
+//        Lookup<AuthSchemeFactory> authSchemeRegistry = RegistryBuilder.<AuthSchemeFactory>create().register(StandardAuthScheme.SPNEGO, new SPNegoSchemeFactory(
+//                org.apache.hc.client5.http.auth.KerberosConfig.custom()
+//                        .setStripPort(org.apache.hc.client5.http.auth.KerberosConfig.Option.DEFAULT) // 默认情况下剥离端口
+//                        .setUseCanonicalHostname(org.apache.hc.client5.http.auth.KerberosConfig.Option.DEFAULT) // 使用规范主机名
+//                        .build(),
+//                SystemDefaultDnsResolver.INSTANCE
+//        )).build();
         builder.setDefaultAuthSchemeRegistry(authSchemeRegistry);
+        builder.setTargetAuthenticationStrategy(new CustomAuthenticationStrategy());
         SystemDefaultCredentialsProvider credentialsProvider = new SystemDefaultCredentialsProvider();
 //        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
 //        credentialsProvider.setCredentials(new AuthScope(null,  -1), new Credentials() {
