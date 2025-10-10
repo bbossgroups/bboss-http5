@@ -28,6 +28,7 @@ import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
 import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
+import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.FluxSink;
@@ -155,7 +156,28 @@ public class ResponseUtil {
         }
     }
 
-    private static String parseContentFromData(String data) {
+    public static boolean handleStringData(String line,FluxSink<String> sink){
+        if (line.startsWith("data: ")) {
+            String data = line.substring(6).trim();
+
+            if ("[DONE]".equals(data)) {
+                return true;
+            }            
+            if (!data.isEmpty()) {
+                String content = ResponseUtil.parseStreamContentFromData(data);
+                if (content != null && !content.isEmpty()) {
+                    sink.next(content);
+                }
+            }
+        }
+        else{
+            if(logger.isDebugEnabled()) {
+                logger.debug("streamChatCompletion: " + line);
+            }
+        }
+        return false;
+    }
+    public static String parseStreamContentFromData(String data) {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("choices");
@@ -176,12 +198,19 @@ public class ResponseUtil {
         }
         return null;
     }
-    private static void processStreamResponse(ClassicHttpResponse response, FluxSink<String> sink) throws IOException {
+    private static <T> void processStreamResponse(ClassicHttpResponse response, FluxSink<T> sink, StreamDataHandler<T> streamDataHandler) throws IOException {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(response.getEntity().getContent()))) {
 
             String line;
+            boolean needBreak;
             while ((line = reader.readLine()) != null && !sink.isCancelled()) {
+                needBreak = streamDataHandler.handle(line, sink);
+                if(needBreak){
+                     break;
+                }
+               
+                /**
                 if (line.startsWith("data: ")) {
                     String data = line.substring(6).trim();
 
@@ -196,18 +225,43 @@ public class ResponseUtil {
                             sink.next(content);
                         }
                     }
-                }
+                }*/
             }
         }
     }
+//
+//    private static <T> void processStreamResponse(ClassicHttpResponse response, FluxSink<T> sink, StreamDataHandler<T> streamDataHandler) throws IOException {
+//        try (BufferedReader reader = new BufferedReader(
+//                new InputStreamReader(response.getEntity().getContent()))) {
+//
+//            String line;
+//            while ((line = reader.readLine()) != null && !sink.isCancelled()) {
+//                if (line.startsWith("data: ")) {
+//                    String data = line.substring(6).trim();
+//
+//                    if ("[DONE]".equals(data)) {
+//                        sink.complete();
+//                        break;
+//                    }
+//
+//                    if (!data.isEmpty()) {
+//                        String content = parseContentFromData(data);
+//                        if (content != null && !content.isEmpty()) {
+//                            sink.next(content);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
-    public static void handleStreamResponse(String url,ClassicHttpResponse response,FluxSink<String> sink)
+    public static <T> void handleStreamResponse(String url,ClassicHttpResponse response,FluxSink<T> sink, StreamDataHandler<T> streamDataHandler)
             throws IOException, ParseException {
          
         int status = response.getCode();       
         
         if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
-            processStreamResponse(response, sink);
+            processStreamResponse(response, sink,streamDataHandler);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null ) {
