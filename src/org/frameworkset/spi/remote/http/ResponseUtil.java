@@ -27,11 +27,15 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
+import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.FluxSink;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -148,6 +152,73 @@ public class ResponseUtil {
                         .append(BBossEntityUtils.toString(entity)).toString());
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
+        }
+    }
+
+    private static String parseContentFromData(String data) {
+        try {
+            Map map = SimpleStringUtil.json2Object(data,Map.class);
+            Object choices_ = map.get("choices");
+            if (choices_ != null && choices_ instanceof List ) {
+                List<Map> choices = (List<Map>) choices_;
+                if (choices.size() > 0) {
+                    Map delta = (Map)choices.get(0).get("delta");
+                    if (delta != null ) {//&& delta.has("content")
+                        String content = (String)delta.get("content");
+
+                        return content;
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            throw new ReactorCallException(data,e);
+        }
+        return null;
+    }
+    private static void processStreamResponse(ClassicHttpResponse response, FluxSink<String> sink) throws IOException {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(response.getEntity().getContent()))) {
+
+            String line;
+            while ((line = reader.readLine()) != null && !sink.isCancelled()) {
+                if (line.startsWith("data: ")) {
+                    String data = line.substring(6).trim();
+
+                    if ("[DONE]".equals(data)) {
+                        sink.complete();
+                        break;
+                    }
+
+                    if (!data.isEmpty()) {
+                        String content = parseContentFromData(data);
+                        if (content != null && !content.isEmpty()) {
+                            sink.next(content);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void handleStreamResponse(String url,ClassicHttpResponse response,FluxSink<String> sink)
+            throws IOException, ParseException {
+         
+        int status = response.getCode();       
+        
+        if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
+            processStreamResponse(response, sink);
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null ) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
+                }
+                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
+            }
+            else {
+                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
+            }
         }
     }
 	public static <T> T handleResponse(String url,HttpResponse response, Class<T> resultType)

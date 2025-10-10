@@ -1,5 +1,6 @@
 package org.frameworkset.spi.remote.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
@@ -9,6 +10,7 @@ import org.apache.hc.client5.http.classic.methods.*;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.FileBody;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
@@ -17,23 +19,27 @@ import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
+import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.scheduler.Schedulers;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 
@@ -882,6 +888,52 @@ public class HttpRequestProxy {
     			 (Map<String, File>) null, (Map)null,responseHandler) ;
 
     }
+
+    /**
+     * 创建流式调用的Flux，使用默认数据源
+     */
+    public static Flux<String> streamChatCompletion(String url,Object message) {
+        return streamChatCompletion((String)null , url, message);
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public static Flux<String> streamChatCompletion(String poolName,String url,Object message) {
+
+        return Flux.<String>create(sink -> {
+                    try {
+                        Map header = new LinkedHashMap();
+                        header.put("Accept", "text/event-stream");
+                        String data = null;
+                        if(message != null){
+                            if(message instanceof String){
+                                data = (String)message;
+                            }
+                            else{
+                                data = SimpleStringUtil.object2json(message);
+                            }
+                        }
+                        HttpRequestProxy.sendJsonBody(poolName,data,url,header,new BaseURLResponseHandler<Void>(){
+                            @Override
+                            public Void handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                                ResponseUtil.handleStreamResponse(url,response,sink);                               
+                                return null;
+                            }
+                        });
+                    } catch (Exception e) {
+                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
+                    }
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic()) // 在弹性线程池中执行阻塞IO
+                .timeout(Duration.ofSeconds(60)) // 设置超时
+                .onErrorResume(throwable -> {
+//                    System.err.println("流式处理错误: " + throwable.getMessage());
+                    logger.warn(throwable.getMessage(),throwable);
+                    return Flux.empty();
+                });
+    }
+
 
     public static String httpPostforStringWithFiles(String url, String cookie, String userAgent,
                                            Map<String, File> files) throws HttpProxyRequestException {
@@ -2291,7 +2343,7 @@ public class HttpRequestProxy {
                                           responseHandler,  executeRequest)  ;
 
     }
-
+  
     /**
      * 公共处理请求方法
      * @param url
@@ -2906,5 +2958,7 @@ public class HttpRequestProxy {
         Object execute(ClientConfiguration config,HttpClient httpClient ,String url, int triesCount) throws Exception;
     }
 
+    
+    
 
 }

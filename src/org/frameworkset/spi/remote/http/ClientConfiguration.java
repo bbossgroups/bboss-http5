@@ -236,9 +236,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
 	/**
-	 * 单位毫秒：
+	 * 单位:秒
+     * 链接空闲时间，链接空闲时间达到maxIdleTime时，将被回收掉
 	 */
-	private final int maxIdleTime = -1;
+	private Integer maxIdleTime = null;
 
 	public HttpServiceHosts getHttpServiceHosts() {
 		return httpServiceHosts;
@@ -973,10 +974,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 else
                     log.append(",http.authPassword=******");
 			}
-			
 
 
+            String maxIdleTime = ClientConfiguration._getStringValue(name, "http.maxIdleTime", context, null);
+            if(maxIdleTime != null && !maxIdleTime.equals("")){
+                clientConfiguration.setMaxIdleTime(Integer.parseInt(maxIdleTime));
+            }
 
+            log.append(",http.maxIdleTime=").append(maxIdleTime);
+            
 
             String apiKeyId = ClientConfiguration._getStringValue(name, "http.apiKeyId", context, null);
             if(apiKeyId != null && !apiKeyId.equals("")){
@@ -1414,7 +1420,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		this.keystore = keystore;
 	}
 
-	public String getKeyPassword() {
+    /**
+     * 单位:秒
+     * 链接空闲时间，链接空闲时间达到maxIdleTime时，将被回收掉
+     * @param maxIdleTime 
+     */
+    public void setMaxIdleTime(Integer maxIdleTime) {
+        this.maxIdleTime = maxIdleTime;
+    }
+
+    public Integer getMaxIdleTime() {
+        return maxIdleTime;
+    }
+
+    public String getKeyPassword() {
 		return keyPassword;
 	}
 
@@ -1702,7 +1721,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 		// Create an HttpClient with the given custom dependencies and configuration.
 		HttpClientBuilder builder = HttpClients.custom();
-
+        if(maxIdleTime != null &&  maxIdleTime > 0){
+            builder.evictIdleConnections(TimeValue.ofSeconds(maxIdleTime));
+        }
         //启用kerberos认证
         if(kerberosConfig != null){
             if(requestKerberosUrlUtils == null) {
