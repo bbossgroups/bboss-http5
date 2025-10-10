@@ -1637,8 +1637,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
         PoolingHttpClientConnectionManager connManager =  PoolingHttpClientConnectionManagerBuilder.create().setDnsResolver(dnsResolver)
                 .setSSLSocketFactory(SSLConnectionSocketFactory)
-//                .set(PlainConnectionSocketFactory.INSTANCE)
-//                .setConnectionFactory(PlainConnectionSocketFactory.INSTANCE)
                 .setConnectionTimeToLive(TimeValue.ofMilliseconds(this.timeToLive)).build();
 
 //		PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry, null, null, dnsResolver,
