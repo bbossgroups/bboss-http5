@@ -160,7 +160,7 @@ public class ResponseUtil {
         if (line.startsWith("data: ")) {
             String data = line.substring(6).trim();
 
-            if ("[DONE]".equals(data)) {
+            if ("[DONE]".equals(data)) {                
                 return true;
             }            
             if (!data.isEmpty()) {
@@ -207,7 +207,8 @@ public class ResponseUtil {
             while ((line = reader.readLine()) != null && !sink.isCancelled()) {
                 needBreak = streamDataHandler.handle(line, sink);
                 if(needBreak){
-                     break;
+                    sink.complete();
+                    break;
                 }
                
                 /**
