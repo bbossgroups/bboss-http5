@@ -1,6 +1,5 @@
 package org.frameworkset.spi.remote.http;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
@@ -10,7 +9,6 @@ import org.apache.hc.client5.http.classic.methods.*;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.FileBody;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
@@ -28,10 +26,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Schedulers;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
@@ -2433,6 +2429,8 @@ public class HttpRequestProxy {
                             }
                         });
                     }
+                    //正常调用结束后，如果e不为空，需要置空
+                    e = null;
                     httpAddress.recover();
                     httpResponseStatusException = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
                     
