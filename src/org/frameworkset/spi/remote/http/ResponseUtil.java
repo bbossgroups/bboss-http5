@@ -37,6 +37,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -200,11 +201,12 @@ public class ResponseUtil {
     }
     private static <T> void processStreamResponse(ClassicHttpResponse response, FluxSink<T> sink, StreamDataHandler<T> streamDataHandler) throws IOException {
         try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(response.getEntity().getContent()))) {
+                new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8))) {
 
             String line;
             boolean needBreak;
             while ((line = reader.readLine()) != null && !sink.isCancelled()) {
+                 
                 needBreak = streamDataHandler.handle(line, sink);
                 if(needBreak){
                     sink.complete();

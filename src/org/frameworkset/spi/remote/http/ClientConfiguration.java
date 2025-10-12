@@ -305,15 +305,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private long keepAlive = 1000l * 60l * 60l;
 	private String beanName;
 
-	public boolean isEvictExpiredConnections() {
-		return evictExpiredConnections;
-	}
+//	public boolean isEvictExpiredConnections() {
+//		return evictExpiredConnections;
+//	}
+//
+//	public void setEvictExpiredConnections(boolean evictExpiredConnections) {
+//		this.evictExpiredConnections = evictExpiredConnections;
+//	}
 
-	public void setEvictExpiredConnections(boolean evictExpiredConnections) {
-		this.evictExpiredConnections = evictExpiredConnections;
-	}
-
-	private boolean evictExpiredConnections = true;
+//	private boolean evictExpiredConnections = false;
 
 	/**
 	 *
@@ -424,7 +424,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setRetryTime(-1);
 					clientConfiguration.setRetryInterval(-1);
 					clientConfiguration.setTimeToLive(3600000);
-					clientConfiguration.setEvictExpiredConnections(true);
+//					clientConfiguration.setEvictExpiredConnections(true);
 					clientConfiguration.setMaxLineLength(Integer.MAX_VALUE);
 					clientConfiguration.setMaxHeaderCount(Integer.MAX_VALUE);
 					clientConfiguration.setMaxTotal(500);
@@ -460,7 +460,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setTimeoutSocket(0);
 					clientConfiguration.setConnectionRequestTimeout(5000);
 					clientConfiguration.setTimeToLive(3600000);
-					clientConfiguration.setEvictExpiredConnections(true);
+//					clientConfiguration.setEvictExpiredConnections(true);
 					clientConfiguration.setRetryTime(3);
 					clientConfiguration.setRetryInterval(-1);
 					clientConfiguration.setMaxLineLength(Integer.MAX_VALUE);
@@ -1146,9 +1146,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
             
 			clientConfiguration.setSupportedProtocols(supportedProtocols);
-			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
-			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
-			log.append(",http.evictExpiredConnections=").append(evictExpiredConnections);
+//			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
+//			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
+//			log.append(",http.evictExpiredConnections=").append(evictExpiredConnections);
 			clientConfiguration.setBeanName(rname(healthPoolname,name));
 			HttpServiceHosts httpServiceHosts = null;
 			if(healthPoolname == null) {
@@ -1656,7 +1656,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
         PoolingHttpClientConnectionManager connManager =  PoolingHttpClientConnectionManagerBuilder.create().setDnsResolver(dnsResolver)
                 .setSSLSocketFactory(SSLConnectionSocketFactory)
-                .setConnectionTimeToLive(TimeValue.ofMilliseconds(this.timeToLive)).build();
+                .setConnectionTimeToLive(TimeValue.ofMilliseconds(this.timeToLive))
+                .build();
 
 //		PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry, null, null, dnsResolver,
 //				TimeValue.ofMilliseconds(this.timeToLive));
@@ -1742,8 +1743,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         else {
             initCredentialsProvider(builder);
         }
-		if(evictExpiredConnections)
-			builder.evictExpiredConnections();
+//		if(evictExpiredConnections)
+//			builder.evictExpiredConnections();
 		if (keepAlive > 0)//设置链接保活策略
 		{
 			HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy = new HttpConnectionKeepAliveStrategy(this.keepAlive);
