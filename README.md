@@ -7,7 +7,7 @@ gradle clean publishToMavenLocal
 https://esdoc.bbossgroups.com/#/bboss-build
 
 # bboss httpproxy
- http负载均衡组件-HttpRequestProxy  使用参考文档https://esdoc.bbossgroups.com/#/httpproxy
+ http负载均衡组件-HttpRequestProxy  使用参考文档https://esdoc.bbossgroups.com/#/httpproxy5
 
  负载均衡组件特点：
 
@@ -41,7 +41,7 @@ https://esdoc.bbossgroups.com/#/bboss-build
 
 # 开发文档
 
-https://esdoc.bbossgroups.com/#/httpproxy
+https://esdoc.bbossgroups.com/#/httpproxy5
 
 httpproxy 案例：
 
