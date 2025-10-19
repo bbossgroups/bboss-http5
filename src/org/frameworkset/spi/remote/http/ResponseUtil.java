@@ -28,6 +28,7 @@ import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
 import org.frameworkset.spi.remote.http.reactor.FluxSinkStatus;
 import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
+import org.frameworkset.spi.remote.http.reactor.ServerEvent;
 import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,6 +178,31 @@ public class ResponseUtil {
         return false;
     }
 
+    public static boolean handleServerEventData(String line,FluxSink<ServerEvent> sink){
+        if (line.startsWith("data: ")) {
+            String data = line.substring(6).trim();
+
+            if ("[DONE]".equals(data)) {
+                return true;
+            }
+            if (!data.isEmpty()) {
+                String content = ResponseUtil.parseStreamContentFromData(data);
+                if (content != null && !content.isEmpty()) {
+                    ServerEvent serverEvent = new ServerEvent();
+                    serverEvent.setData(content);
+                    serverEvent.setType(ServerEvent.DATA);                    
+                    sink.next(serverEvent);
+                }
+            }
+        }
+        else{
+            if(logger.isDebugEnabled()) {
+                logger.debug("streamChatCompletion: " + line);
+            }
+        }
+        return false;
+    }
+
     public static boolean handleStringExceptionData(Throwable throwable,FluxSink<String> sink){
         if(logger.isWarnEnabled()) {
             logger.warn("服务端异常：", throwable);
@@ -186,6 +212,20 @@ public class ResponseUtil {
         sink.complete();
         return true;
         
+    }
+
+    public static boolean handleServerEventExceptionData(Throwable throwable,FluxSink<ServerEvent> sink){
+        if(logger.isWarnEnabled()) {
+            logger.warn("服务端异常：", throwable);
+        }
+        String error = SimpleStringUtil.exceptionToString(throwable);
+        ServerEvent serverEvent = new ServerEvent();
+        serverEvent.setData(error);
+        serverEvent.setType(ServerEvent.ERROR);
+        sink.next(serverEvent);
+        sink.complete();
+        return true;
+
     }
     public static String parseStreamContentFromData(String data) {
         try {

@@ -17,10 +17,7 @@ import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
-import org.frameworkset.spi.remote.http.reactor.BaseStreamDataHandler;
-import org.frameworkset.spi.remote.http.reactor.FluxSinkStatus;
-import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
-import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
+import org.frameworkset.spi.remote.http.reactor.*;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -914,6 +911,34 @@ public class HttpRequestProxy {
             }
         });
         
+    }
+
+
+    /**
+     * 创建流式调用的Flux，使用默认数据源
+     */
+    public static Flux<ServerEvent> streamChatCompletionEvent(String url, Object message) {
+        return streamChatCompletionEvent((String)null , url, message);
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object message) {
+        return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<ServerEvent>() {
+            @Override
+            public boolean handle(String line, FluxSink<ServerEvent> sink) {
+                return ResponseUtil.handleServerEventData(  line, sink);
+
+            }
+            @Override
+
+            public boolean handleException(Throwable throwable, FluxSink<ServerEvent> sink){
+                boolean result = ResponseUtil.handleServerEventExceptionData(  throwable, sink);
+                return result;
+            }
+        });
+
     }
     public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
         return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
