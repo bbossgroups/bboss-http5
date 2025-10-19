@@ -17,6 +17,8 @@ import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
+import org.frameworkset.spi.remote.http.reactor.BaseStreamDataHandler;
+import org.frameworkset.spi.remote.http.reactor.FluxSinkStatus;
 import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
 import org.frameworkset.util.ResourceStartResult;
@@ -37,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 
@@ -897,7 +900,7 @@ public class HttpRequestProxy {
      * 创建流式调用的Flux,在指定的数据源上执行
      */
     public static Flux<String> streamChatCompletion(String poolName,String url,Object message) {
-        return streamChatCompletion(  poolName,  url,  message,new StreamDataHandler<String>() {
+        return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<String>() {
             @Override
             public boolean handle(String line, FluxSink<String> sink) {
                 return ResponseUtil.handleStringData(  line, sink);
@@ -906,14 +909,14 @@ public class HttpRequestProxy {
         });
         
     }
-    public static <T> Flux<T> streamChatCompletion(String url,Object message,StreamDataHandler<T> streamDataHandler){
+    public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
         return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
     }
 
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object message,StreamDataHandler<T> streamDataHandler) {
+    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object message,BaseStreamDataHandler<T> streamDataHandler) {
 
         return Flux.<T>create(sink -> {
                     try {
@@ -928,9 +931,11 @@ public class HttpRequestProxy {
                                 data = SimpleStringUtil.object2json(message);
                             }
                         }
+                        
                         HttpRequestProxy.sendJsonBody(poolName,data,url,header,new BaseURLResponseHandler<Void>(){
                             @Override
                             public Void handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                                streamDataHandler.setHttpUriRequestBase(httpUriRequestBase);
                                 ResponseUtil.handleStreamResponse(url, response, sink, streamDataHandler);
 
                                 return null;
@@ -2282,6 +2287,9 @@ public class HttpRequestProxy {
                         try {
                             httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", invokeContext.getHeaders());
                             httpPost.setEntity(httpEntity);
+                            if(responseHandler instanceof BaseURLResponseHandler){
+                                ((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPost);
+                            }
 
                             return httpClient.execute(httpPost, responseHandler);
                         }

@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 
 /**
@@ -31,8 +32,10 @@ public abstract class BaseURLResponseHandler<T> implements URLResponseHandler<T>
      * 标记是否在响应对象中放置请求报文，便于在异常处理中放置请求报文数据
      */
     protected boolean enableSetRequestBody;
+    protected HttpUriRequestBase httpUriRequestBase;
     protected String requestBody;
     private ExecuteIntercepter executeIntercepter; 
+    
     public ExecuteIntercepter getExecuteIntercepter(){
         return executeIntercepter;
     }
@@ -45,7 +48,11 @@ public abstract class BaseURLResponseHandler<T> implements URLResponseHandler<T>
 		return url;
 	}
 
-	public void setUrl(String url) {
+    public void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase) {
+        this.httpUriRequestBase = httpUriRequestBase;
+    }
+
+    public void setUrl(String url) {
 		this.url = url;
 	}
     public boolean isEnableSetRequestBody() {

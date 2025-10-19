@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http.reactor;
  * limitations under the License.
  */
 
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import reactor.core.publisher.FluxSink;
 
 /**
@@ -29,4 +30,6 @@ public interface StreamDataHandler<T> {
      * @return
      */
     boolean handle(String line, FluxSink<T> sink);
+    void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase);
+    HttpUriRequestBase getHttpUriRequestBase();
 }

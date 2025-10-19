@@ -1,6 +1,6 @@
-package org.frameworkset.spi.remote.http;
+package org.frameworkset.spi.remote.http.reactor;
 /**
- * Copyright 2020 bboss
+ * Copyright 2025 bboss
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,18 @@ package org.frameworkset.spi.remote.http;
  */
 
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.core5.http.io.HttpClientResponseHandler;
-import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 
 /**
- * <p>Description: </p>
- * <p></p>
- * <p>Copyright (c) 2020</p>
- * @Date 2020/2/27 15:40
  * @author biaoping.yin
- * @version 1.0
+ * @Date 2025/10/19
  */
-public interface URLResponseHandler<T> extends HttpClientResponseHandler<T> {
-	void setUrl(String url);
-	String getUrl();
-    ExecuteIntercepter getExecuteIntercepter();
-//    void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase);
-    void setExecuteIntercepter(ExecuteIntercepter executeIntercepter);
-    
+public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
+    protected HttpUriRequestBase httpUriRequestBase;
+
+    public void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase) {
+        this.httpUriRequestBase = httpUriRequestBase;
+    }
+    public HttpUriRequestBase getHttpUriRequestBase() {
+        return httpUriRequestBase;
+    }
 }

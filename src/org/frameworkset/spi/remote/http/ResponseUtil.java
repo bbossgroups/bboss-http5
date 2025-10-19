@@ -15,7 +15,6 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
@@ -27,20 +26,19 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
+import org.frameworkset.spi.remote.http.reactor.FluxSinkStatus;
 import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.FluxSink;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>Description: </p>
@@ -199,14 +197,37 @@ public class ResponseUtil {
         }
         return null;
     }
-    private static <T> void processStreamResponse(ClassicHttpResponse response, FluxSink<T> sink, StreamDataHandler<T> streamDataHandler) throws IOException {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8))) {
 
+    private static <T> void processStreamResponse(ClassicHttpResponse response, FluxSink<T> sink, StreamDataHandler<T> streamDataHandler) throws IOException {
+
+        FluxSinkStatus fluxSinkStatus = null;
+        try  {
+            fluxSinkStatus = new FluxSinkStatus(response,streamDataHandler.getHttpUriRequestBase());
+             
+//            // 添加取消监听器
+//            sink.onCancel(() -> {
+//                // 当订阅被取消时执行
+//                logger.info("Subscription cancelled");
+//                fluxSinkStatus.cancel();
+//                // 执行清理工作
+//            });
+            AtomicBoolean isDispose = new AtomicBoolean(false);
+            final FluxSinkStatus fluxSinkStatus_ = fluxSinkStatus;
+            // 添加处置监听器
+            sink.onDispose(() -> {
+                // 当 sink 被处置时执行（包括正常完成、错误和取消）
+                logger.info("Sink disposed");
+                fluxSinkStatus_.dispose();
+                // 执行清理工作
+                fluxSinkStatus_.releaseResources();
+                
+            });
             String line;
             boolean needBreak;
-            while ((line = reader.readLine()) != null && !sink.isCancelled()) {
-                 
+            while ((line = fluxSinkStatus.readLine()) != null && !sink.isCancelled()) {
+                if(fluxSinkStatus.isDispose()){
+                    break;
+                }
                 needBreak = streamDataHandler.handle(line, sink);
                 if(needBreak){
                     sink.complete();
@@ -231,34 +252,14 @@ public class ResponseUtil {
                 }*/
             }
         }
+        finally {
+            fluxSinkStatus.releaseResources();
+        }
     }
-//
-//    private static <T> void processStreamResponse(ClassicHttpResponse response, FluxSink<T> sink, StreamDataHandler<T> streamDataHandler) throws IOException {
-//        try (BufferedReader reader = new BufferedReader(
-//                new InputStreamReader(response.getEntity().getContent()))) {
-//
-//            String line;
-//            while ((line = reader.readLine()) != null && !sink.isCancelled()) {
-//                if (line.startsWith("data: ")) {
-//                    String data = line.substring(6).trim();
-//
-//                    if ("[DONE]".equals(data)) {
-//                        sink.complete();
-//                        break;
-//                    }
-//
-//                    if (!data.isEmpty()) {
-//                        String content = parseContentFromData(data);
-//                        if (content != null && !content.isEmpty()) {
-//                            sink.next(content);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
-    public static <T> void handleStreamResponse(String url,ClassicHttpResponse response,FluxSink<T> sink, StreamDataHandler<T> streamDataHandler)
+
+    public static <T> void handleStreamResponse(String url, ClassicHttpResponse response, 
+                                                FluxSink<T> sink, StreamDataHandler<T> streamDataHandler)
             throws IOException, ParseException {
          
         int status = response.getCode();       
