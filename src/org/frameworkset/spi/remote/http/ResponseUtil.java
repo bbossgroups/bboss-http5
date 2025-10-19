@@ -176,6 +176,17 @@ public class ResponseUtil {
         }
         return false;
     }
+
+    public static boolean handleStringExceptionData(Throwable throwable,FluxSink<String> sink){
+        if(logger.isWarnEnabled()) {
+            logger.warn("服务端异常：", throwable);
+        }
+        String error = SimpleStringUtil.exceptionToString(throwable);
+        sink.next(error);
+        sink.complete();
+        return true;
+        
+    }
     public static String parseStreamContentFromData(String data) {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
@@ -272,10 +283,13 @@ public class ResponseUtil {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
-                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
+                throw new ReactorCallException(new StringBuilder().append("Request url:")
+                        .append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
+//                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
             }
             else {
-                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
+                throw new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString());
+//                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
             }
         }
     }

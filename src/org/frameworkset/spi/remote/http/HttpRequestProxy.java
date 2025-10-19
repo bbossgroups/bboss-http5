@@ -906,6 +906,12 @@ public class HttpRequestProxy {
                 return ResponseUtil.handleStringData(  line, sink);
 
             }
+            @Override
+
+            public boolean handleException(Throwable throwable, FluxSink<String> sink){
+                boolean result = ResponseUtil.handleStringExceptionData(  throwable, sink);
+                return result;
+            }
         });
         
     }
@@ -942,15 +948,26 @@ public class HttpRequestProxy {
 
                             }
                         });
+                    } catch (ReactorCallException e) {
+                        streamDataHandler.handleException(e,sink);
+//                        sink.error(e);
                     } catch (Exception e) {
-                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
+                        streamDataHandler.handleException(e,sink);
+//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
+                    }
+                    catch (Throwable e) {
+                        streamDataHandler.handleException(e,sink);
+//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
                     }
                 }, FluxSink.OverflowStrategy.BUFFER)
                 .subscribeOn(Schedulers.boundedElastic()) // 在弹性线程池中执行阻塞IO
                 .timeout(Duration.ofSeconds(60)) // 设置超时
                 .onErrorResume(throwable -> {
+//                    String error = SimpleStringUtil.exceptionToString(throwable);
 //                    System.err.println("流式处理错误: " + throwable.getMessage());
+//                    String error = SimpleStringUtil.exceptionToString(throwable);
                     logger.warn(throwable.getMessage(),throwable);
+                    // 修改此处，将错误信息作为Flux输出
                     return Flux.empty();
                 });
     }

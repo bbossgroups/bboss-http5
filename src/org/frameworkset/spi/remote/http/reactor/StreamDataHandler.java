@@ -30,6 +30,7 @@ public interface StreamDataHandler<T> {
      * @return
      */
     boolean handle(String line, FluxSink<T> sink);
+    boolean handleException(Throwable throwable, FluxSink<T> sink);
     void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase);
     HttpUriRequestBase getHttpUriRequestBase();
 }
