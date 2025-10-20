@@ -267,7 +267,6 @@ public class ResponseUtil {
 //                fluxSinkStatus.cancel();
 //                // 执行清理工作
 //            });
-            AtomicBoolean isDispose = new AtomicBoolean(false);
             final FluxSinkStatus fluxSinkStatus_ = fluxSinkStatus;
             // 添加处置监听器
             sink.onDispose(() -> {
@@ -280,7 +279,7 @@ public class ResponseUtil {
             });
             String line;
             boolean needBreak;
-            while ((line = fluxSinkStatus.readLine()) != null && !sink.isCancelled()) {
+            while (!sink.isCancelled() && (line = fluxSinkStatus.readLine()) != null ) {
                 if(fluxSinkStatus.isDispose()){
                     break;
                 }
@@ -290,22 +289,7 @@ public class ResponseUtil {
                     break;
                 }
                
-                /**
-                if (line.startsWith("data: ")) {
-                    String data = line.substring(6).trim();
-
-                    if ("[DONE]".equals(data)) {
-                        sink.complete();
-                        break;
-                    }
-
-                    if (!data.isEmpty()) {
-                        String content = parseContentFromData(data);
-                        if (content != null && !content.isEmpty()) {
-                            sink.next(content);
-                        }
-                    }
-                }*/
+                
             }
         }
         finally {
