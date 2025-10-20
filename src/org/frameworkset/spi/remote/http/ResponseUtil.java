@@ -183,6 +183,10 @@ public class ResponseUtil {
             String data = line.substring(6).trim();
 
             if ("[DONE]".equals(data)) {
+                ServerEvent serverEvent = new ServerEvent();
+                serverEvent.setType(ServerEvent.DATA);
+                serverEvent.setDone(true);
+                sink.next(serverEvent);
                 return true;
             }
             if (!data.isEmpty()) {
@@ -222,6 +226,7 @@ public class ResponseUtil {
         ServerEvent serverEvent = new ServerEvent();
         serverEvent.setData(error);
         serverEvent.setType(ServerEvent.ERROR);
+        serverEvent.setDone( true);
         sink.next(serverEvent);
         sink.complete();
         return true;
