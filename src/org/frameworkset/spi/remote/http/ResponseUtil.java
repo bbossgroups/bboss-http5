@@ -226,6 +226,10 @@ public class ResponseUtil {
         ServerEvent serverEvent = new ServerEvent();
         serverEvent.setData(error);
         serverEvent.setType(ServerEvent.ERROR);
+        sink.next(serverEvent);
+
+        serverEvent = new ServerEvent();
+        
         serverEvent.setDone( true);
         sink.next(serverEvent);
         sink.complete();
