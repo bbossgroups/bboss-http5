@@ -36,6 +36,9 @@
 		if (JavaVersion.current().isJava8Compatible()) {
 			options.addStringOption('Xdoclint:none', '-quiet')
 		}
+        if(JavaVersion.current().isJava9Compatible()) {
+            options.addBooleanOption('html5', true)
+        }
 	}
     tasks.register('sourcesJar', Jar) {
         archiveClassifier = "sources"

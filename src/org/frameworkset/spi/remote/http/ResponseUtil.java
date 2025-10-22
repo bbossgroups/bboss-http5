@@ -275,7 +275,9 @@ public class ResponseUtil {
             // 添加处置监听器
             sink.onDispose(() -> {
                 // 当 sink 被处置时执行（包括正常完成、错误和取消）
-                logger.info("Sink disposed");
+                if(logger.isDebugEnabled()) {
+                    logger.debug("Sink disposed");
+                }
                 fluxSinkStatus_.dispose();
                 // 执行清理工作
                 fluxSinkStatus_.releaseResources();
