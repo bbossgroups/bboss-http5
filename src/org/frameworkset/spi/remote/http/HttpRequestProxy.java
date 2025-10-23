@@ -991,7 +991,9 @@ public class HttpRequestProxy {
 //                    String error = SimpleStringUtil.exceptionToString(throwable);
 //                    System.err.println("流式处理错误: " + throwable.getMessage());
 //                    String error = SimpleStringUtil.exceptionToString(throwable);
-                    logger.warn(throwable.getMessage(),throwable);
+                    if(logger.isDebugEnabled()) {
+                        logger.debug(throwable.getMessage(), throwable);
+                    }
                     // 修改此处，将错误信息作为Flux输出
                     return Flux.empty();
                 });
