@@ -201,7 +201,7 @@ public class ResponseUtil {
         }
         else{
             if(logger.isDebugEnabled()) {
-                logger.debug("streamChatCompletion: " + line);
+                logger.debug("streamChatCompletion: {}",line);
             }
         }
         return false;
@@ -240,17 +240,44 @@ public class ResponseUtil {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("choices");
-            if (choices_ != null && choices_ instanceof List ) {
-                List<Map> choices = (List<Map>) choices_;
-                if (choices.size() > 0) {
-                    Map delta = (Map)choices.get(0).get("delta");
-                    if (delta != null ) {//&& delta.has("content")
-                        String content = (String)delta.get("content");
+            if (choices_ != null ) {
+                if (choices_ instanceof List) {
+                    List<Map> choices = (List<Map>) choices_;
+                    if (choices.size() > 0) {
+                        Map delta = (Map) choices.get(0).get("delta");
+                        if (delta != null) {
+                            String content = (String)delta.get("content");
+                            return content;
+//                            String reasoning_content = (String)delta.get("reasoning_content");
+//                            String content = (String) delta.get("content");
+//                            if(SimpleStringUtil.isNotEmpty(reasoning_content)){
+//                                return reasoning_content;
+//                            }
+//                            else{
+//                                return content;
+//                            }
+                            
 
-                        return content;
+                        }
+                        else{
+                            if(logger.isDebugEnabled())
+                                logger.debug("choices list delta null: {}",data);
+                        }
                     }
-                }
+                    else {
+                        if(logger.isDebugEnabled())
+                            logger.debug("choices list 0: {}",data);
+                    }
 
+                }
+                else{
+                    if(logger.isDebugEnabled())
+                        logger.debug("no list:{}",data);
+                }
+            }
+            else {
+                if(logger.isDebugEnabled())
+                    logger.debug("-----------no choices:{}",data);
             }
         } catch (Exception e) {
             throw new ReactorCallException(data,e);
