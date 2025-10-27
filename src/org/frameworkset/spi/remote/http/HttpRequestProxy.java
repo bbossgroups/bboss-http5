@@ -19,6 +19,8 @@ import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
 import org.frameworkset.spi.remote.http.reactor.*;
 import org.frameworkset.util.ResourceStartResult;
+import org.frameworkset.util.concurrent.BooleanWrapperInf;
+import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -899,14 +901,14 @@ public class HttpRequestProxy {
     public static Flux<String> streamChatCompletion(String poolName,String url,Object message) {
         return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<String>() {
             @Override
-            public boolean handle(String line, FluxSink<String> sink) {
-                return ResponseUtil.handleStringData(  line, sink);
+            public boolean handle(String line, FluxSink<String> sink, BooleanWrapperInf firstEventTag) {
+                return ResponseUtil.handleStringData(  line, sink,   firstEventTag);
 
             }
             @Override
 
-            public boolean handleException(Throwable throwable, FluxSink<String> sink){
-                boolean result = ResponseUtil.handleStringExceptionData(  throwable, sink);
+            public boolean handleException(Throwable throwable, FluxSink<String> sink, BooleanWrapperInf firstEventTag){
+                boolean result = ResponseUtil.handleStringExceptionData(  throwable, sink,   firstEventTag);
                 return result;
             }
         });
@@ -927,14 +929,14 @@ public class HttpRequestProxy {
     public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object message) {
         return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<ServerEvent>() {
             @Override
-            public boolean handle(String line, FluxSink<ServerEvent> sink) {
-                return ResponseUtil.handleServerEventData(  line, sink);
+            public boolean handle(String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag) {
+                return ResponseUtil.handleServerEventData(  line, sink,   firstEventTag);
 
             }
             @Override
 
-            public boolean handleException(Throwable throwable, FluxSink<ServerEvent> sink){
-                boolean result = ResponseUtil.handleServerEventExceptionData(  throwable, sink);
+            public boolean handleException(Throwable throwable, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
+                boolean result = ResponseUtil.handleServerEventExceptionData(  throwable, sink,   firstEventTag);
                 return result;
             }
         });
@@ -974,14 +976,15 @@ public class HttpRequestProxy {
                             }
                         });
                     } catch (ReactorCallException e) {
-                        streamDataHandler.handleException(e,sink);
+                        
+                        streamDataHandler.handleException(e,sink,new NoSynBooleanWrapper( true));
 //                        sink.error(e);
                     } catch (Exception e) {
-                        streamDataHandler.handleException(e,sink);
+                        streamDataHandler.handleException(e,sink,new NoSynBooleanWrapper( true));
 //                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
                     }
                     catch (Throwable e) {
-                        streamDataHandler.handleException(e,sink);
+                        streamDataHandler.handleException(e,sink,new NoSynBooleanWrapper( true));
 //                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
                     }
                 }, FluxSink.OverflowStrategy.BUFFER)

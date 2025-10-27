@@ -16,12 +16,12 @@ package org.frameworkset.spi.remote.http;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
-import  org.apache.hc.core5.http.HttpResponse;
-import  org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.ParseException;
-import  org.apache.hc.core5.http.impl.io.EmptyInputStream;
+import org.apache.hc.core5.http.impl.io.EmptyInputStream;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
@@ -30,6 +30,8 @@ import org.frameworkset.spi.remote.http.reactor.FluxSinkStatus;
 import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.frameworkset.spi.remote.http.reactor.ServerEvent;
 import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
+import org.frameworkset.util.concurrent.BooleanWrapperInf;
+import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.FluxSink;
@@ -39,7 +41,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>Description: </p>
@@ -156,7 +157,7 @@ public class ResponseUtil {
         }
     }
 
-    public static boolean handleStringData(String line,FluxSink<String> sink){
+    public static boolean handleStringData(String line,FluxSink<String> sink, BooleanWrapperInf firstEventTag){
         if (line.startsWith("data: ")) {
             String data = line.substring(6).trim();
 
@@ -164,6 +165,9 @@ public class ResponseUtil {
                 return true;
             }            
             if (!data.isEmpty()) {
+                if(firstEventTag.get()) {
+                    firstEventTag.set(false);
+                }
                 String content = ResponseUtil.parseStreamContentFromData(data);
                 if (content != null && !content.isEmpty()) {
                     sink.next(content);
@@ -178,12 +182,17 @@ public class ResponseUtil {
         return false;
     }
 
-    public static boolean handleServerEventData(String line,FluxSink<ServerEvent> sink){
+    public static boolean handleServerEventData(String line,FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
         if (line.startsWith("data: ")) {
             String data = line.substring(6).trim();
 
             if ("[DONE]".equals(data)) {
+                 
                 ServerEvent serverEvent = new ServerEvent();
+                if(firstEventTag.get()) {
+                    firstEventTag.set(false);
+                    serverEvent.setFirst(true);
+                }
                 serverEvent.setType(ServerEvent.DATA);
                 serverEvent.setDone(true);
                 sink.next(serverEvent);
@@ -192,7 +201,12 @@ public class ResponseUtil {
             if (!data.isEmpty()) {
                 String content = ResponseUtil.parseStreamContentFromData(data);
                 if (content != null && !content.isEmpty()) {
+                   
                     ServerEvent serverEvent = new ServerEvent();
+                    if(firstEventTag.get()) {
+                        firstEventTag.set(false);
+                        serverEvent.setFirst(true);
+                    }
                     serverEvent.setData(content);
                     serverEvent.setType(ServerEvent.DATA);                    
                     sink.next(serverEvent);
@@ -207,9 +221,12 @@ public class ResponseUtil {
         return false;
     }
 
-    public static boolean handleStringExceptionData(Throwable throwable,FluxSink<String> sink){
+    public static boolean handleStringExceptionData(Throwable throwable,FluxSink<String> sink, BooleanWrapperInf firstEventTag){
         if(logger.isWarnEnabled()) {
             logger.warn("服务端异常：", throwable);
+        }
+        if(firstEventTag.get()) {
+            firstEventTag.set(false);
         }
         String error = SimpleStringUtil.exceptionToString(throwable);
         sink.next(error);
@@ -218,12 +235,17 @@ public class ResponseUtil {
         
     }
 
-    public static boolean handleServerEventExceptionData(Throwable throwable,FluxSink<ServerEvent> sink){
+    public static boolean handleServerEventExceptionData(Throwable throwable,FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
         if(logger.isWarnEnabled()) {
             logger.warn("服务端异常：", throwable);
         }
+        
         String error = SimpleStringUtil.exceptionToString(throwable);
         ServerEvent serverEvent = new ServerEvent();
+        if(firstEventTag.get()) {
+            firstEventTag.set(false);
+            serverEvent.setFirst(true);
+        }
         serverEvent.setData(error);
         serverEvent.setType(ServerEvent.ERROR);
         sink.next(serverEvent);
@@ -312,11 +334,12 @@ public class ResponseUtil {
             });
             String line;
             boolean needBreak;
+            BooleanWrapperInf firstEventTag = new NoSynBooleanWrapper(true);
             while (!sink.isCancelled() && (line = fluxSinkStatus.readLine()) != null ) {
                 if(fluxSinkStatus.isDispose()){
                     break;
                 }
-                needBreak = streamDataHandler.handle(line, sink);
+                needBreak = streamDataHandler.handle(line, sink,   firstEventTag);
                 if(needBreak){
                     sink.complete();
                     break;
