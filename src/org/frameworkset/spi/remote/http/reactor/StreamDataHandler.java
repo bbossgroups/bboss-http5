@@ -28,7 +28,8 @@ public interface StreamDataHandler<T> {
      * 处理数据行,如果数据已经返回完毕，则返回true，指示关闭对话，否则返回false
      * @param line 数据行
      * @param sink 数据行处理结果
-     * @param firstEventTag 是否是第一个事件标记，需要具体实现设置，如果为true，则表示当前数据行是第一个事件标记，否则不是第一个事件标记
+     * @param firstEventTag 是否是第一个事件标记，需要具体实现设置，如果为true，则表示当前数据行是第一个事件标记，否则不是第一个事件标记。
+     *                      在接口方法实现中，在发送消息时，需检测是否为true，如果为true，需设置标记为false，同时将ServerEvent的first标记设置为true
      * @return
      */
     boolean handle(String line, FluxSink<T> sink, BooleanWrapperInf firstEventTag);
@@ -36,7 +37,8 @@ public interface StreamDataHandler<T> {
      * 处理异常，如果数据已经返回完毕，则返回true，指示关闭对话，否则返回false
      * @param throwable 异常
      * @param sink 数据行处理结果
-     * @param firstEventTag 是否是第一个事件标记，需要具体实现设置，如果为true，则表示当前数据行是第一个事件标记，否则不是第一个事件标记
+     * @param firstEventTag 是否是第一个事件标记，需要具体实现设置，如果为true，则表示当前数据行是第一个事件标记，否则不是第一个事件标记。
+     *                      在接口方法实现中，在发送消息时，需检测是否为true，如果为true，需设置标记为false，同时将ServerEvent的first标记设置为true
      * @return
      */
     boolean handleException(Throwable throwable, FluxSink<T> sink, BooleanWrapperInf firstEventTag);
