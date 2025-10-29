@@ -1745,29 +1745,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         }
 //		if(evictExpiredConnections)
 //			builder.evictExpiredConnections();
+        builder.setConnectionManager(connManager)
+                .setDefaultRequestConfig(requestConfig);
 		if (keepAlive > 0)//设置链接保活策略
 		{
 			HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy = new HttpConnectionKeepAliveStrategy(this.keepAlive);
-
-
-
-			builder.setConnectionManager(connManager)
-//					.setDefaultCookieStore(cookieStore)
-
-					//.setProxy(new HttpHost("myproxy", 8080))
-					.setDefaultRequestConfig(requestConfig).setKeepAliveStrategy(httpConnectionKeepAliveStrategy);
-
-
-		} else {
-
-
-			builder.setConnectionManager(connManager)
-//					.setDefaultCookieStore(cookieStore)
-					//.setProxy(new HttpHost("myproxy", 8080))
-					.setDefaultRequestConfig(requestConfig);
-
-
-		}
+            builder.setKeepAliveStrategy(httpConnectionKeepAliveStrategy);
+		} 
 		buildRetryHandler(builder);
 		customizeHttpBuilder( builder );
 		httpclient = builder.build();

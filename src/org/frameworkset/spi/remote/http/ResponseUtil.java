@@ -26,10 +26,7 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
-import org.frameworkset.spi.remote.http.reactor.FluxSinkStatus;
-import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
-import org.frameworkset.spi.remote.http.reactor.ServerEvent;
-import org.frameworkset.spi.remote.http.reactor.StreamDataHandler;
+import org.frameworkset.spi.remote.http.reactor.*;
 import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
 import org.slf4j.Logger;
@@ -168,9 +165,9 @@ public class ResponseUtil {
                 if(firstEventTag.get()) {
                     firstEventTag.set(false);
                 }
-                String content = ResponseUtil.parseStreamContentFromData(data);
+                StreamData content = ResponseUtil.parseStreamContentFromData(data);
                 if (content != null && !content.isEmpty()) {
-                    sink.next(content);
+                    sink.next(content.getData());
                 }
             }
         }
@@ -199,7 +196,7 @@ public class ResponseUtil {
                 return true;
             }
             if (!data.isEmpty()) {
-                String content = ResponseUtil.parseStreamContentFromData(data);
+                StreamData content = ResponseUtil.parseStreamContentFromData(data);
                 if (content != null && !content.isEmpty()) {
                    
                     ServerEvent serverEvent = new ServerEvent();
@@ -207,8 +204,9 @@ public class ResponseUtil {
                         firstEventTag.set(false);
                         serverEvent.setFirst(true);
                     }
-                    serverEvent.setData(content);
-                    serverEvent.setType(ServerEvent.DATA);                    
+                    serverEvent.setData(content.getData());
+                    serverEvent.setType(ServerEvent.DATA);      
+                    serverEvent.setContentType(content.getType());
                     sink.next(serverEvent);
                 }
             }
@@ -258,7 +256,13 @@ public class ResponseUtil {
         return true;
 
     }
-    public static String parseStreamContentFromData(String data) {
+
+    /**
+     * data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
+     * @param data
+     * @return
+     */
+    public static StreamData parseStreamContentFromData(String data) {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("choices");
@@ -268,16 +272,16 @@ public class ResponseUtil {
                     if (choices.size() > 0) {
                         Map delta = (Map) choices.get(0).get("delta");
                         if (delta != null) {
-                            String content = (String)delta.get("content");
-                            return content;
-//                            String reasoning_content = (String)delta.get("reasoning_content");
-//                            String content = (String) delta.get("content");
-//                            if(SimpleStringUtil.isNotEmpty(reasoning_content)){
-//                                return reasoning_content;
-//                            }
-//                            else{
-//                                return content;
-//                            }
+//                            String content = (String)delta.get("content");
+//                            return content;
+                            String reasoning_content = (String)delta.get("reasoning_content");
+                            String content = (String) delta.get("content");
+                            if(SimpleStringUtil.isNotEmpty(reasoning_content)){
+                                return new StreamData(ServerEvent.REASONING_CONTENT,reasoning_content);
+                            }
+                            else{
+                                return new StreamData(ServerEvent.CONTENT,content);
+                            }
                             
 
                         }
