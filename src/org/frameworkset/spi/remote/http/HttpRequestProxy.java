@@ -13,11 +13,14 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
-import org.frameworkset.spi.remote.http.reactor.*;
+import org.frameworkset.spi.remote.http.reactor.BaseStreamDataHandler;
+import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.frameworkset.util.ResourceStartResult;
 import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
@@ -38,7 +41,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 
@@ -915,7 +917,58 @@ public class HttpRequestProxy {
         
     }
 
+    /**
+     * 调用图片生成模型，生成图片
+     * @param poolName
+     * @param url
+     * @param message
+     * @return
+     */
+    public static ImageEvent multimodalImageGeneration(String poolName,String url, Object message) {
+        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
+        Map output = (Map)data.get("output");
+        List choices = (List)output.get("choices");
+        if(choices == null || choices.size() == 0)
+            return null;
+        Map choice = (Map)choices.get(0);
+        Map messageData = (Map)choice.get("message");
+        
+        String finishReason = (String)choice.get("finish_reason");
+        List imageContentData = (List)messageData.get("content");
+        ImageEvent imageEvent = null;
+        if(imageContentData != null ){
+            int size = imageContentData.size();
+            if(size > 0) {
+                imageEvent = new ImageEvent();
+                if(size == 1) {
+                    Map image = (Map) imageContentData.get(0);
+                    String imageUrl = (String) image.get("image");
 
+                    imageEvent.setImageUrl(imageUrl);
+                }
+                else{
+                    for(int i = 0; i < size; i++){
+                        Map image = (Map) imageContentData.get(i);
+                        String imageUrl = (String) image.get("image");
+                        imageEvent.addImageUrl(imageUrl);
+                    }
+                }
+                imageEvent.setFinishReason(finishReason);
+            }
+        }
+        return imageEvent;
+    }
+
+    /**
+     * 调用图片生成模型，生成图片
+     * @param url
+     * @param message
+     * @return
+     */
+    public static ImageEvent multimodalImageGeneration(String url, Object message) {
+         
+        return multimodalImageGeneration(null, url, message) ;
+    }
     /**
      * 创建流式调用的Flux，使用默认数据源
      */

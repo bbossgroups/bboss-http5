@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.reactor;
+package org.frameworkset.spi.ai.model;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http.reactor;
  * limitations under the License.
  */
 
+
 /**
  * @author biaoping.yin
  * @Date 2025/10/29
@@ -23,12 +24,14 @@ public class StreamData {
 
     private int type = ServerEvent.CONTENT;
     private String data;
+    private  String finishReason;
     
     public StreamData(){
     }
-    public StreamData(int type,String data){
+    public StreamData(int type, String data, String finishReason){
     	this.type = type;
     	this.data = data;
+        this.finishReason = finishReason;
     }
     public int getType() {
 		return type;
@@ -47,5 +50,11 @@ public class StreamData {
         return data == null || data.length() == 0;
     }
     
+    public String getFinishReason() {
+		return finishReason;
+	}
 
+    public void setFinishReason(String finishReason) {
+        this.finishReason = finishReason;
+    }
 }

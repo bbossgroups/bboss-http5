@@ -16,6 +16,7 @@ package org.frameworkset.spi.remote.http;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.model.StreamData;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
@@ -23,6 +24,7 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.impl.io.EmptyInputStream;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
@@ -155,6 +157,9 @@ public class ResponseUtil {
     }
 
     public static boolean handleStringData(String line,FluxSink<String> sink, BooleanWrapperInf firstEventTag){
+        if(logger.isDebugEnabled()){
+            logger.debug("line: " + line);
+        }
         if (line.startsWith("data: ")) {
             String data = line.substring(6).trim();
 
@@ -180,6 +185,9 @@ public class ResponseUtil {
     }
 
     public static boolean handleServerEventData(String line,FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
+        if(logger.isDebugEnabled()){
+            logger.debug("line: " + line);
+        }
         if (line.startsWith("data: ")) {
             String data = line.substring(6).trim();
 
@@ -197,18 +205,32 @@ public class ResponseUtil {
             }
             if (!data.isEmpty()) {
                 StreamData content = ResponseUtil.parseStreamContentFromData(data);
-                if (content != null && !content.isEmpty()) {
-                   
-                    ServerEvent serverEvent = new ServerEvent();
-                    if(firstEventTag.get()) {
-                        firstEventTag.set(false);
-                        serverEvent.setFirst(true);
-                    }
-                    serverEvent.setData(content.getData());
-                    serverEvent.setType(ServerEvent.DATA);      
-                    serverEvent.setContentType(content.getType());
-                    sink.next(serverEvent);
+                if (content != null) {
+                   if( !content.isEmpty()) {
+                       ServerEvent serverEvent = new ServerEvent();
+                       if (firstEventTag.get()) {
+                           firstEventTag.set(false);
+                           serverEvent.setFirst(true);
+                       }
+                       serverEvent.setFinishReason(content.getFinishReason());
+                       serverEvent.setData(content.getData());
+                       serverEvent.setType(ServerEvent.DATA);
+                       serverEvent.setContentType(content.getType());
+                       sink.next(serverEvent);
+                   }
+                   else if(content.getFinishReason() != null && content.getFinishReason().length() > 0){
+                       ServerEvent serverEvent = new ServerEvent();
+                       if (firstEventTag.get()) {
+                           firstEventTag.set(false);
+                           serverEvent.setFirst(true);
+                       }
+                       serverEvent.setFinishReason(content.getFinishReason());
+                       serverEvent.setType(ServerEvent.DATA);
+                       serverEvent.setContentType(content.getType());
+                       sink.next(serverEvent);
+                   }
                 }
+                
             }
         }
         else{
@@ -270,17 +292,19 @@ public class ResponseUtil {
                 if (choices_ instanceof List) {
                     List<Map> choices = (List<Map>) choices_;
                     if (choices.size() > 0) {
-                        Map delta = (Map) choices.get(0).get("delta");
+                        Map choice = choices.get(0);
+                        String finishReason = (String) choice.get("finish_reason");
+                        Map delta = (Map) choice.get("delta");
                         if (delta != null) {
 //                            String content = (String)delta.get("content");
 //                            return content;
                             String reasoning_content = (String)delta.get("reasoning_content");
                             String content = (String) delta.get("content");
                             if(SimpleStringUtil.isNotEmpty(reasoning_content)){
-                                return new StreamData(ServerEvent.REASONING_CONTENT,reasoning_content);
+                                return new StreamData(ServerEvent.REASONING_CONTENT,reasoning_content,finishReason);
                             }
                             else{
-                                return new StreamData(ServerEvent.CONTENT,content);
+                                return new StreamData(ServerEvent.CONTENT,content,finishReason);
                             }
                             
 
