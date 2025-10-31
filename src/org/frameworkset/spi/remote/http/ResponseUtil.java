@@ -184,12 +184,13 @@ public class ResponseUtil {
         return false;
     }
 
+ 
     public static boolean handleServerEventData(String line,FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
-        if (line.startsWith("data: ")) {
-            String data = line.substring(6).trim();
+        if (line.startsWith("data: ")||line.startsWith("data:")) {
+            String data = line.substring(5).trim();
 
             if ("[DONE]".equals(data)) {
                  
@@ -279,8 +280,56 @@ public class ResponseUtil {
 
     }
 
+    private static StreamData parseAudioStreamContentFromData(Map output){
+        try {
+            
+            Object choices_ = output.get("choices");            
+            if (choices_ != null ) {
+                if (choices_ instanceof List) {
+                    List<Map> choices = (List<Map>) choices_;
+                    if (choices.size() > 0) {
+                        Map choice = choices.get(0);
+                        Map message = (Map) choice.get("message");
+                     
+                        if(message != null) {
+                            List<Map> content_ = (List) message.get("content");
+                            
+                            String content = content_ != null && content_.size() > 0? (String) content_.get(0).get("text"):null;
+                            List<Map> reasoning_content_ = (List) message.get("reasoning_content");
+                            String reasoning_content = reasoning_content_ != null && reasoning_content_.size() > 0?(String) reasoning_content_.get(0).get("text"):null;
+                            String finishReason = (String) choice.get("finish_reason");
+                            if (SimpleStringUtil.isNotEmpty(reasoning_content)) {
+                                return new StreamData(ServerEvent.REASONING_CONTENT, reasoning_content, finishReason);
+                            } else {
+                                return new StreamData(ServerEvent.CONTENT, content, finishReason);
+                            }
+                        }
+                        else{
+                            if(logger.isDebugEnabled())
+                                logger.debug("choices list message null");
+                        }
+                       
+                    }
+                    else {
+                        if(logger.isDebugEnabled())
+                            logger.debug("choices list size is 0");
+                    }
+
+                }
+                else{
+                    if (logger.isDebugEnabled())
+                        logger.debug("choices is not list:{}");
+                }
+            }
+           
+        } catch (Exception e) {
+            throw new ReactorCallException("ParseAudioStreamContentFromData failed:",e);
+        }
+        return null;
+    }
     /**
-     * data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
+     * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
+     * LLM和图像识别：data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
      * @param data
      * @return
      */
@@ -288,6 +337,12 @@ public class ResponseUtil {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("choices");
+            if(choices_ == null){
+                Map output = (Map) map.get("output");
+                if(output != null){ 
+                    return parseAudioStreamContentFromData(output);
+                }
+            }
             if (choices_ != null ) {
                 if (choices_ instanceof List) {
                     List<Map> choices = (List<Map>) choices_;
@@ -316,18 +371,26 @@ public class ResponseUtil {
                     }
                     else {
                         if(logger.isDebugEnabled())
-                            logger.debug("choices list 0: {}",data);
+                            logger.debug("choices list size is 0: {}",data);
                     }
 
                 }
                 else{
-                    if(logger.isDebugEnabled())
-                        logger.debug("no list:{}",data);
+                    if (logger.isDebugEnabled())
+                        logger.debug("choices is not list:{}", data);
                 }
             }
             else {
-                if(logger.isDebugEnabled())
-                    logger.debug("-----------no choices:{}",data);
+                String code =  (String)map.get("code");
+                String message = (String) map.get("message");
+                if(SimpleStringUtil.isNotEmpty(code)) {
+                    return new StreamData(ServerEvent.CONTENT, message, code);
+                }
+                else {
+                    if(logger.isDebugEnabled())
+                        logger.debug("-----------no choices:{}",data);
+                }
+                
             }
         } catch (Exception e) {
             throw new ReactorCallException(data,e);
@@ -361,7 +424,7 @@ public class ResponseUtil {
                 
             });
             String line;
-            boolean needBreak;
+            boolean needBreak = false;
             BooleanWrapperInf firstEventTag = new NoSynBooleanWrapper(true);
             while (!sink.isCancelled() && (line = fluxSinkStatus.readLine()) != null ) {
                 if(fluxSinkStatus.isDispose()){
@@ -374,6 +437,9 @@ public class ResponseUtil {
                 }
                
                 
+            }
+            if(!needBreak){
+                sink.complete();
             }
         }
         finally {
