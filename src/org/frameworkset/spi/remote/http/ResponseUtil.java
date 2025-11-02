@@ -160,8 +160,8 @@ public class ResponseUtil {
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
-        if (line.startsWith("data: ")) {
-            String data = line.substring(6).trim();
+        if (line.startsWith("data: ") || line.startsWith("data:")) {
+            String data = line.substring(5).trim();
 
             if ("[DONE]".equals(data)) {                
                 return true;
@@ -439,6 +439,15 @@ public class ResponseUtil {
                 
             }
             if(!needBreak){
+//                ServerEvent serverEvent = new ServerEvent();
+//                if(firstEventTag.get()) {
+//                    firstEventTag.set(false);
+//                    serverEvent.setFirst(true);
+//                }
+//                serverEvent.setType(ServerEvent.DATA);
+//                serverEvent.setDone(true);
+//                sink.next(serverEvent);
+                streamDataHandler.handle("data:[DONE]", sink,   firstEventTag);
                 sink.complete();
             }
         }
