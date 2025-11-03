@@ -15,7 +15,6 @@ package org.frameworkset.spi.ai.util;
  * limitations under the License.
  */
 
-import com.frameworkset.util.SimpleStringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,11 +29,12 @@ public class MessageBuilder {
     public static final String ROLE_USER = "user";
     public static final String ROLE_ASSISTANT = "assistant";
     public static final String ROLE_SYSTEM = "system";
+    public static final String ROLE_TOOL = "tool";
+    
+    public static final String TYPE_TEXT = "text";
+    public static final String TYPE_IMAGE = "image_url";
     public static Map<String,Object> buildSystemMessage(String message){
 
-//        Map<String, Object> userMessage = new HashMap<>();
-//        userMessage.put("role", "user");
-//        userMessage.put("content", message);
 
         return buildMessage(ROLE_SYSTEM,  message);
     }
@@ -52,26 +52,10 @@ public class MessageBuilder {
 
     public static Map<String,Object> buildAudioMessage(String audioUrl){
         LinkedHashMap<String, Object> userMessage = new LinkedHashMap<>();
-        userMessage.put("role", "user");
+        userMessage.put("role", ROLE_USER);
         List contents = new ArrayList<>();
         Map<String,Object> contentData = new LinkedHashMap<>();
-        contentData.put("audio", "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3");
-//        // 将上传的音频文件转换为base64编码
-//        if (audio != null && !audio.isEmpty()) {
-//            try {
-//                byte[] audioBytes = audio.getBytes();
-//                String base64Audio = "data:" + audio.getContentType() + ";base64," +
-//                        java.util.Base64.getEncoder().encodeToString(audioBytes);
-//                contentData.put("audio", base64Audio);
-//            } catch (Exception e) {
-//                logger.error("音频文件转换base64失败", e);
-//                // 如果转换失败，使用默认音频文件
-//                contentData.put("audio", "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3");
-//            }
-//        } else {
-//            // 如果没有上传音频文件，使用默认音频文件
-//            contentData.put("audio", "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3");
-//        }
+        contentData.put("audio", audioUrl);
 
         contents.add(contentData);
         userMessage.put("content", contents);
@@ -80,7 +64,7 @@ public class MessageBuilder {
     
     public static Map<String,Object> buildGenImageMessage(String message){
         Map<String, Object> userMessage = new LinkedHashMap<>();
-        userMessage.put("role", "user");
+        userMessage.put("role",ROLE_USER);
 
         List contents = new ArrayList<>();
         Map contentData = new LinkedHashMap();
@@ -98,7 +82,7 @@ public class MessageBuilder {
         Map contentData = null;
         for (String imageUrl:imageUrls) {
             contentData = new LinkedHashMap();
-            contentData.put("type", "image_url");
+            contentData.put("type", TYPE_IMAGE);
             String _imageUrl = imageUrl;
             contentData.put("image_url", new HashMap<String, String>() {{
 
@@ -108,18 +92,11 @@ public class MessageBuilder {
         }
  
         contentData = new LinkedHashMap();
-        contentData.put("type", "text");
+        contentData.put("type", TYPE_TEXT);
         contentData.put("text", message);;
         contents.add(contentData);
-
-
-
-
-
-
-//        List<Map<String, Object>> messages = new ArrayList<>();
         Map<String, Object> userMessage = new HashMap<>();
-        userMessage.put("role", "user");
+        userMessage.put("role", ROLE_USER);
         userMessage.put("content", contents);
         return userMessage;
     }
@@ -130,22 +107,6 @@ public class MessageBuilder {
         List contents = new ArrayList<>();
         Map<String,Object> contentData = new LinkedHashMap<>();
         contentData.put("audio", audioDataBuilder.buildAudioBase64Data());
-//        // 将上传的音频文件转换为base64编码
-//        if (audio != null && !audio.isEmpty()) {
-//            try {
-//                byte[] audioBytes = audio.getBytes();
-//                String base64Audio = "data:" + audio.getContentType() + ";base64," +
-//                        java.util.Base64.getEncoder().encodeToString(audioBytes);
-//                contentData.put("audio", base64Audio);
-//            } catch (Exception e) {
-//                logger.error("音频文件转换base64失败", e);
-//                // 如果转换失败，使用默认音频文件
-//                contentData.put("audio", "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3");
-//            }
-//        } else {
-//            // 如果没有上传音频文件，使用默认音频文件
-//            contentData.put("audio", "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3");
-//        }
 
         contents.add(contentData);
         userMessage.put("content", contents);
@@ -153,18 +114,12 @@ public class MessageBuilder {
     }
     public static Map<String,Object> buildUserMessage(String message){
 
-//        Map<String, Object> userMessage = new HashMap<>();
-//        userMessage.put("role", "user");
-//        userMessage.put("content", message);
 
         return buildMessage(ROLE_USER,  message);
     }
 
     public static Map<String,Object> buildAssistantMessage(String message){
 
-//        Map<String, Object> userMessage = new HashMap<>();
-//        userMessage.put("role", "assistant");
-//        userMessage.put("content", message);
 
         return buildMessage(ROLE_ASSISTANT,  message);
     }
@@ -177,6 +132,18 @@ public class MessageBuilder {
 
         return userMessage;
     }
+
+    public static Map<String,Object> buildToolMessage(String message,String toolId){
+
+        Map<String, Object> toolMessage = new HashMap<>();
+        toolMessage.put("role", ROLE_TOOL);
+        toolMessage.put("content", message);
+        toolMessage.put("tool_call_id", toolId);
+ 
+
+        return toolMessage;
+    }
+
 
 
 
