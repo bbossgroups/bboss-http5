@@ -13,6 +13,7 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.frameworkset.spi.ai.model.AudioEvent;
 import org.frameworkset.spi.ai.model.ImageEvent;
 import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
@@ -968,6 +969,52 @@ public class HttpRequestProxy {
     public static ImageEvent multimodalImageGeneration(String url, Object message) {
          
         return multimodalImageGeneration(null, url, message) ;
+    }
+
+
+    /**
+     * 调用音频合成模型，生成音频
+     * @param poolName
+     * @param url
+     * @param message
+     * @return
+     */
+    public static AudioEvent multimodalAudioGeneration(String poolName,String url, Object message) {
+        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
+        Map output = (Map)data.get("output");
+        Map audio = (Map)output.get("audio");
+        String finishReason = (String)output.get("finish_reason");
+        
+        if(audio == null && finishReason == null)
+            return null;
+        AudioEvent audioEvent = new AudioEvent();
+        audioEvent.setFinishReason(finishReason);
+        String audioUrl = (String)audio.get("url");
+        String auditData = (String)audio.get("data");
+        Object expiresAt_ = audio.get("expires_at");
+        if(expiresAt_ != null) {
+            if (expiresAt_ instanceof Long) {
+                audioEvent.setExpiresAt((Long) expiresAt_);
+            } else {
+                audioEvent.setExpiresAt((Integer) expiresAt_);
+            }
+        }
+        audioEvent.setAudioBase64(auditData);
+        audioEvent.setAudioUrl(audioUrl);
+
+         
+        return audioEvent;
+    }
+
+    /**
+     * 调用音频合成模型，生成音频
+     * @param url
+     * @param message
+     * @return
+     */
+    public static AudioEvent multimodalAudioGeneration(String url, Object message) {
+
+        return multimodalAudioGeneration(null, url, message) ;
     }
     /**
      * 创建流式调用的Flux，使用默认数据源
