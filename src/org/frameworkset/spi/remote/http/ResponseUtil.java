@@ -242,6 +242,30 @@ public class ResponseUtil {
         return false;
     }
 
+    public static ServerEvent handleServerEventData(String line){
+        if(logger.isDebugEnabled()){
+            logger.debug("line: " + line);
+        }
+        ServerEvent serverEvent = null;
+        if (SimpleStringUtil.isNotEmpty(line)) {
+            StreamData content = ResponseUtil.parseStreamContentFromData(line);
+            if (content != null) {
+                 
+                    serverEvent = new ServerEvent();
+                     
+                    serverEvent.setFinishReason(content.getFinishReason());
+                    serverEvent.setData(content.getData());
+                    serverEvent.setType(ServerEvent.DATA);
+                    serverEvent.setContentType(content.getType());
+                    
+                 
+            }
+
+        }
+        return serverEvent;
+        
+    }
+
     public static boolean handleStringExceptionData(Throwable throwable,FluxSink<String> sink, BooleanWrapperInf firstEventTag){
         if(logger.isWarnEnabled()) {
             logger.warn("服务端异常：", throwable);
@@ -360,11 +384,21 @@ public class ResponseUtil {
                             }
                             else{
                                 return new StreamData(ServerEvent.CONTENT,content,finishReason);
-                            }
-                            
+                            }                           
 
                         }
                         else{
+                            Map message = (Map) choice.get("message");
+                            if(message != null) {
+                                String reasoning_content = (String)message.get("reasoning_content");
+                                String content = (String) message.get("content");
+                                if(SimpleStringUtil.isNotEmpty(reasoning_content)){
+                                    return new StreamData(ServerEvent.REASONING_CONTENT,reasoning_content,finishReason);
+                                }
+                                else{
+                                    return new StreamData(ServerEvent.CONTENT,content,finishReason);
+                                }
+                            }
                             if(logger.isDebugEnabled())
                                 logger.debug("choices list delta null: {}",data);
                         }
@@ -457,6 +491,34 @@ public class ResponseUtil {
     }
 
 
+    public static ServerEvent handleChatResponse(String url, ClassicHttpResponse response)
+            throws IOException, ParseException {
+
+        int status = response.getCode();
+
+        if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
+            HttpEntity entity = response.getEntity();
+            String line = entity != null ? BBossEntityUtils.toString(entity) : null;
+            if(line == null || line.equals("")){
+                return null;
+            }
+            return ResponseUtil.handleServerEventData(  line);
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null ) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
+                }
+                throw new ReactorCallException(new StringBuilder().append("Request url:")
+                        .append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
+//                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
+            }
+            else {
+                throw new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString());
+//                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
+            }
+        }
+    }
     public static <T> void handleStreamResponse(String url, ClassicHttpResponse response, 
                                                 FluxSink<T> sink, StreamDataHandler<T> streamDataHandler)
             throws IOException, ParseException {

@@ -1042,6 +1042,38 @@ public class HttpRequestProxy {
         });
 
     }
+
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent chatCompletionEvent(String url,Object message) {
+        return chatCompletionEvent(  (String)null,url,  message);
+
+
+    }
+
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
+        String data = null;
+        if(message != null){
+            if(message instanceof String){
+                data = (String)message;
+            }
+            else{
+                data = SimpleStringUtil.object2json(message);
+            }
+        }
+       return  HttpRequestProxy.sendJsonBody(poolName,data,url,null,new BaseURLResponseHandler<ServerEvent>(){
+            @Override
+            public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                return ResponseUtil.handleChatResponse(url, response);
+            }
+        });
+         
+
+    }
     public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
         return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
     }
@@ -1102,6 +1134,7 @@ public class HttpRequestProxy {
                 });
     }
 
+     
 
     public static String httpPostforStringWithFiles(String url, String cookie, String userAgent,
                                            Map<String, File> files) throws HttpProxyRequestException {
