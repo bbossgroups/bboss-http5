@@ -29,7 +29,10 @@ public class ImageEvent extends MultimodalGeneration{
      * 图片地址
      */
     private String imageUrl;
+    private String imageSize;
     private List<String> imageUrls;
+
+    private List<String> imageSizes;
 
     public String getImageUrl() {
         return imageUrl;
@@ -53,6 +56,24 @@ public class ImageEvent extends MultimodalGeneration{
     public void setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
     }
+    
+    public String getImageSize() {
+        return imageSize;
+    }
+    public void setImageSize(String imageSize) {
+        this.imageSize = imageSize;
+    }
 
-
+    public List<String> getImageSizes() {
+        return imageSizes;
+    }
+    public void setImageSizes(List<String> imageSizes) {
+        this.imageSizes = imageSizes;
+    }
+    public void addImageSize(String imageSize) {
+        if(imageSizes == null){
+            imageSizes = new ArrayList<>();
+        }
+        imageSizes.add(imageSize);
+    }
 }

@@ -13,7 +13,9 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.model.AudioEvent;
+import org.frameworkset.spi.ai.model.ChatObject;
 import org.frameworkset.spi.ai.model.ImageEvent;
 import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
@@ -926,38 +928,44 @@ public class HttpRequestProxy {
      * @return
      */
     public static ImageEvent multimodalImageGeneration(String poolName,String url, Object message) {
-        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
-        Map output = (Map)data.get("output");
-        List choices = (List)output.get("choices");
-        if(choices == null || choices.size() == 0)
-            return null;
-        Map choice = (Map)choices.get(0);
-        Map messageData = (Map)choice.get("message");
-        
-        String finishReason = (String)choice.get("finish_reason");
-        List imageContentData = (List)messageData.get("content");
-        ImageEvent imageEvent = null;
-        if(imageContentData != null ){
-            int size = imageContentData.size();
-            if(size > 0) {
-                imageEvent = new ImageEvent();
-                if(size == 1) {
-                    Map image = (Map) imageContentData.get(0);
-                    String imageUrl = (String) image.get("image");
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = config.getAgentAdapter();
+        message = agentAdapter.buildGenImageRequestParameter(message);
+        Map data = HttpRequestProxy.sendJsonBody(config,message,url,Map.class);
+        ImageEvent imageEvent = agentAdapter.buildGenImageResponse(data);
 
-                    imageEvent.setImageUrl(imageUrl);
-                }
-                else{
-                    for(int i = 0; i < size; i++){
-                        Map image = (Map) imageContentData.get(i);
-                        String imageUrl = (String) image.get("image");
-                        imageEvent.addImageUrl(imageUrl);
-                    }
-                }
-                imageEvent.setFinishReason(finishReason);
-            }
-        }
         return imageEvent;
+//        Map output = (Map)data.get("output");
+//        List choices = (List)output.get("choices");
+//        if(choices == null || choices.size() == 0)
+//            return null;
+//        Map choice = (Map)choices.get(0);
+//        Map messageData = (Map)choice.get("message");
+//        
+//        String finishReason = (String)choice.get("finish_reason");
+//        List imageContentData = (List)messageData.get("content");
+//        
+//        if(imageContentData != null ){
+//            int size = imageContentData.size();
+//            if(size > 0) {
+//                imageEvent = new ImageEvent();
+//                if(size == 1) {
+//                    Map image = (Map) imageContentData.get(0);
+//                    String imageUrl = (String) image.get("image");
+//
+//                    imageEvent.setImageUrl(imageUrl);
+//                }
+//                else{
+//                    for(int i = 0; i < size; i++){
+//                        Map image = (Map) imageContentData.get(i);
+//                        String imageUrl = (String) image.get("image");
+//                        imageEvent.addImageUrl(imageUrl);
+//                    }
+//                }
+//                imageEvent.setFinishReason(finishReason);
+//            }
+//        }
+//        return imageEvent;
     }
 
     /**
@@ -1030,7 +1038,7 @@ public class HttpRequestProxy {
         return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<ServerEvent>() {
             @Override
             public boolean handle(String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag) {
-                return ResponseUtil.handleServerEventData(  line, sink,   firstEventTag);
+                return ResponseUtil.handleServerEventData( this.isStream(), line, sink,   firstEventTag);
 
             }
             @Override
@@ -1056,6 +1064,9 @@ public class HttpRequestProxy {
      * 同步调用模型服务，返回问答内容
      */
     public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = config.getAgentAdapter();
+        message = agentAdapter.buildOpenAIRequestParameter(message);
         String data = null;
         if(message != null){
             if(message instanceof String){
@@ -1065,7 +1076,7 @@ public class HttpRequestProxy {
                 data = SimpleStringUtil.object2json(message);
             }
         }
-       return  HttpRequestProxy.sendJsonBody(poolName,data,url,null,new BaseURLResponseHandler<ServerEvent>(){
+       return  HttpRequestProxy.sendJsonBody(config,data,url,null,new BaseURLResponseHandler<ServerEvent>(){
             @Override
             public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
                 return ResponseUtil.handleChatResponse(url, response);
@@ -1081,13 +1092,19 @@ public class HttpRequestProxy {
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object message,BaseStreamDataHandler<T> streamDataHandler) {
-
+    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = clientConfiguration.getAgentAdapter();
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        streamDataHandler.setStream(chatObject.isStream());
         return Flux.<T>create(sink -> {
                     try {
                         Map header = new LinkedHashMap();
-                        header.put("Accept", "text/event-stream");
+                        if(chatObject.isStream()) {
+                            header.put("Accept", "text/event-stream");
+                        }
                         String data = null;
+                        Object message = chatObject.getMessage();
                         if(message != null){
                             if(message instanceof String){
                                 data = (String)message;
@@ -1097,12 +1114,11 @@ public class HttpRequestProxy {
                             }
                         }
                         
-                        HttpRequestProxy.sendJsonBody(poolName,data,url,header,new BaseURLResponseHandler<Void>(){
+                        HttpRequestProxy.sendJsonBody(clientConfiguration,data,url,header,new BaseURLResponseHandler<Void>(){
                             @Override
                             public Void handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
                                 streamDataHandler.setHttpUriRequestBase(httpUriRequestBase);
                                 ResponseUtil.handleStreamResponse(url, response, sink, streamDataHandler);
-
                                 return null;
 
                             }
@@ -2287,6 +2303,11 @@ public class HttpRequestProxy {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
+
+    public static <T> T sendJsonBody(ClientConfiguration clientConfiguration,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody(   clientConfiguration, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+    }
     public static <T> T sendJsonBody(String poolname,Object requestBody,Map<String,String> headers, String url,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
@@ -2424,8 +2445,13 @@ public class HttpRequestProxy {
     }
 
     public static <T> T sendJsonBody(String poolname,String requestBody, String url, Map headers  ,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolname);
+        return  sendJsonBody(  clientConfiguration,  requestBody,   url,   headers  , responseHandler);
+    }
 
-        return  sendBody( poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
+    public static <T> T sendJsonBody(ClientConfiguration clientConfiguration,String requestBody, String url, Map headers  ,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+
+        return  sendBody( clientConfiguration, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
 
     private static void injectBody(HttpClientResponseHandler responseHandler,String requestBody){
@@ -2440,26 +2466,45 @@ public class HttpRequestProxy {
             }
         }
     }
-    public static <T> T sendBody(final String poolname,  String requestBody, String url,
+    public static <T> T sendBody(final ClientConfiguration config,  String requestBody, String url,
                                  final Map headers, ContentType contentType,
                                  final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         InvokeContext invokeContext = new InvokeContext();
         invokeContext.setHeaders(headers);
         invokeContext.setRequestContentType(contentType);
-        return sendBody( poolname,   requestBody,  url,
+        return sendBody( config,   requestBody,  url,
                  invokeContext,         responseHandler);
        
      
     }
 
     public static <T> T sendBody(final String poolname,  String requestBody, String url,
+                                 final Map headers, ContentType contentType,
+                                 final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+        return sendBody(config,    requestBody,   url,
+          headers,   contentType,
+          responseHandler);
+
+
+    }
+    public static <T> T sendBody(final String poolname,  String requestBody, String url,
+                                 InvokeContext invokeContext,
+                                 final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+        return sendBody(    config,    requestBody,   url,
+                  invokeContext,
+          responseHandler);
+    }
+    public static <T> T sendBody(final ClientConfiguration config,  String requestBody, String url,
                                  InvokeContext invokeContext,
                                  final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         final HttpEntity httpEntity = new StringEntity(
                 requestBody,
                 invokeContext.getRequestContentType());
         injectBody(responseHandler, requestBody);
-        return _handleRequest( poolname, url ,
+        
+        return _handleRequest( config, url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
                     public Object execute(ClientConfiguration config, HttpClient httpClient,String url, int triesCount) throws Exception {
@@ -2944,7 +2989,18 @@ public class HttpRequestProxy {
         });
 
     }
-   
+    public static <T> T sendBody(ClientConfiguration clientConfiguration,String requestBody, String url, Map headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  clientConfiguration,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<T>() {
+
+            @Override
+            public T handleResponse(final ClassicHttpResponse response)
+                    throws IOException, ParseException {
+                return ResponseUtil.handleResponse( url, response, resultType);
+            }
+
+        });
+
+    }
     public static <T> T sendBody(String poolname,String requestBody, String url, Map headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<T>() {
 

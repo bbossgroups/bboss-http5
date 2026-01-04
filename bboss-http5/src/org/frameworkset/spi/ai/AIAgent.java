@@ -1,6 +1,6 @@
-package org.frameworkset.spi.remote.http.reactor;
+package org.frameworkset.spi.ai;
 /**
- * Copyright 2025 bboss
+ * Copyright 2026 bboss
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@ package org.frameworkset.spi.remote.http.reactor;
  * limitations under the License.
  */
 
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.frameworkset.spi.ai.model.ImageAgentMessage;
+import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.remote.http.HttpRequestProxy;
 
 /**
+ * 智能体工具包
  * @author biaoping.yin
- * @Date 2025/10/19
+ * @Date 2026/1/4
  */
-public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
-    protected HttpUriRequestBase httpUriRequestBase;
+public class AIAgent {
+    public ImageEvent genImage(String maasName,String url,ImageAgentMessage imageAgentMessage){
+        return HttpRequestProxy.multimodalImageGeneration(maasName,url,imageAgentMessage);
+    }
 
-    public void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase) {
-        this.httpUriRequestBase = httpUriRequestBase;
-    }
-    public HttpUriRequestBase getHttpUriRequestBase() {
-        return httpUriRequestBase;
-    }
 }

@@ -33,6 +33,8 @@ import org.apache.hc.core5.ssl.TrustStrategy;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.frameworkset.spi.*;
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.adapter.AgentAdapterFactory;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
@@ -98,6 +100,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     
 
     public static final String http_apiKeyId = "http.apiKeyId";
+    public static final String http_modelType = "http.modelType";
+    
     public static final String http_apiKeySecret = "http.apiKeySecret";
     
 	public static final String http_healthCheck_prex = "__healthCheck_";
@@ -130,6 +134,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     private String authAccount;
     private String authPassword;
     private String apiKeyId;
+
+
+
+    /**
+     * 设置AI模型类型
+     */
+    private String modelType;
 
 
     private String apiKeySecret;
@@ -990,6 +1001,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
             }
 
             log.append(",http.apiKeyId=").append(apiKeyId);
+
+            String modelType = ClientConfiguration._getStringValue(name, "http.modelType", context, null);
+            if(modelType != null && !modelType.equals("")){
+                clientConfiguration.setModelType(modelType);
+            }
+
+            log.append(",http.modelType=").append(modelType);
 
             
             String apiKeySecret = ClientConfiguration._getStringValue(name, "http.apiKeySecret", context, null);
@@ -2107,4 +2125,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	public void setBackoffAuth(boolean backoffAuth) {
 		this.backoffAuth = backoffAuth;
 	}
+    public String getModelType() {
+        return modelType;
+    }
+
+    public void setModelType(String modelType) {
+        this.modelType = modelType;
+    }
+    public AgentAdapter getAgentAdapter() {
+        return AgentAdapterFactory.getAgentAdapter(this.getModelType());
+    }
 }

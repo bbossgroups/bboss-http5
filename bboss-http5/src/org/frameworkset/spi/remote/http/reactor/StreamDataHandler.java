@@ -24,6 +24,9 @@ import reactor.core.publisher.FluxSink;
  * @Date 2025/10/10
  */
 public interface StreamDataHandler<T> {
+    boolean isStream() ;
+
+    void setStream(boolean stream) ;
     /**
      * 处理数据行,如果数据已经返回完毕，则返回true，指示关闭对话，否则返回false
      * @param line 数据行

@@ -1,1 +1,3 @@
 rootProject.name='bboss-http5'
+include 'bboss-http5'
+include 'bboss-ai'

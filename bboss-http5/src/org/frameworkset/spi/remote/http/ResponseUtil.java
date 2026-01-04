@@ -185,15 +185,33 @@ public class ResponseUtil {
     }
 
  
-    public static boolean handleServerEventData(String line,FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
+    public static boolean handleServerEventData(boolean stream,String line,FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
-        if (line.startsWith("data: ")||line.startsWith("data:")) {
-            String data = line.substring(5).trim();
-
+        String data = null;
+        if(stream){
+            if (line.startsWith("data: ")||line.startsWith("data:")) {
+                data = line.substring(5).trim();
+            }
+            else{
+                if(logger.isDebugEnabled()) {
+                    logger.debug("streamChatCompletion: {}",line);
+                }
+            }
+        }
+        else{
+            if (line.startsWith("data: ")||line.startsWith("data:")) {
+                data = line.substring(5).trim();
+            }
+            else{
+                data = line;
+            }
+          
+        }
+        if(SimpleStringUtil.isNotEmpty( data)){
             if ("[DONE]".equals(data)) {
-                 
+
                 ServerEvent serverEvent = new ServerEvent();
                 if(firstEventTag.get()) {
                     firstEventTag.set(false);
@@ -203,42 +221,35 @@ public class ResponseUtil {
                 serverEvent.setDone(true);
                 sink.next(serverEvent);
                 return true;
-            }
-            if (!data.isEmpty()) {
-                StreamData content = ResponseUtil.parseStreamContentFromData(data);
-                if (content != null) {
-                   if( !content.isEmpty()) {
-                       ServerEvent serverEvent = new ServerEvent();
-                       if (firstEventTag.get()) {
-                           firstEventTag.set(false);
-                           serverEvent.setFirst(true);
-                       }
-                       serverEvent.setFinishReason(content.getFinishReason());
-                       serverEvent.setData(content.getData());
-                       serverEvent.setType(ServerEvent.DATA);
-                       serverEvent.setContentType(content.getType());
-                       sink.next(serverEvent);
-                   }
-                   else if(content.getFinishReason() != null && content.getFinishReason().length() > 0){
-                       ServerEvent serverEvent = new ServerEvent();
-                       if (firstEventTag.get()) {
-                           firstEventTag.set(false);
-                           serverEvent.setFirst(true);
-                       }
-                       serverEvent.setFinishReason(content.getFinishReason());
-                       serverEvent.setType(ServerEvent.DATA);
-                       serverEvent.setContentType(content.getType());
-                       sink.next(serverEvent);
-                   }
+            }           
+            StreamData content = ResponseUtil.parseStreamContentFromData(data);
+            if (content != null) {
+                if( !content.isEmpty()) {
+                    ServerEvent serverEvent = new ServerEvent();
+                    if (firstEventTag.get()) {
+                        firstEventTag.set(false);
+                        serverEvent.setFirst(true);
+                    }
+                    serverEvent.setFinishReason(content.getFinishReason());
+                    serverEvent.setData(content.getData());
+                    serverEvent.setType(ServerEvent.DATA);
+                    serverEvent.setContentType(content.getType());
+                    sink.next(serverEvent);
                 }
-                
-            }
+                else if(content.getFinishReason() != null && content.getFinishReason().length() > 0){
+                    ServerEvent serverEvent = new ServerEvent();
+                    if (firstEventTag.get()) {
+                        firstEventTag.set(false);
+                        serverEvent.setFirst(true);
+                    }
+                    serverEvent.setFinishReason(content.getFinishReason());
+                    serverEvent.setType(ServerEvent.DATA);
+                    serverEvent.setContentType(content.getType());
+                    sink.next(serverEvent);
+                }
+            }            
         }
-        else{
-            if(logger.isDebugEnabled()) {
-                logger.debug("streamChatCompletion: {}",line);
-            }
-        }
+        
         return false;
     }
 
