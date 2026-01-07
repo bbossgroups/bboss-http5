@@ -22,6 +22,7 @@ import org.frameworkset.spi.ai.util.MessageBuilder;
 import java.util.*;
 
 /**
+ * Kimi模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */

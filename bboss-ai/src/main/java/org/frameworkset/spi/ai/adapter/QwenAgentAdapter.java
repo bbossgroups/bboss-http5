@@ -23,6 +23,7 @@ import org.frameworkset.spi.ai.util.MessageBuilder;
 import java.util.*;
 
 /**
+ * 阿里百炼通义系列模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */

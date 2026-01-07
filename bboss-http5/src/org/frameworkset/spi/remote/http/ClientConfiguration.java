@@ -35,6 +35,7 @@ import org.apache.hc.core5.util.Timeout;
 import org.frameworkset.spi.*;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.adapter.AgentAdapterFactory;
+import org.frameworkset.spi.ai.model.AgentMessage;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
@@ -2132,7 +2133,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     public void setModelType(String modelType) {
         this.modelType = modelType;
     }
-    public AgentAdapter getAgentAdapter() {
-        return AgentAdapterFactory.getAgentAdapter(this.getModelType());
+    public AgentAdapter getAgentAdapter(Object message) {
+        String modelType = null;
+        if(message instanceof AgentMessage){
+            modelType = ((AgentMessage)message).getModelType(); 
+            if(modelType == null || modelType.equals("")){
+                modelType = this.getModelType();
+            }
+        }
+        return AgentAdapterFactory.getAgentAdapter(modelType);
     }
 }

@@ -16,6 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 /**
+ * 通用模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */

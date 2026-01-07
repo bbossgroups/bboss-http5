@@ -15,9 +15,12 @@ package org.frameworkset.spi.ai;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.model.ChatAgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
+import reactor.core.publisher.Flux;
 
 /**
  * 智能体工具包
@@ -25,8 +28,22 @@ import org.frameworkset.spi.remote.http.HttpRequestProxy;
  * @Date 2026/1/4
  */
 public class AIAgent {
+    /**
+     * 生成图片
+     * @param maasName
+     * @param url
+     * @param imageAgentMessage
+     * @return
+     */
     public ImageEvent genImage(String maasName,String url,ImageAgentMessage imageAgentMessage){
         return HttpRequestProxy.multimodalImageGeneration(maasName,url,imageAgentMessage);
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public Flux<ServerEvent> streamChat(String maasName, String url, ChatAgentMessage chatAgentMessage){
+        return HttpRequestProxy.streamChatCompletionEvent(maasName,url,chatAgentMessage);
     }
 
 }

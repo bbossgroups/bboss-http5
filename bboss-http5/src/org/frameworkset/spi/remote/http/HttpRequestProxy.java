@@ -929,7 +929,7 @@ public class HttpRequestProxy {
      */
     public static ImageEvent multimodalImageGeneration(String poolName,String url, Object message) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = config.getAgentAdapter();
+        AgentAdapter agentAdapter = config.getAgentAdapter(message);
         message = agentAdapter.buildGenImageRequestParameter(message);
         Map data = HttpRequestProxy.sendJsonBody(config,message,url,Map.class);
         ImageEvent imageEvent = agentAdapter.buildGenImageResponse(data);
@@ -1065,7 +1065,7 @@ public class HttpRequestProxy {
      */
     public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = config.getAgentAdapter();
+        AgentAdapter agentAdapter = config.getAgentAdapter(message);
         message = agentAdapter.buildOpenAIRequestParameter(message);
         String data = null;
         if(message != null){
@@ -1094,7 +1094,7 @@ public class HttpRequestProxy {
      */
     public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = clientConfiguration.getAgentAdapter();
+        AgentAdapter agentAdapter = clientConfiguration.getAgentAdapter(chatMessage);
         final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
         streamDataHandler.setStream(chatObject.isStream());
         return Flux.<T>create(sink -> {

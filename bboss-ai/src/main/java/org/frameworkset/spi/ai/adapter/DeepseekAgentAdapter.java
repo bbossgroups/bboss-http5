@@ -21,6 +21,7 @@ import org.frameworkset.spi.ai.model.ImageEvent;
 import java.util.Map;
 
 /**
+ * Deepseek模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */

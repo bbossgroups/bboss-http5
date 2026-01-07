@@ -26,6 +26,18 @@ public class AgentMessage<T extends AgentMessage> {
     private String message;
     private String model ;
     private Map parameters;
+    /**
+     * 消息级别模型类型，优先级高于模型服务级别配置，取值参考：
+     * public class AIConstants {
+     *     public static final String AI_MODEL_TYPE_QWEN = "qwen";
+     *     public static final String AI_MODEL_TYPE_DOUBAO = "doubao";
+     *     public static final String AI_MODEL_TYPE_DEEPSEEK = "deepseek";
+     *     public static final String AI_MODEL_TYPE_KIMI = "kimi";
+     *     public static final String AI_MODEL_TYPE_NONE = "none";
+     *
+     * }
+     */
+    private String modelType;
 
     public String getMessage() {
         return message;
@@ -58,5 +70,14 @@ public class AgentMessage<T extends AgentMessage> {
         parameters.put(key, value);
         return (T)this;
     }
+    
+    public String getModelType() {
+		return modelType;
+	}
+    
+    public T setModelType(String modelType) {
+		this.modelType = modelType;
+		return (T)this;
+	}
 
 }
