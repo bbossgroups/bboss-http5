@@ -34,6 +34,9 @@ public class AgentAdapterFactory {
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_DEEPSEEK,new DeepseekAgentAdapter());
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_KIMI,new KimiAgentAdapter());
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_NONE,new NoneAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_SILICONFLOW,new SiliconflowAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_OPENAI,new OpenaiAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_BAIDU,new BaiduAgentAdapter());
     }
     
     public static AgentAdapter getAgentAdapter(String modelType) {

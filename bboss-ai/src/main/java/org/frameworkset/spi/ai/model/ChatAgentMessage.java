@@ -22,7 +22,7 @@ import java.util.Map;
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class ChatAgentMessage extends AgentMessage<ChatAgentMessage>{
+public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
  
     /** 使用静态变量存储会话记忆（实际项目中建议使用缓存或数据库）*/
     private List<Map<String, Object>> sessionMemory;

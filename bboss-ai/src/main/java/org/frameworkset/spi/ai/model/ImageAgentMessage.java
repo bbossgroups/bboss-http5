@@ -18,6 +18,7 @@ package org.frameworkset.spi.ai.model;
 import java.util.Map;
 
 /**
+ * 图片生成报文
  * @author biaoping.yin
  * @Date 2026/1/4
  */

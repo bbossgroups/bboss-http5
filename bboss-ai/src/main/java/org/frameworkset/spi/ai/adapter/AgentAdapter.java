@@ -16,10 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.model.ChatObject;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.model.ChatAgentMessage;
+import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 
 import java.util.ArrayList;
@@ -40,7 +37,7 @@ public abstract class AgentAdapter {
      */
     protected abstract Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage);
 
-
+    protected abstract Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage);
     /**
      * 构建智能问答请求参数
      * @param chatAgentMessage
@@ -79,7 +76,7 @@ public abstract class AgentAdapter {
         return requestMap;
     }
     public abstract ImageEvent buildGenImageResponse(Map imageData);
-
+   
     public Object buildGenImageRequestParameter(Object imageAgentMessage){
         if(imageAgentMessage instanceof ImageAgentMessage){
             return buildGenImageRequestMap((ImageAgentMessage)imageAgentMessage);
@@ -95,6 +92,11 @@ public abstract class AgentAdapter {
         Boolean stream = false;
         if(agentMessage instanceof ChatAgentMessage){
             parameters = buildOpenAIRequestMap((ChatAgentMessage)agentMessage);
+            stream = (Boolean)parameters.get("stream");
+            agentMessage = parameters;
+        }
+        else if(agentMessage instanceof ImageVLAgentMessage){
+            parameters = buildImageVLRequestMap((ImageVLAgentMessage)agentMessage);;
             stream = (Boolean)parameters.get("stream");
             agentMessage = parameters;
         }

@@ -15,10 +15,7 @@ package org.frameworkset.spi.ai;
  * limitations under the License.
  */
 
-import org.frameworkset.spi.ai.model.ChatAgentMessage;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.model.ServerEvent;
+import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import reactor.core.publisher.Flux;
 
@@ -29,7 +26,7 @@ import reactor.core.publisher.Flux;
  */
 public class AIAgent {
     /**
-     * 生成图片
+     * 实现图片生成功能
      * @param maasName
      * @param url
      * @param imageAgentMessage
@@ -40,10 +37,41 @@ public class AIAgent {
     }
 
     /**
-     * 创建流式调用的Flux,在指定的数据源上执行
+     * 实现流式图片识别处理
+     * @param maasName
+     * @param url
+     * @param imageVLAgentMessage
+     * @return
+     */
+    public Flux<ServerEvent> streamImageParser(String maasName, String url, ImageVLAgentMessage imageVLAgentMessage){
+        return HttpRequestProxy.streamChatCompletionEvent(maasName,url,imageVLAgentMessage);
+    }
+
+
+    /**
+     * 实现流式智能问答功能,在指定的数据源上执行
      */
     public Flux<ServerEvent> streamChat(String maasName, String url, ChatAgentMessage chatAgentMessage){
         return HttpRequestProxy.streamChatCompletionEvent(maasName,url,chatAgentMessage);
+    }
+
+    /**
+     * 实现同步图片识别处理
+     * @param maasName
+     * @param url
+     * @param imageVLAgentMessage
+     * @return
+     */
+    public ServerEvent imageParser(String maasName, String url, ImageVLAgentMessage imageVLAgentMessage){
+        return HttpRequestProxy.chatCompletionEvent(maasName,url,imageVLAgentMessage);
+    }
+
+
+    /**
+     * 实现同步智能问答,在指定的数据源上执行
+     */
+    public ServerEvent synChat(String maasName, String url, ChatAgentMessage chatAgentMessage){
+        return HttpRequestProxy.chatCompletionEvent(maasName,url,chatAgentMessage);
     }
 
 }

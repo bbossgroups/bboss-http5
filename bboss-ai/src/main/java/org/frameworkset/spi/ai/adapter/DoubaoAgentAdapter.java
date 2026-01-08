@@ -28,7 +28,7 @@ import java.util.Map;
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class DoubaoAgentAdapter  extends AgentAdapter{
+public class DoubaoAgentAdapter  extends QwenAgentAdapter{
 
     @Override
     public Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage) {
@@ -56,6 +56,48 @@ public class DoubaoAgentAdapter  extends AgentAdapter{
 //        requestMap.put("size", "2k");
 //        requestMap.put("watermark", true);
         return requestMap;
+    }
+    /**
+     * curl https://ark.cn-beijing.volces.com/api/v3/chat/completions \
+     *   -H "Content-Type: application/json" \
+     *   -H "Authorization: Bearer $ARK_API_KEY" \
+     *   -d $'{
+     *     "model": "doubao-seed-1-8-251228",
+     *     "max_completion_tokens": 65535,
+     *     "reasoning_effort": "medium",
+     *     "messages": [
+     *         {
+     *             "content": [
+     *                 {
+     *                     "image_url": {
+     *                         "url": "https://ark-project.tos-cn-beijing.ivolces.com/images/view.jpeg"
+     *                     },
+     *                     "type": "image_url"
+     *                 },
+     *                 {
+     *                     "text": "图片主要讲了什么?",
+     *                     "type": "text"
+     *                 }
+     *             ],
+     *             "role": "user"
+     *         }
+     *     ]
+     * }'
+     */
+    @Override
+    protected void filterParameters(Map<String, Object> requestMap,Map<String, Object> parameters) {
+        if(SimpleStringUtil.isEmpty( parameters)){
+//            requestMap.put("stream", true);
+
+            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
+
+            requestMap.put("max_completion_tokens",65535);
+            requestMap.put("reasoning_effort","medium");
+        }
+        else {
+
+            requestMap.putAll( parameters);
+        }
     }
 
     public ImageEvent buildGenImageResponse(Map imageData){

@@ -15,20 +15,34 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
- * 模型类型常量
+ * 图片识别报文体
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class AIConstants {
-    public static final String AI_MODEL_TYPE_QWEN = "qwen";
-    public static final String AI_MODEL_TYPE_DOUBAO = "doubao";
-    public static final String AI_MODEL_TYPE_DEEPSEEK = "deepseek";
-    public static final String AI_MODEL_TYPE_KIMI = "kimi";
-    public static final String AI_MODEL_TYPE_NONE = "none";
-    public static final String AI_MODEL_TYPE_BAIDU = "baidu";
-    public static final String AI_MODEL_TYPE_OPENAI = "openai";
-    public static final String AI_MODEL_TYPE_SILICONFLOW = "siliconflow";
+public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage>{
+    private List<String> imageUrls;
+
     
 
+    public ImageVLAgentMessage setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
+        return this;
+    }
+
+    public ImageVLAgentMessage addImageUrl(String imageUrl) {
+        if(imageUrls == null){
+            imageUrls = new ArrayList<>();
+        }
+        imageUrls.add(imageUrl);
+        return this;
+    }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
 }

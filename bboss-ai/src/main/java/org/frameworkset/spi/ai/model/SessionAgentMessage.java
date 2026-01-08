@@ -15,20 +15,26 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- * 模型类型常量
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class AIConstants {
-    public static final String AI_MODEL_TYPE_QWEN = "qwen";
-    public static final String AI_MODEL_TYPE_DOUBAO = "doubao";
-    public static final String AI_MODEL_TYPE_DEEPSEEK = "deepseek";
-    public static final String AI_MODEL_TYPE_KIMI = "kimi";
-    public static final String AI_MODEL_TYPE_NONE = "none";
-    public static final String AI_MODEL_TYPE_BAIDU = "baidu";
-    public static final String AI_MODEL_TYPE_OPENAI = "openai";
-    public static final String AI_MODEL_TYPE_SILICONFLOW = "siliconflow";
+public class SessionAgentMessage<T extends SessionAgentMessage> extends AgentMessage<T> {
+    /** 使用静态变量存储会话记忆（实际项目中建议使用缓存或数据库）*/
+    private List<Map<String, Object>> sessionMemory;
+
+    public T setSessionMemory(List<Map<String, Object>> sessionMemory) {
+        this.sessionMemory = sessionMemory;
+        return (T)this;
+    }
+
+    public List<Map<String, Object>> getSessionMemory() {
+        return sessionMemory;
+    }
     
 
 }

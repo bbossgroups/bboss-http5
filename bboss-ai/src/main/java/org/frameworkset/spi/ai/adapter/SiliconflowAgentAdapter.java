@@ -1,4 +1,4 @@
-package org.frameworkset.spi.ai.model;
+package org.frameworkset.spi.ai.adapter;
 /**
  * Copyright 2026 bboss
  * <p>
@@ -15,20 +15,27 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import com.frameworkset.util.SimpleStringUtil;
+
+import java.util.Map;
+
 /**
- * 模型类型常量
+ * 阿里百炼通义系列模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class AIConstants {
-    public static final String AI_MODEL_TYPE_QWEN = "qwen";
-    public static final String AI_MODEL_TYPE_DOUBAO = "doubao";
-    public static final String AI_MODEL_TYPE_DEEPSEEK = "deepseek";
-    public static final String AI_MODEL_TYPE_KIMI = "kimi";
-    public static final String AI_MODEL_TYPE_NONE = "none";
-    public static final String AI_MODEL_TYPE_BAIDU = "baidu";
-    public static final String AI_MODEL_TYPE_OPENAI = "openai";
-    public static final String AI_MODEL_TYPE_SILICONFLOW = "siliconflow";
-    
+public class SiliconflowAgentAdapter extends QwenAgentAdapter{
+    @Override
+    protected void filterParameters(Map<String, Object> requestMap,Map<String, Object> parameters) {
+        if(SimpleStringUtil.isEmpty( parameters)){
+            requestMap.put("stream", true);
+        }
+        else {
+            parameters.remove("enable_thinking");
+            parameters.remove("thinking_budget");
+            requestMap.putAll( parameters);
+        }
+    }
+  
 
 }

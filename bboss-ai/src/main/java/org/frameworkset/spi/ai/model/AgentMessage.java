@@ -15,6 +15,7 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -70,6 +71,32 @@ public class AgentMessage<T extends AgentMessage> {
         parameters.put(key, value);
         return (T)this;
     }
+
+    /**
+     * 往值类型为Map的参数中添加key和value对
+     * @param mapKey
+     * @param key
+     * @param value
+     * @return
+     */
+    public T addMapParameter(String mapKey,String key,Object value){
+        Map data = null;
+        if(parameters == null){
+            parameters = new java.util.LinkedHashMap<>();
+            data = new LinkedHashMap();
+            parameters.put(mapKey,data);
+        }
+        else{
+            data = (Map)parameters.get(mapKey);
+            if(data == null) {
+                data = new LinkedHashMap();
+                parameters.put(mapKey, data);
+            }
+        }
+
+        data.put(key, value);
+        return (T)this;
+    }
     
     public String getModelType() {
 		return modelType;
@@ -79,5 +106,6 @@ public class AgentMessage<T extends AgentMessage> {
 		this.modelType = modelType;
 		return (T)this;
 	}
+    
 
 }

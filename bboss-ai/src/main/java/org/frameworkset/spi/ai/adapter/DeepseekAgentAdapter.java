@@ -17,6 +17,7 @@ package org.frameworkset.spi.ai.adapter;
 
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
 
 import java.util.Map;
 
@@ -25,15 +26,6 @@ import java.util.Map;
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class DeepseekAgentAdapter extends AgentAdapter{
-
-    @Override
-    public Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage) {
-        return null;
-    }
-
-    @Override
-    public ImageEvent buildGenImageResponse(Map imageData) {
-        return null;
-    }
+public class DeepseekAgentAdapter extends QwenAgentAdapter{
+ 
 }

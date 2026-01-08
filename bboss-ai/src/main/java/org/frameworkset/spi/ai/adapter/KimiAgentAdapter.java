@@ -15,12 +15,6 @@ package org.frameworkset.spi.ai.adapter;
  * limitations under the License.
  */
 
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.util.MessageBuilder;
-
-import java.util.*;
-
 /**
  * Kimi模型智能体适配器
  * @author biaoping.yin
