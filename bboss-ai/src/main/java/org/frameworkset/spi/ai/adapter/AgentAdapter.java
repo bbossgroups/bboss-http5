@@ -103,6 +103,9 @@ public abstract class AgentAdapter {
             if(!parameters.containsKey("stream") && chatAgentMessage.getStream() != null){
                 requestMap.put("stream", chatAgentMessage.getStream());
             }
+            if(!parameters.containsKey("temperature") && chatAgentMessage.getTemperature() != null){
+                requestMap.put("temperature", chatAgentMessage.getTemperature());
+            }
             requestMap.putAll(parameters);
         }
         else {
@@ -114,7 +117,10 @@ public abstract class AgentAdapter {
                 requestMap.put("stream", true);
             }
             requestMap.put("max_tokens", 8192);
-            requestMap.put("temperature", 0.7);
+
+            if( chatAgentMessage.getTemperature() != null){
+                requestMap.put("temperature", chatAgentMessage.getTemperature());
+            }
         }
         return requestMap;
     }

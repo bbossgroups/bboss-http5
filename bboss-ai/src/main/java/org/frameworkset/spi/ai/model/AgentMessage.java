@@ -28,6 +28,7 @@ public class AgentMessage<T extends AgentMessage> {
     private String model ;
     private Map parameters;
     private Boolean stream;
+    private Double temperature;
     /**
      * 消息级别模型类型，优先级高于模型服务级别配置，取值参考：
      * public class AIConstants {
@@ -114,6 +115,15 @@ public class AgentMessage<T extends AgentMessage> {
 
     public T setStream(Boolean stream) {
         this.stream = stream;
+        return (T)this;
+    }
+    
+    public Double getTemperature() {
+		return temperature;
+	}
+
+    public T setTemperature(Double temperature) {
+        this.temperature = temperature;
         return (T)this;
     }
 }

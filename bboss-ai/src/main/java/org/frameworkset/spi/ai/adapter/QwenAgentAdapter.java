@@ -38,7 +38,9 @@ public class QwenAgentAdapter extends AgentAdapter{
             else {
                 requestMap.put("stream", true);
             }
-
+            if( agentMessage.getTemperature() != null){
+                requestMap.put("temperature", agentMessage.getTemperature());
+            }
             // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
 
             requestMap.put("enable_thinking",true);
@@ -48,6 +50,10 @@ public class QwenAgentAdapter extends AgentAdapter{
             //设置默认参数
             if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
                 requestMap.put("stream", agentMessage.getStream());
+            }
+
+            if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
+                requestMap.put("temperature", agentMessage.getTemperature());
             }
             requestMap.putAll( parameters);
         }
