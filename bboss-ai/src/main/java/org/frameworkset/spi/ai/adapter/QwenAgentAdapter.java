@@ -16,6 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.model.AgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
 import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
@@ -29,9 +30,14 @@ import java.util.*;
  * @Date 2026/1/4
  */
 public class QwenAgentAdapter extends AgentAdapter{
-    protected void filterParameters(Map<String, Object> requestMap,Map<String, Object> parameters) {
+    protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
         if(SimpleStringUtil.isEmpty( parameters)){
-            requestMap.put("stream", true);
+            if( agentMessage.getStream() != null){
+                requestMap.put("stream", agentMessage.getStream());
+            }
+            else {
+                requestMap.put("stream", true);
+            }
 
             // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
 
@@ -39,10 +45,14 @@ public class QwenAgentAdapter extends AgentAdapter{
             requestMap.put("thinking_budget",81920);
         }
         else {
-             
+            //设置默认参数
+            if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
+                requestMap.put("stream", agentMessage.getStream());
+            }
             requestMap.putAll( parameters);
         }
     }
+    
     protected Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
 
         Map<String, Object> requestMap = new HashMap<>();
@@ -59,13 +69,13 @@ public class QwenAgentAdapter extends AgentAdapter{
             messages = new ArrayList<>();
         }
 
-        Map<String, Object> userMessage = MessageBuilder.buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
+        Map<String, Object> userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
         messages.add(userMessage);
 
         requestMap.put("messages", messages);
         Map parameters = imageAgentMessage.getParameters();
 
-        filterParameters(requestMap,parameters);
+        filterParameters(imageAgentMessage,requestMap,parameters);
 
         return requestMap;
     }

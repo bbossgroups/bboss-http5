@@ -25,7 +25,11 @@ sourceSets {
 }
 
 dependencies {
-    api project(':bboss-ai')
+
+    api (
+            [group: 'com.bbossgroups', name: 'bboss-core', version: BBOSS_VERSION, transitive: true]
+    )
+
     api (
            
             [group: 'commons-codec', name: 'commons-codec', version: '1.19.0', transitive: false],
@@ -36,7 +40,7 @@ dependencies {
 
     )
     api group: 'org.apache.httpcomponents.core5', name: 'httpcore5-h2', version: httpcore5version
-    api group: 'io.projectreactor', name: 'reactor-core', version: reactor
+   
 
 }
 

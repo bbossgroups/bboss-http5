@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.reactor;
+package org.frameworkset.spi.reactor;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -16,6 +16,7 @@ package org.frameworkset.spi.remote.http.reactor;
  */
 
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import reactor.core.publisher.FluxSink;
 
@@ -44,7 +45,8 @@ public interface StreamDataHandler<T> {
      *                      在接口方法实现中，在发送消息时，需检测是否为true，如果为true，需设置标记为false，同时将ServerEvent的first标记设置为true
      * @return
      */
-    boolean handleException(Throwable throwable, FluxSink<T> sink, BooleanWrapperInf firstEventTag);
+    boolean handleException(Object requestBody,Throwable throwable, FluxSink<T> sink, BooleanWrapperInf firstEventTag);
     void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase);
     HttpUriRequestBase getHttpUriRequestBase();
+    AgentAdapter getAgentAdapter();
 }

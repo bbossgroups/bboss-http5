@@ -16,6 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.model.AgentMessage;
 
 import java.util.Map;
 
@@ -26,11 +27,19 @@ import java.util.Map;
  */
 public class SiliconflowAgentAdapter extends QwenAgentAdapter{
     @Override
-    protected void filterParameters(Map<String, Object> requestMap,Map<String, Object> parameters) {
+    protected void filterParameters(AgentMessage agentMessage, Map<String, Object> requestMap, Map<String, Object> parameters) {
         if(SimpleStringUtil.isEmpty( parameters)){
-            requestMap.put("stream", true);
+            if( agentMessage.getStream() != null){
+                requestMap.put("stream", agentMessage.getStream());
+            }
+            else {
+                requestMap.put("stream", true);
+            }
         }
         else {
+            if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
+                requestMap.put("stream", agentMessage.getStream());
+            }
             parameters.remove("enable_thinking");
             parameters.remove("thinking_budget");
             requestMap.putAll( parameters);

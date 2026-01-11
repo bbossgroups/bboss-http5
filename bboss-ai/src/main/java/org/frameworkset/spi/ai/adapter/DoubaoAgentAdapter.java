@@ -16,6 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.model.AgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
 
@@ -85,7 +86,7 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
      * }'
      */
     @Override
-    protected void filterParameters(Map<String, Object> requestMap,Map<String, Object> parameters) {
+    protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
         if(SimpleStringUtil.isEmpty( parameters)){
 //            requestMap.put("stream", true);
 

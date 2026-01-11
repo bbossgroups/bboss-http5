@@ -25,6 +25,7 @@ public class StreamData {
     private int type = ServerEvent.CONTENT;
     private String data;
     private  String finishReason;
+    private boolean done;
     
     public StreamData(){
     }
@@ -33,6 +34,17 @@ public class StreamData {
     	this.data = data;
         this.finishReason = finishReason;
     }
+    public StreamData(int type, String data, String finishReason,boolean done){
+        this.type = type;
+        this.data = data;
+        this.finishReason = finishReason;
+        this.done = done;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
     public int getType() {
 		return type;
 	}

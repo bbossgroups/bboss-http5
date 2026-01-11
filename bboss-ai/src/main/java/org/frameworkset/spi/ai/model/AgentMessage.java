@@ -27,6 +27,7 @@ public class AgentMessage<T extends AgentMessage> {
     private String message;
     private String model ;
     private Map parameters;
+    private Boolean stream;
     /**
      * 消息级别模型类型，优先级高于模型服务级别配置，取值参考：
      * public class AIConstants {
@@ -106,6 +107,13 @@ public class AgentMessage<T extends AgentMessage> {
 		this.modelType = modelType;
 		return (T)this;
 	}
-    
 
+    public Boolean getStream() {
+        return stream;
+    }
+
+    public T setStream(Boolean stream) {
+        this.stream = stream;
+        return (T)this;
+    }
 }

@@ -29,6 +29,12 @@ public class AIConstants {
     public static final String AI_MODEL_TYPE_BAIDU = "baidu";
     public static final String AI_MODEL_TYPE_OPENAI = "openai";
     public static final String AI_MODEL_TYPE_SILICONFLOW = "siliconflow";
+    public static final String AI_MODEL_TYPE_JIUTIAN = "jiutian";
+    
+    public static final String AI_CHAT_REQUEST_BODY_JSON = "bodyJson";
+
+
+    public static final String AI_CHAT_REQUEST_POST_FORM = "postForm";
     
 
 }

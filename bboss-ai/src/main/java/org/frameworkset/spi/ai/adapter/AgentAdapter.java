@@ -17,7 +17,11 @@ package org.frameworkset.spi.ai.adapter;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.*;
+import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
+import org.frameworkset.spi.remote.http.ResponseUtil;
+import org.frameworkset.util.concurrent.BooleanWrapperInf;
+import reactor.core.publisher.FluxSink;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +34,7 @@ import java.util.Map;
  * @Date 2026/1/4
  */
 public abstract class AgentAdapter {
+    private org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AgentAdapter.class);
     /**
      * 构建生成图片请求参数
      * @param imageAgentMessage
@@ -38,6 +43,36 @@ public abstract class AgentAdapter {
     protected abstract Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage);
 
     protected abstract Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage);
+    public boolean isDone(String data){
+        return "[DONE]".equals(data);
+
+    }
+    
+    public String getDoneData(){
+        return "data:[DONE]";
+    }
+    /**
+     * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
+     * LLM和图像识别：data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
+     * @param data
+     * @return
+     */
+    public StreamData parseStreamContentFromData(String data){
+        return AIResponseUtil.parseStreamContentFromData(data);
+    }
+    
+    /**
+     * 获取智能问答请求参数类型
+     * @return
+     */
+    public String getAIChatRequestType(){
+        return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
+        
+    }
+    
+    protected Map<String, Object> buildInputImagesMessage(String message,String... imageUrls) {
+        return MessageBuilder.buildInputImagesMessage(message,imageUrls);
+    }
     /**
      * 构建智能问答请求参数
      * @param chatAgentMessage
@@ -65,11 +100,19 @@ public abstract class AgentAdapter {
         requestMap.put("messages", messages);
         Map parameters = chatAgentMessage.getParameters();
         if(SimpleStringUtil.isNotEmpty( parameters)){
+            if(!parameters.containsKey("stream") && chatAgentMessage.getStream() != null){
+                requestMap.put("stream", chatAgentMessage.getStream());
+            }
             requestMap.putAll(parameters);
         }
         else {
             //设置默认参数
-            requestMap.put("stream", true);
+            if( chatAgentMessage.getStream() != null){
+                requestMap.put("stream", chatAgentMessage.getStream());
+            }
+            else {
+                requestMap.put("stream", true);
+            }
             requestMap.put("max_tokens", 8192);
             requestMap.put("temperature", 0.7);
         }
@@ -85,6 +128,8 @@ public abstract class AgentAdapter {
             return imageAgentMessage;
         }
     }
+    
+ 
 
     public ChatObject buildOpenAIRequestParameter(Object agentMessage){
         ChatObject chatObject = new ChatObject();

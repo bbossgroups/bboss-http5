@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.reactor;
+package org.frameworkset.spi.reactor;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -16,6 +16,7 @@ package org.frameworkset.spi.remote.http.reactor;
  */
 
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
 
 /**
  * @author biaoping.yin
@@ -23,6 +24,7 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
  */
 public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
     protected HttpUriRequestBase httpUriRequestBase;
+    protected AgentAdapter agentAdapter;
     protected boolean stream;
     public boolean isStream() {
         return stream;
@@ -37,5 +39,14 @@ public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
     }
     public HttpUriRequestBase getHttpUriRequestBase() {
         return httpUriRequestBase;
+    }
+
+    public void setAgentAdapter(AgentAdapter agentAdapter) {
+        this.agentAdapter = agentAdapter;
+    }
+
+    @Override
+    public AgentAdapter getAgentAdapter() {
+        return agentAdapter;
     }
 }

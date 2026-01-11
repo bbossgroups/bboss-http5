@@ -13,25 +13,14 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.frameworkset.spi.ai.adapter.AgentAdapter;
-import org.frameworkset.spi.ai.model.AudioEvent;
-import org.frameworkset.spi.ai.model.ChatObject;
-import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
-import org.frameworkset.spi.remote.http.reactor.BaseStreamDataHandler;
-import org.frameworkset.spi.remote.http.reactor.ReactorCallException;
 import org.frameworkset.util.ResourceStartResult;
-import org.frameworkset.util.concurrent.BooleanWrapperInf;
-import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.scheduler.Schedulers;
+ 
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +30,6 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -633,18 +621,22 @@ public class HttpRequestProxy {
             }
         });
     }
+    public static <T> T httpPostForObject(ClientConfiguration config,String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
+        HttpOption httpOption = new HttpOption();
 
+        httpOption.params = params;
+
+        return httpPost(  config,   url,  httpOption, new BaseURLResponseHandler<T>() {
+            @Override
+            public T handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                return ResponseUtil.handleResponse(url,response,resultType);
+            }
+        });
+//        return httpPostforString(  poolName,url, params, (Map) null);
+    }
     public static <T> T httpPostForObject(String poolName,String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
-		HttpOption httpOption = new HttpOption();
-
-		httpOption.params = params;
-
-		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<T>() {
-			@Override
-			public T handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
-				return ResponseUtil.handleResponse(url,response,resultType);
-			}
-		});
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+		return httpPostForObject( clientConfiguration,  url,   params,   resultType);
 //        return httpPostforString(  poolName,url, params, (Map) null);
     }
 
@@ -809,6 +801,32 @@ public class HttpRequestProxy {
 
     /**
      * 公用post方法
+     * @pparam poolName
+     * @param url
+     * @param params
+     * @param headers
+     * @param responseHandler
+     * @throws HttpProxyRequestException
+     */
+    public static  <T> T  httpPost(String poolName,String url, Object params, Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        return httpPost(poolName, url, (String) null, (String) null, params, (Map<String, File>) null, headers, responseHandler);
+    }
+
+    /**
+     * 公用post方法
+     * @pparam poolName
+     * @param url
+     * @param params
+     * @param headers
+     * @param responseHandler
+     * @throws HttpProxyRequestException
+     */
+    public static  <T> T  httpPost(ClientConfiguration clientConfiguration,String url, Object params, Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        return httpPost(clientConfiguration, url, (String) null, (String) null, params, (Map<String, File>) null, headers, responseHandler);
+    }
+
+    /**
+     * 公用post方法
      *
      * @param url
      * @param params
@@ -893,262 +911,6 @@ public class HttpRequestProxy {
 
     }
 
-    /**
-     * 创建流式调用的Flux，使用默认数据源
-     */
-    public static Flux<String> streamChatCompletion(String url,Object message) {
-        return streamChatCompletion((String)null , url, message);
-    }
-
-    /**
-     * 创建流式调用的Flux,在指定的数据源上执行
-     */
-    public static Flux<String> streamChatCompletion(String poolName,String url,Object message) {
-        return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<String>() {
-            @Override
-            public boolean handle(String line, FluxSink<String> sink, BooleanWrapperInf firstEventTag) {
-                return ResponseUtil.handleStringData(  line, sink,   firstEventTag);
-
-            }
-            @Override
-
-            public boolean handleException(Throwable throwable, FluxSink<String> sink, BooleanWrapperInf firstEventTag){
-                boolean result = ResponseUtil.handleStringExceptionData(  throwable, sink,   firstEventTag);
-                return result;
-            }
-        });
-        
-    }
-
-    /**
-     * 调用图片生成模型，生成图片
-     * @param poolName
-     * @param url
-     * @param message
-     * @return
-     */
-    public static ImageEvent multimodalImageGeneration(String poolName,String url, Object message) {
-        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = config.getAgentAdapter(message);
-        message = agentAdapter.buildGenImageRequestParameter(message);
-        Map data = HttpRequestProxy.sendJsonBody(config,message,url,Map.class);
-        ImageEvent imageEvent = agentAdapter.buildGenImageResponse(data);
-
-        return imageEvent;
-//        Map output = (Map)data.get("output");
-//        List choices = (List)output.get("choices");
-//        if(choices == null || choices.size() == 0)
-//            return null;
-//        Map choice = (Map)choices.get(0);
-//        Map messageData = (Map)choice.get("message");
-//        
-//        String finishReason = (String)choice.get("finish_reason");
-//        List imageContentData = (List)messageData.get("content");
-//        
-//        if(imageContentData != null ){
-//            int size = imageContentData.size();
-//            if(size > 0) {
-//                imageEvent = new ImageEvent();
-//                if(size == 1) {
-//                    Map image = (Map) imageContentData.get(0);
-//                    String imageUrl = (String) image.get("image");
-//
-//                    imageEvent.setImageUrl(imageUrl);
-//                }
-//                else{
-//                    for(int i = 0; i < size; i++){
-//                        Map image = (Map) imageContentData.get(i);
-//                        String imageUrl = (String) image.get("image");
-//                        imageEvent.addImageUrl(imageUrl);
-//                    }
-//                }
-//                imageEvent.setFinishReason(finishReason);
-//            }
-//        }
-//        return imageEvent;
-    }
-
-    /**
-     * 调用图片生成模型，生成图片
-     * @param url
-     * @param message
-     * @return
-     */
-    public static ImageEvent multimodalImageGeneration(String url, Object message) {
-         
-        return multimodalImageGeneration(null, url, message) ;
-    }
-
-
-    /**
-     * 调用音频合成模型，生成音频
-     * @param poolName
-     * @param url
-     * @param message
-     * @return
-     */
-    public static AudioEvent multimodalAudioGeneration(String poolName,String url, Object message) {
-        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
-        Map output = (Map)data.get("output");
-        Map audio = (Map)output.get("audio");
-        String finishReason = (String)output.get("finish_reason");
-        
-        if(audio == null && finishReason == null)
-            return null;
-        AudioEvent audioEvent = new AudioEvent();
-        audioEvent.setFinishReason(finishReason);
-        String audioUrl = (String)audio.get("url");
-        String auditData = (String)audio.get("data");
-        Object expiresAt_ = audio.get("expires_at");
-        if(expiresAt_ != null) {
-            if (expiresAt_ instanceof Long) {
-                audioEvent.setExpiresAt((Long) expiresAt_);
-            } else {
-                audioEvent.setExpiresAt((Integer) expiresAt_);
-            }
-        }
-        audioEvent.setAudioBase64(auditData);
-        audioEvent.setAudioUrl(audioUrl);
-
-         
-        return audioEvent;
-    }
-
-    /**
-     * 调用音频合成模型，生成音频
-     * @param url
-     * @param message
-     * @return
-     */
-    public static AudioEvent multimodalAudioGeneration(String url, Object message) {
-
-        return multimodalAudioGeneration(null, url, message) ;
-    }
-    /**
-     * 创建流式调用的Flux，使用默认数据源
-     */
-    public static Flux<ServerEvent> streamChatCompletionEvent(String url, Object message) {
-        return streamChatCompletionEvent((String)null , url, message);
-    }
-
-    /**
-     * 创建流式调用的Flux,在指定的数据源上执行
-     */
-    public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object message) {
-        return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<ServerEvent>() {
-            @Override
-            public boolean handle(String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag) {
-                return ResponseUtil.handleServerEventData( this.isStream(), line, sink,   firstEventTag);
-
-            }
-            @Override
-
-            public boolean handleException(Throwable throwable, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
-                boolean result = ResponseUtil.handleServerEventExceptionData(  throwable, sink,   firstEventTag);
-                return result;
-            }
-        });
-
-    }
-
-    /**
-     * 同步调用模型服务，返回问答内容
-     */
-    public static ServerEvent chatCompletionEvent(String url,Object message) {
-        return chatCompletionEvent(  (String)null,url,  message);
-
-
-    }
-
-    /**
-     * 同步调用模型服务，返回问答内容
-     */
-    public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
-        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = config.getAgentAdapter(message);
-        message = agentAdapter.buildOpenAIRequestParameter(message);
-        String data = null;
-        if(message != null){
-            if(message instanceof String){
-                data = (String)message;
-            }
-            else{
-                data = SimpleStringUtil.object2json(message);
-            }
-        }
-       return  HttpRequestProxy.sendJsonBody(config,data,url,null,new BaseURLResponseHandler<ServerEvent>(){
-            @Override
-            public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
-                return ResponseUtil.handleChatResponse(url, response);
-            }
-        });
-         
-
-    }
-    public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
-        return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
-    }
-
-    /**
-     * 创建流式调用的Flux,在指定的数据源上执行
-     */
-    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
-        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = clientConfiguration.getAgentAdapter(chatMessage);
-        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
-        streamDataHandler.setStream(chatObject.isStream());
-        return Flux.<T>create(sink -> {
-                    try {
-                        Map header = new LinkedHashMap();
-                        if(chatObject.isStream()) {
-                            header.put("Accept", "text/event-stream");
-                        }
-                        String data = null;
-                        Object message = chatObject.getMessage();
-                        if(message != null){
-                            if(message instanceof String){
-                                data = (String)message;
-                            }
-                            else{
-                                data = SimpleStringUtil.object2json(message);
-                            }
-                        }
-                        
-                        HttpRequestProxy.sendJsonBody(clientConfiguration,data,url,header,new BaseURLResponseHandler<Void>(){
-                            @Override
-                            public Void handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
-                                streamDataHandler.setHttpUriRequestBase(httpUriRequestBase);
-                                ResponseUtil.handleStreamResponse(url, response, sink, streamDataHandler);
-                                return null;
-
-                            }
-                        });
-                    } catch (ReactorCallException e) {
-                        
-                        streamDataHandler.handleException(e,sink,new NoSynBooleanWrapper( true));
-//                        sink.error(e);
-                    } catch (Exception e) {
-                        streamDataHandler.handleException(e,sink,new NoSynBooleanWrapper( true));
-//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
-                    }
-                    catch (Throwable e) {
-                        streamDataHandler.handleException(e,sink,new NoSynBooleanWrapper( true));
-//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
-                    }
-                }, FluxSink.OverflowStrategy.BUFFER)
-                .subscribeOn(Schedulers.boundedElastic()) // 在弹性线程池中执行阻塞IO
-                .timeout(Duration.ofSeconds(60)) // 设置超时
-                .onErrorResume(throwable -> {
-//                    String error = SimpleStringUtil.exceptionToString(throwable);
-//                    System.err.println("流式处理错误: " + throwable.getMessage());
-//                    String error = SimpleStringUtil.exceptionToString(throwable);
-                    if(logger.isDebugEnabled()) {
-                        logger.debug(throwable.getMessage(), throwable);
-                    }
-                    // 修改此处，将错误信息作为Flux输出
-                    return Flux.empty();
-                });
-    }
 
      
 

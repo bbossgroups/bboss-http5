@@ -26,9 +26,7 @@ sourceSets {
 
 
 dependencies {
-//	api project(':bboss-http5')  
- 
-    api (
-            [group: 'com.bbossgroups', name: 'bboss-core', version: BBOSS_VERSION, transitive: true]
-    )
+	api project(':bboss-http5')  
+
+    api group: 'io.projectreactor', name: 'reactor-core', version: reactor
 }

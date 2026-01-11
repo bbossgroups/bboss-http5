@@ -18,6 +18,8 @@ package org.frameworkset.spi.ai.adapter;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.AIConstants;
 import org.frameworkset.spi.ai.model.AIRuntimeException;
+import org.frameworkset.spi.ai.model.AgentMessage;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,6 +39,8 @@ public class AgentAdapterFactory {
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_SILICONFLOW,new SiliconflowAgentAdapter());
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_OPENAI,new OpenaiAgentAdapter());
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_BAIDU,new BaiduAgentAdapter());
+
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_JIUTIAN,new JiutianAgentAdapter());
     }
     
     public static AgentAdapter getAgentAdapter(String modelType) {
@@ -50,6 +54,18 @@ public class AgentAdapterFactory {
             throw new AIRuntimeException("modelType:["+modelType+"] is not supported.");
         }
         return agentAdapter;
+    }
+
+    
+    public static AgentAdapter getAgentAdapter(ClientConfiguration clientConfiguration,Object message) {
+        String modelType = null;
+        if(message instanceof AgentMessage){
+            modelType = ((AgentMessage)message).getModelType();
+            if(modelType == null || modelType.equals("")){
+                modelType = clientConfiguration.getModelType();
+            }
+        }
+        return AgentAdapterFactory.getAgentAdapter(modelType);
     }
     
 

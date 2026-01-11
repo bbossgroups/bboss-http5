@@ -76,10 +76,17 @@ public class MessageBuilder {
     }
     
 
-    public static Map<String,Object> buildInputImagesMessage(String message,String... imageUrls){
+    /**
+     * 构建图片识别消息，传入识别提示词和图片url清单，构建模型请求参数报文
+     * @param message 提示
+     * @param imageUrls 图片url
+     * @return
+     */
+    public static Map<String,Object> buildInputImagesMessage( String message,String... imageUrls){
 
         List contents = new ArrayList<>();
         Map contentData = null;
+       
         for (String imageUrl:imageUrls) {
             contentData = new LinkedHashMap();
             contentData.put("type", TYPE_IMAGE);
@@ -90,11 +97,39 @@ public class MessageBuilder {
             }});
             contents.add(contentData);
         }
- 
+
         contentData = new LinkedHashMap();
         contentData.put("type", TYPE_TEXT);
         contentData.put("text", message);;
         contents.add(contentData);
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", ROLE_USER);
+        userMessage.put("content", contents);
+        return userMessage;
+    }
+
+    /**
+     * 构建图片识别消息，传入识别提示词和图片url清单，构建模型请求参数报文
+     * @param message 提示
+     * @param imageUrls 图片url
+     * @return
+     */
+    public static Map<String,Object> buildJiuTianInputImagesMessage( String message,String... imageUrls){
+
+        List contents = new ArrayList<>();
+        Map contentData = new LinkedHashMap();
+        contentData.put("type", TYPE_TEXT);
+        contentData.put("text", message);;
+        contents.add(contentData);
+        for (String imageUrl:imageUrls) {
+            contentData = new LinkedHashMap();
+            contentData.put("type", TYPE_IMAGE);
+            String _imageUrl = imageUrl;
+            contentData.put("image_url", _imageUrl);
+            contents.add(contentData);
+        }
+
+        
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", ROLE_USER);
         userMessage.put("content", contents);
