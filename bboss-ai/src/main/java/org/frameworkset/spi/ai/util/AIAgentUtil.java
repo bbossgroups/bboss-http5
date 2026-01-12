@@ -18,7 +18,6 @@ package org.frameworkset.spi.ai.util;
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ParseException;
-import org.frameworkset.spi.ai.AIAgent;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.adapter.AgentAdapterFactory;
 import org.frameworkset.spi.ai.model.*;
@@ -40,13 +39,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * AI智能体工具类
  * @author biaoping.yin
  * @Date 2026/1/11
  */
 public class AIAgentUtil {
     private static Logger logger = org.slf4j.LoggerFactory.getLogger(AIAgentUtil.class);
 
-
+    
     /**
      * 创建流式调用的Flux，使用默认数据源
      */
@@ -57,8 +57,11 @@ public class AIAgentUtil {
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static Flux<String> streamChatCompletion(String poolName,String url,Object message) {
-        return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<String>() {
+    public static Flux<String> streamChatCompletion(String poolName,String url,Object chatMessage) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        BaseStreamDataHandler<String> streamDataHandler = new BaseStreamDataHandler<String>() {
             @Override
             public boolean handle(String line, FluxSink<String> sink, BooleanWrapperInf firstEventTag) {
                 return AIResponseUtil.handleStringData( this.agentAdapter, line, sink,   firstEventTag);
@@ -70,9 +73,17 @@ public class AIAgentUtil {
                 boolean result = AIResponseUtil.handleStringExceptionData(  throwable, sink,   firstEventTag);
                 return result;
             }
-        });
+
+            
+        };
+        streamDataHandler.setStream(chatObject.isStream());
+        streamDataHandler.setAgentAdapter(agentAdapter);
+        streamDataHandler.setChatObject(chatObject);
+        return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
 
     }
+    
+    
 
     /**
      * 调用图片生成模型，生成图片
@@ -188,11 +199,14 @@ public class AIAgentUtil {
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object message) {
-        return streamChatCompletion(  poolName,  url,  message,new BaseStreamDataHandler<ServerEvent>() {
+    public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object chatMessage) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        BaseStreamDataHandler<ServerEvent> streamDataHandler = new BaseStreamDataHandler<ServerEvent>() {
             @Override
             public boolean handle(String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag) {
-                return AIResponseUtil.handleServerEventData(this.agentAdapter, this.isStream(), line, sink,   firstEventTag);
+                return AIResponseUtil.handleServerEventData(this.agentAdapter, this.isStream(), line, sink, firstEventTag, chatObject.getStreamDataBuilder());
 
             }
             @Override
@@ -201,57 +215,17 @@ public class AIAgentUtil {
                 boolean result = AIResponseUtil.handleServerEventExceptionData(  throwable, sink,   firstEventTag);
                 return result;
             }
-        });
 
-    }
-
-    /**
-     * 同步调用模型服务，返回问答内容
-     */
-    public static ServerEvent chatCompletionEvent(String url,Object message) {
-        return chatCompletionEvent(  (String)null,url,  message);
-
-
-    }
-
-    /**
-     * 同步调用模型服务，返回问答内容
-     */
-    public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
-        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
-        message = agentAdapter.buildOpenAIRequestParameter(message);
-        String data = null;
-        if(message != null){
-            if(message instanceof String){
-                data = (String)message;
-            }
-            else{
-                data = SimpleStringUtil.object2json(message);
-            }
-        }
-        return  HttpRequestProxy.sendJsonBody(config,data,url,null,new BaseURLResponseHandler<ServerEvent>(){
-            @Override
-            public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
-                return AIResponseUtil.handleChatResponse(agentAdapter,url, response);
-            }
-        });
-
-
-    }
-    public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
-        return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
-    }
-
-    /**
-     * 创建流式调用的Flux,在指定的数据源上执行
-     */
-    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
-        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
-        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+             
+        };
         streamDataHandler.setStream(chatObject.isStream());
         streamDataHandler.setAgentAdapter(agentAdapter);
+        streamDataHandler.setChatObject(chatObject);
+        return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
+
+    }
+
+    private static <T> Flux<T> buildFlux(ClientConfiguration clientConfiguration,String url,ChatObject chatObject ,BaseStreamDataHandler<T> streamDataHandler) {
         return Flux.<T>create(sink -> {
                     Object data = null;
                     Object message = chatObject.getMessage();
@@ -267,7 +241,7 @@ public class AIAgentUtil {
 
                             }
                         };
-                        if (agentAdapter.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_BODY_JSON)){
+                        if (chatObject.getAIChatRequestType() == null || chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_BODY_JSON)){
                             Map header = new LinkedHashMap();
                             if (chatObject.isStream()) {
                                 header.put("Accept", "text/event-stream");
@@ -283,7 +257,7 @@ public class AIAgentUtil {
 
                             HttpRequestProxy.sendJsonBody(clientConfiguration, (String)data, url, header, responseHandler);
                         }
-                        else if (agentAdapter.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
+                        else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
                             Map header = new LinkedHashMap();
                             if (chatObject.isStream()) {
                                 header.put("Accept", "text/event-stream");
@@ -293,7 +267,7 @@ public class AIAgentUtil {
                             HttpRequestProxy.httpPost(clientConfiguration, url,message,  header, responseHandler);
                         }
                         else {
-                            throw new ReactorCallException("Unsupported request type: "+agentAdapter.getAIChatRequestType());
+                            throw new ReactorCallException("Unsupported request type: "+chatObject.getAIChatRequestType());
                         }
                     } catch (ReactorCallException e) {
 //                        logger.error("流式请求失败：poolName["+poolName +"],url["+url +"],data:" + data);
@@ -320,6 +294,88 @@ public class AIAgentUtil {
                     // 修改此处，将错误信息作为Flux输出
                     return Flux.empty();
                 });
+    }
+    
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent imageParser(String url,Object message) {
+        return imageParser(  (String)null,url,  message);
+
+
+    }
+
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent imageParser(String poolName,String url,Object message) {
+        return chatCompletionEvent(poolName,url,message);
+        
+
+
+    }
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent chatCompletionEvent(String url,Object message) {
+        return chatCompletionEvent(  (String)null,url,  message);
+
+
+    }
+
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
+        ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(message);
+        message = chatObject.getMessage();
+        String data = null;
+
+        BaseURLResponseHandler<ServerEvent> responseHandler = new BaseURLResponseHandler<ServerEvent>() {
+            @Override
+            public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                return AIResponseUtil.handleChatResponse(agentAdapter, url, response, chatObject.getStreamDataBuilder());
+            }
+        };
+
+        if (chatObject.getAIChatRequestType() == null || chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_BODY_JSON)) {
+            if (message != null) {
+                if (message instanceof String) {
+                    data = (String) message;
+                } else {
+                    data = SimpleStringUtil.object2json(message);
+                }
+            }
+            return HttpRequestProxy.sendJsonBody(config, data, url, (Map)null, responseHandler);
+        }
+        else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
+
+
+            return HttpRequestProxy.httpPost(config, url,message,  (Map)null, responseHandler);
+        }
+        else {
+            throw new ReactorCallException("Unsupported request type: "+chatObject.getAIChatRequestType());
+        }
+
+
+    }
+    public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
+        return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        streamDataHandler.setStream(chatObject.isStream());
+        streamDataHandler.setAgentAdapter(agentAdapter);
+        streamDataHandler.setChatObject(chatObject);
+        return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
     }
 
 }

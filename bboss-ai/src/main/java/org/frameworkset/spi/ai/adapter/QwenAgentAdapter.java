@@ -30,61 +30,8 @@ import java.util.*;
  * @Date 2026/1/4
  */
 public class QwenAgentAdapter extends AgentAdapter{
-    protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
-        if(SimpleStringUtil.isEmpty( parameters)){
-            if( agentMessage.getStream() != null){
-                requestMap.put("stream", agentMessage.getStream());
-            }
-            else {
-                requestMap.put("stream", true);
-            }
-            if( agentMessage.getTemperature() != null){
-                requestMap.put("temperature", agentMessage.getTemperature());
-            }
-            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
-
-            requestMap.put("enable_thinking",true);
-            requestMap.put("thinking_budget",81920);
-        }
-        else {
-            //设置默认参数
-            if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
-                requestMap.put("stream", agentMessage.getStream());
-            }
-
-            if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
-                requestMap.put("temperature", agentMessage.getTemperature());
-            }
-            requestMap.putAll( parameters);
-        }
-    }
     
-    protected Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
-
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model",imageAgentMessage.getModel());
-       
-        // 构建消息历史列表，包含之前的会话记忆
-
-        List<Map<String, Object>> sessionMemory = imageAgentMessage.getSessionMemory();
-        List<Map<String, Object>> messages = null;
-        if(sessionMemory != null && sessionMemory.size() > 0){
-            messages = new ArrayList<>(sessionMemory);
-        }
-        else{
-            messages = new ArrayList<>();
-        }
-
-        Map<String, Object> userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
-        messages.add(userMessage);
-
-        requestMap.put("messages", messages);
-        Map parameters = imageAgentMessage.getParameters();
-
-        filterParameters(imageAgentMessage,requestMap,parameters);
-
-        return requestMap;
-    }
+   
 
     @Override
     protected Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage) {

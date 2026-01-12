@@ -17,6 +17,7 @@ package org.frameworkset.spi.reactor;
 
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.model.ChatObject;
 import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import reactor.core.publisher.FluxSink;
 
@@ -49,4 +50,7 @@ public interface StreamDataHandler<T> {
     void setHttpUriRequestBase(HttpUriRequestBase httpUriRequestBase);
     HttpUriRequestBase getHttpUriRequestBase();
     AgentAdapter getAgentAdapter();
+    
+    ChatObject getChatObject();
+    String getDoneData() ;
 }

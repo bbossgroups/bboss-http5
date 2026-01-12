@@ -231,7 +231,7 @@ public class AIResponseUtil {
      * @param data
      * @return
      */
-    public static StreamData parseJiutianStreamContentFromData(String data) {
+    public static StreamData parseJiutianImageParserStreamContentFromData(String data) {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("parts");
@@ -295,10 +295,13 @@ public class AIResponseUtil {
                 }
             }
             else {
-                String code =  (String)map.get("code");
-                String message = (String) map.get("message");
-                if(SimpleStringUtil.isNotEmpty(code)) {
-                    return new StreamData(ServerEvent.CONTENT, message, code);
+                Object code =  map.get("code");
+//                String message = (String) map.get("message");
+                Map result = (Map) map.get("result");
+                String message = (String) result.get("text");
+                if(code != null) {
+                    
+                    return new StreamData(ServerEvent.CONTENT, message, String.valueOf(code));
                 }
                 else {
                     if(logger.isDebugEnabled())
@@ -362,7 +365,7 @@ public class AIResponseUtil {
 //                serverEvent.setType(ServerEvent.DATA);
 //                serverEvent.setDone(true);
 //                sink.next(serverEvent);
-                streamDataHandler.handle(agentAdapter.getDoneData(), sink,   firstEventTag);
+                streamDataHandler.handle(streamDataHandler.getDoneData(), sink,   firstEventTag);
                 sink.complete();
             }
         }
@@ -372,7 +375,7 @@ public class AIResponseUtil {
     }
 
 
-    public static ServerEvent handleChatResponse(AgentAdapter agentAdapter,String url, ClassicHttpResponse response)
+    public static ServerEvent handleChatResponse(AgentAdapter agentAdapter,String url, ClassicHttpResponse response, StreamDataBuilder streamDataBuilder)
             throws IOException, ParseException {
 
         int status = response.getCode();
@@ -383,7 +386,7 @@ public class AIResponseUtil {
             if(line == null || line.equals("")){
                 return null;
             }
-            return handleServerEventData( agentAdapter, line);
+            return handleServerEventData( agentAdapter, line,   streamDataBuilder);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null ) {
@@ -464,13 +467,13 @@ public class AIResponseUtil {
      * @param line
      * @return
      */
-    public static   ServerEvent handleServerEventData(AgentAdapter agentAdapter ,String line){
+    public static   ServerEvent handleServerEventData(AgentAdapter agentAdapter ,String line, StreamDataBuilder streamDataBuilder){
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
         ServerEvent serverEvent = null;
         if (SimpleStringUtil.isNotEmpty(line)) {
-            StreamData content = agentAdapter.parseStreamContentFromData(line);
+            StreamData content = streamDataBuilder.build(agentAdapter,line);
             if (content != null) {
 
                 serverEvent = new ServerEvent();
@@ -497,7 +500,7 @@ public class AIResponseUtil {
      * @param firstEventTag
      * @return
      */
-    public static boolean handleServerEventData(AgentAdapter agentAdapter, boolean stream, String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag){
+    public static boolean handleServerEventData(AgentAdapter agentAdapter, boolean stream, String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag, StreamDataBuilder streamDataBuilder){
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
@@ -534,7 +537,7 @@ public class AIResponseUtil {
                 sink.next(serverEvent);
                 return true;
             }
-            StreamData content = agentAdapter.parseStreamContentFromData(data);
+            StreamData content = streamDataBuilder.build(agentAdapter,data);
             if (content != null) {
                 if( !content.isEmpty()) {
                     ServerEvent serverEvent = new ServerEvent();

@@ -42,10 +42,10 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
         Map parameters = imageAgentMessage.getParameters();
         if(SimpleStringUtil.isEmpty( parameters)){
             //默认参数
-            requestMap.put("sequential_image_generation", "disabled");
-            requestMap.put("response_format", "url");
-            requestMap.put("size", "2k");
-            requestMap.put("watermark", true);
+//            requestMap.put("sequential_image_generation", "disabled");
+//            requestMap.put("response_format", "url");
+//            requestMap.put("size", "2k");
+//            requestMap.put("watermark", true);
         }
         else{
             requestMap.putAll(parameters);
@@ -85,21 +85,21 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
      *     ]
      * }'
      */
-    @Override
-    protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
-        if(SimpleStringUtil.isEmpty( parameters)){
-//            requestMap.put("stream", true);
-
-            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
-
-            requestMap.put("max_completion_tokens",65535);
-            requestMap.put("reasoning_effort","medium");
-        }
-        else {
-
-            requestMap.putAll( parameters);
-        }
-    }
+//    @Override
+//    protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
+//        if(SimpleStringUtil.isEmpty( parameters)){
+////            requestMap.put("stream", true);
+//
+//            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
+//
+//            requestMap.put("max_completion_tokens",65535);
+//            requestMap.put("reasoning_effort","medium");
+//        }
+//        else {
+//
+//            requestMap.putAll( parameters);
+//        }
+//    }
 
     public ImageEvent buildGenImageResponse(Map imageData){
         List data = (List)imageData.get("data");

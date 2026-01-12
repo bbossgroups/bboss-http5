@@ -81,7 +81,7 @@ public class AIAgent {
      * @return
      */
     public ServerEvent imageParser(String url, ImageVLAgentMessage imageVLAgentMessage){
-        return AIAgentUtil.chatCompletionEvent(url,imageVLAgentMessage);
+        return AIAgentUtil.imageParser(url,imageVLAgentMessage);
     }
 
     /**
@@ -92,7 +92,7 @@ public class AIAgent {
      * @return
      */
     public ServerEvent imageParser(String maasName, String url, ImageVLAgentMessage imageVLAgentMessage){
-        return AIAgentUtil.chatCompletionEvent(maasName,url,imageVLAgentMessage);
+        return AIAgentUtil.imageParser(maasName,url,imageVLAgentMessage);
     }
 
 

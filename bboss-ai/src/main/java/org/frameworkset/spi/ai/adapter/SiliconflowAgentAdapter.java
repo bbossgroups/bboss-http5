@@ -32,9 +32,7 @@ public class SiliconflowAgentAdapter extends QwenAgentAdapter{
             if( agentMessage.getStream() != null){
                 requestMap.put("stream", agentMessage.getStream());
             }
-            else {
-                requestMap.put("stream", true);
-            }
+             
 
             if( agentMessage.getTemperature() != null){
                 requestMap.put("temperature", agentMessage.getTemperature());

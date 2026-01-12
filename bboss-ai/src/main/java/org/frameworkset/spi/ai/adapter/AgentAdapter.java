@@ -19,9 +19,7 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
-import org.frameworkset.spi.remote.http.ResponseUtil;
-import org.frameworkset.util.concurrent.BooleanWrapperInf;
-import reactor.core.publisher.FluxSink;
+import org.frameworkset.spi.ai.util.StreamDataBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +40,59 @@ public abstract class AgentAdapter {
      */
     protected abstract Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage);
 
-    protected abstract Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage);
+    protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
+        if(SimpleStringUtil.isEmpty( parameters)){
+            if( agentMessage.getStream() != null){
+                requestMap.put("stream", agentMessage.getStream());
+            }
+
+            if( agentMessage.getTemperature() != null){
+                requestMap.put("temperature", agentMessage.getTemperature());
+            }
+            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
+
+        }
+        else {
+            //设置默认参数
+            if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
+                requestMap.put("stream", agentMessage.getStream());
+            }
+
+            if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
+                requestMap.put("temperature", agentMessage.getTemperature());
+            }
+            requestMap.putAll( parameters);
+        }
+    }
+    protected Object handleImageParserMessages(List<Map<String, Object>> messages){
+        return messages;
+    }
+    protected Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
+
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model",imageAgentMessage.getModel());
+
+        // 构建消息历史列表，包含之前的会话记忆
+
+        List<Map<String, Object>> sessionMemory = imageAgentMessage.getSessionMemory();
+        List<Map<String, Object>> messages = null;
+        if(sessionMemory != null && sessionMemory.size() > 0){
+            messages = new ArrayList<>(sessionMemory);
+        }
+        else{
+            messages = new ArrayList<>();
+        }
+
+        Map<String, Object> userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
+        messages.add(userMessage);
+
+        requestMap.put("messages", handleImageParserMessages(messages));
+        Map parameters = imageAgentMessage.getParameters();
+
+        filterParameters(imageAgentMessage,requestMap,parameters);
+
+        return requestMap;
+    }
     public boolean isDone(String data){
         return "[DONE]".equals(data);
 
@@ -50,6 +100,16 @@ public abstract class AgentAdapter {
     
     public String getDoneData(){
         return "data:[DONE]";
+    }
+
+
+    public boolean isImageParserDone(String data){
+        return isDone(  data);
+
+    }
+
+    public String getImageParserDoneData(){
+        return getDoneData();
     }
     /**
      * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
@@ -60,14 +120,33 @@ public abstract class AgentAdapter {
     public StreamData parseStreamContentFromData(String data){
         return AIResponseUtil.parseStreamContentFromData(data);
     }
+
+    /**
+     * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
+     * LLM和图像识别：data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
+     * @param data
+     * @return
+     */
+    public StreamData parseImageParserStreamContentFromData(String data){
+        return AIResponseUtil.parseStreamContentFromData(data);
+    }
     
+    /**
+     * 获取智能问答请求参数类型
+     * @return
+     */
+    public String getAIImageParsertRequestType(){
+        return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
+        
+    }
+
     /**
      * 获取智能问答请求参数类型
      * @return
      */
     public String getAIChatRequestType(){
         return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
-        
+
     }
     
     protected Map<String, Object> buildInputImagesMessage(String message,String... imageUrls) {
@@ -113,11 +192,7 @@ public abstract class AgentAdapter {
             if( chatAgentMessage.getStream() != null){
                 requestMap.put("stream", chatAgentMessage.getStream());
             }
-            else {
-                requestMap.put("stream", true);
-            }
-            requestMap.put("max_tokens", 8192);
-
+            
             if( chatAgentMessage.getTemperature() != null){
                 requestMap.put("temperature", chatAgentMessage.getTemperature());
             }
@@ -141,20 +216,72 @@ public abstract class AgentAdapter {
         ChatObject chatObject = new ChatObject();
         Map parameters = null;
         Boolean stream = false;
+        String aiChatRequestType = null;
+        StreamDataBuilder streamDataBuilder = null;
         if(agentMessage instanceof ChatAgentMessage){
             parameters = buildOpenAIRequestMap((ChatAgentMessage)agentMessage);
             stream = (Boolean)parameters.get("stream");
+            aiChatRequestType = this.getAIChatRequestType();
             agentMessage = parameters;
+            streamDataBuilder = new StreamDataBuilder() {
+                @Override
+                public StreamData build(AgentAdapter agentAdapter, String line) {
+                    return agentAdapter.parseStreamContentFromData(line);
+                }
+
+                @Override
+                public boolean isDone(AgentAdapter agentAdapter,String data) {
+                    return agentAdapter.isDone(data);
+                }
+
+                @Override
+                public String getDoneData(AgentAdapter agentAdapter) {
+                    return agentAdapter.getDoneData();
+                }
+            };
         }
         else if(agentMessage instanceof ImageVLAgentMessage){
             parameters = buildImageVLRequestMap((ImageVLAgentMessage)agentMessage);;
             stream = (Boolean)parameters.get("stream");
+            aiChatRequestType = this.getAIImageParsertRequestType();
             agentMessage = parameters;
+            streamDataBuilder = new StreamDataBuilder() {
+                @Override
+                public StreamData build(AgentAdapter agentAdapter, String line) {
+                    return agentAdapter.parseImageParserStreamContentFromData(line);
+                }
+
+
+                @Override
+                public boolean isDone(AgentAdapter agentAdapter,String data) {
+                    return agentAdapter.isImageParserDone(data);
+                }
+
+                @Override
+                public String getDoneData(AgentAdapter agentAdapter) {
+                    return agentAdapter.getImageParserDoneData();
+                }
+            };
         }
         else if(agentMessage instanceof Map){
             parameters =  (Map)agentMessage;
             stream = (Boolean)parameters.get("stream");
-            
+            streamDataBuilder = new StreamDataBuilder() {
+                @Override
+                public StreamData build(AgentAdapter agentAdapter, String line) {
+                    return agentAdapter.parseStreamContentFromData(line);
+                }
+
+                @Override
+                public boolean isDone(AgentAdapter agentAdapter,String data) {
+                    return agentAdapter.isDone(data);
+                }
+
+                @Override
+                public String getDoneData(AgentAdapter agentAdapter) {
+                    return agentAdapter.getDoneData();
+                }
+            };
         }
          
 
@@ -164,6 +291,8 @@ public abstract class AgentAdapter {
        
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);
+        chatObject.setAiChatRequestType(aiChatRequestType);
+        chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
     }
 

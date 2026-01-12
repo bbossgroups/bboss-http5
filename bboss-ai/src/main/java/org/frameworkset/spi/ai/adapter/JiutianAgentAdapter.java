@@ -16,16 +16,12 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.model.*;
+import org.frameworkset.spi.ai.model.AIConstants;
+import org.frameworkset.spi.ai.model.StreamData;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
-import org.frameworkset.spi.remote.http.ResponseUtil;
-import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import org.slf4j.Logger;
-import reactor.core.publisher.FluxSink;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,88 +37,90 @@ public class JiutianAgentAdapter extends QwenAgentAdapter{
     protected Map<String, Object> buildInputImagesMessage(String message,String... imageUrls) {
         return MessageBuilder.buildJiuTianInputImagesMessage(message,imageUrls);
     }
-    protected Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
-        super.buildImageVLRequestMap(imageAgentMessage);
-
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model",imageAgentMessage.getModel());
-
-//        "image": image_path,
-//                "prompt": "描述下这张图片",
-//        requestMap.put("prompt",imageAgentMessage.getMessage());
-//        requestMap.put("image",imageAgentMessage.getImageUrls().get(0));
-
-        // 构建消息历史列表，包含之前的会话记忆
-
-        List<Map<String, Object>> sessionMemory = imageAgentMessage.getSessionMemory();
-        List<Map<String, Object>> messages = null;
-        if(sessionMemory != null && sessionMemory.size() > 0){
-            messages = new ArrayList<>(sessionMemory);
-        }
-        else{
-            messages = new ArrayList<>();
-        }
-
-        Map<String, Object> userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
-        messages.add(userMessage);
-
-        requestMap.put("messages", SimpleStringUtil.object2json(messages));
-        Map parameters = imageAgentMessage.getParameters();
-
-        filterParameters(imageAgentMessage,requestMap,parameters);
-
-        return requestMap;
+    @Override
+    protected Object handleImageParserMessages(List<Map<String, Object>> messages){
+        return SimpleStringUtil.object2json(messages);
     }
-    public String getAIChatRequestType(){
+ 
+//    protected Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
+//
+//        Map<String, Object> requestMap = new HashMap<>();
+//        requestMap.put("model",imageAgentMessage.getModel());
+//
+////        "image": image_path,
+////                "prompt": "描述下这张图片",
+////        requestMap.put("prompt",imageAgentMessage.getMessage());
+////        requestMap.put("image",imageAgentMessage.getImageUrls().get(0));
+//
+//        // 构建消息历史列表，包含之前的会话记忆
+//
+//        List<Map<String, Object>> sessionMemory = imageAgentMessage.getSessionMemory();
+//        List<Map<String, Object>> messages = null;
+//        if(sessionMemory != null && sessionMemory.size() > 0){
+//            messages = new ArrayList<>(sessionMemory);
+//        }
+//        else{
+//            messages = new ArrayList<>();
+//        }
+//
+//        Map<String, Object> userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
+//        messages.add(userMessage);
+//
+//        String data = SimpleStringUtil.object2json(messages);
+//        
+//        requestMap.put("messages", data);
+//        Map parameters = imageAgentMessage.getParameters();
+//
+//        filterParameters(imageAgentMessage,requestMap,parameters);
+//
+//        return requestMap;
+//    }
+    public String getAIImageParsertRequestType(){
         return AIConstants.AI_CHAT_REQUEST_POST_FORM;
 
     }
-    protected void filterParameters(AgentMessage agentMessage, Map<String, Object> requestMap, Map<String, Object> parameters) {
-        if(SimpleStringUtil.isEmpty( parameters)){
-            if( agentMessage.getStream() != null){
-                requestMap.put("stream", agentMessage.getStream());
-            }
-            else {
-                requestMap.put("stream", true);
-            }
-
-            if( agentMessage.getTemperature() != null){
-                requestMap.put("temperature", agentMessage.getTemperature());
-            }
-
-            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
-
-        }
-        else {
-            //设置默认参数
-            if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
-                requestMap.put("stream", agentMessage.getStream());
-            }
-            if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
-                requestMap.put("temperature", agentMessage.getTemperature());
-            }
-            requestMap.putAll( parameters);
-        }
-    }
+//    protected void filterParameters(AgentMessage agentMessage, Map<String, Object> requestMap, Map<String, Object> parameters) {
+//        if(SimpleStringUtil.isEmpty( parameters)){
+//            if( agentMessage.getStream() != null){
+//                requestMap.put("stream", agentMessage.getStream());
+//            }
+//            
+//
+//            if( agentMessage.getTemperature() != null){
+//                requestMap.put("temperature", agentMessage.getTemperature());
+//            }
+//
+//            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
+//
+//        }
+//        else {
+//            //设置默认参数
+//            if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
+//                requestMap.put("stream", agentMessage.getStream());
+//            }
+//            if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
+//                requestMap.put("temperature", agentMessage.getTemperature());
+//            }
+//            requestMap.putAll( parameters);
+//        }
+//    }
 
 
-    
-    public boolean isDone(String data){
+    @Override
+    public boolean isImageParserDone(String data){
         return "[EOS]".equals(data);
 
     }
-    public String getDoneData(){
+    @Override
+    public String getImageParserDoneData(){
         return "data:[EOS]";
     }
 
-    /**
-     * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
-     * LLM和图像识别：data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
-     * @param data
-     * @return
-     */
-    public StreamData parseStreamContentFromData(String data){
-        return AIResponseUtil.parseJiutianStreamContentFromData(data);
+ 
+
+    @Override
+    public StreamData parseImageParserStreamContentFromData(String data){
+        return AIResponseUtil.parseJiutianImageParserStreamContentFromData(data);
     }
     
 }

@@ -15,6 +15,9 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.util.StreamDataBuilder;
+
 /**
  * @author biaoping.yin
  * @Date 2026/1/4
@@ -22,6 +25,26 @@ package org.frameworkset.spi.ai.model;
 public class ChatObject {
     private boolean isStream;
     private Object message;
+    private String aiChatRequestType = AIConstants.AI_CHAT_REQUEST_BODY_JSON;
+    
+    private StreamDataBuilder streamDataBuilder;
+
+    public String getDoneData(AgentAdapter agentAdapter) {
+        return streamDataBuilder.getDoneData(agentAdapter);
+    }
+
+    /**
+     * 获取智能问答请求参数类型
+     * @return
+     */
+    public String getAIChatRequestType(){
+        return aiChatRequestType;
+
+    }
+
+    public void setAiChatRequestType(String aiChatRequestType) {
+        this.aiChatRequestType = aiChatRequestType;
+    }
 
     public boolean isStream() {
         return isStream;
@@ -38,4 +61,13 @@ public class ChatObject {
     public void setMessage(Object message) {
         this.message = message;
     }
+
+    public void setStreamDataBuilder(StreamDataBuilder streamDataBuilder) {
+        this.streamDataBuilder = streamDataBuilder;
+    }
+
+    public StreamDataBuilder getStreamDataBuilder() {
+        return streamDataBuilder;
+    }
+    
 }
