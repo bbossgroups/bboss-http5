@@ -64,7 +64,7 @@ public class AIAgentUtil {
         BaseStreamDataHandler<String> streamDataHandler = new BaseStreamDataHandler<String>() {
             @Override
             public boolean handle(String line, FluxSink<String> sink, BooleanWrapperInf firstEventTag) {
-                return AIResponseUtil.handleStringData( this.agentAdapter, line, sink,   firstEventTag);
+                return AIResponseUtil.handleStringData( this.agentAdapter, line, sink,   firstEventTag,chatObject.getStreamDataBuilder());
 
             }
             @Override

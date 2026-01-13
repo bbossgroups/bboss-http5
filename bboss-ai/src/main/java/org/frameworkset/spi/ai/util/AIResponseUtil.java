@@ -357,14 +357,7 @@ public class AIResponseUtil {
 
             }
             if(!needBreak){
-//                ServerEvent serverEvent = new ServerEvent();
-//                if(firstEventTag.get()) {
-//                    firstEventTag.set(false);
-//                    serverEvent.setFirst(true);
-//                }
-//                serverEvent.setType(ServerEvent.DATA);
-//                serverEvent.setDone(true);
-//                sink.next(serverEvent);
+ 
                 streamDataHandler.handle(streamDataHandler.getDoneData(), sink,   firstEventTag);
                 sink.complete();
             }
@@ -435,7 +428,7 @@ public class AIResponseUtil {
      * @param firstEventTag
      * @return
      */
-    public static   boolean handleStringData(AgentAdapter agentAdapter ,String line,FluxSink<String> sink, BooleanWrapperInf firstEventTag){
+    public static   boolean handleStringData(AgentAdapter agentAdapter ,String line,FluxSink<String> sink, BooleanWrapperInf firstEventTag, StreamDataBuilder streamDataBuilder){
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
@@ -449,7 +442,7 @@ public class AIResponseUtil {
                 if(firstEventTag.get()) {
                     firstEventTag.set(false);
                 }
-                StreamData content = agentAdapter.parseStreamContentFromData(data);
+                StreamData content = streamDataBuilder.build(agentAdapter,data);
                 if (content != null && !content.isEmpty()) {
                     sink.next(content.getData());
                 }
