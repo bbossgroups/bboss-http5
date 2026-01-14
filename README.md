@@ -1,3 +1,4 @@
+包含两个模块：基于httpclient5 and httpcore5的轻量级bboss ai开发客户端和bboss httpproxy微服务框架
 # 版本构建方法
 
 gradle clean publishToMavenLocal
@@ -5,6 +6,11 @@ gradle clean publishToMavenLocal
 需要通过gradle构建发布版本,gradle安装配置参考文档：
 
 https://esdoc.bbossgroups.com/#/bboss-build
+# bboss ai
+基于 httpclient5 and httpcore5 的bboss ai java大模型对接客户端，支持同步调用和流式调用两种模式；
+
+集成Deepseek，通义千问，计算视觉，音频/视频模型，快速实现智能问答、图片识别/生成、语音识别/生成以及视频识别/生成功能
+
 
 # bboss httpproxy
  http负载均衡组件-HttpRequestProxy  使用参考文档https://esdoc.bbossgroups.com/#/httpproxy5
