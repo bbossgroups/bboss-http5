@@ -39,6 +39,16 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
 
         requestMap.put("model", imageAgentMessage.getModel());
         requestMap.put("prompt", imageAgentMessage.getMessage());
+        List<String> imageUrls = imageAgentMessage.getImageUrls();
+        if(imageUrls != null && imageUrls.size() > 0) {
+            if(imageUrls.size() == 1){
+                requestMap.put("image", imageUrls.get(0));
+            }
+            else{
+                requestMap.put("image", imageUrls);
+            }
+             
+        }
 
         Map parameters = imageAgentMessage.getParameters();
         if(SimpleStringUtil.isEmpty( parameters)){
