@@ -19,6 +19,7 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.AgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.HashMap;
 import java.util.List;
@@ -101,7 +102,7 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
 //        }
 //    }
 
-    public ImageEvent buildGenImageResponse(Map imageData){
+    public ImageEvent buildGenImageResponse(ClientConfiguration config, ImageAgentMessage imageAgentMessage,Map imageData){
         List data = (List)imageData.get("data");
         if(data == null || data.size() == 0)
             return null;
@@ -112,7 +113,8 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
             String size = (String) imgInfo.get("size");
 
             
-            imageEvent.setImageUrl(url);
+            imageEvent.setGenImageUrl(url);
+            imageEvent.setImageUrl(genImageFileBase64Download.downloadImage(config,   imageAgentMessage,null,url));
             imageEvent.setImageSize(size);
             return imageEvent;
         }
@@ -121,8 +123,9 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
                 Map imgInfo = (Map) data.get(i);
                 String url = (String) imgInfo.get("url");
                 String size = (String) imgInfo.get("size");
-                imageEvent.addImageUrl(url);
+                imageEvent.addImageUrl(genImageFileBase64Download.downloadImage(config,   imageAgentMessage,null,url));
                 imageEvent.addImageSize(size);
+                imageEvent.addGenImageUrl(url);
             }
             return imageEvent;
         }

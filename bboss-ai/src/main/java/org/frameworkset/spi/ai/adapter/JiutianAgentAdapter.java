@@ -16,12 +16,17 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.material.JiutianGenImageFileBase64Download;
 import org.frameworkset.spi.ai.model.AIConstants;
+import org.frameworkset.spi.ai.model.ImageAgentMessage;
+import org.frameworkset.spi.ai.model.ImageEvent;
 import org.frameworkset.spi.ai.model.StreamData;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.slf4j.Logger;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +37,92 @@ import java.util.Map;
  */
 public class JiutianAgentAdapter extends QwenAgentAdapter{
     private Logger logger = org.slf4j.LoggerFactory.getLogger(JiutianAgentAdapter.class);
+    private static String downImageUrl = "/largemodel/moma/api/v1/fs/getFile";
+
+    @Override
+    protected AgentAdapter initAgentAdapter(){
+        genImageFileBase64Download = new JiutianGenImageFileBase64Download();
+        return this;
+    }
+    
+    @Override
+    public Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage) {
+
+        Map<String, Object> requestMap = new HashMap<>();
+
+        requestMap.put("model", imageAgentMessage.getModel());
+        requestMap.put("prompt", imageAgentMessage.getMessage());
+        List<String> imageUrls = imageAgentMessage.getImageUrls();
+        if(imageUrls != null && imageUrls.size() > 0){
+            requestMap.put("filePath", imageUrls.get(0));
+        }
+
+        Map parameters = imageAgentMessage.getParameters();
+        if(SimpleStringUtil.isEmpty( parameters)){
+            //默认参数
+//            requestMap.put("sequential_image_generation", "disabled");
+//            requestMap.put("response_format", "url");
+//            requestMap.put("size", "2k");
+//            requestMap.put("watermark", true);
+        }
+        else{
+            requestMap.putAll(parameters);
+        }
+
+
+//        requestMap.put("sequential_image_generation", "disabled");
+//        requestMap.put("response_format", "url");
+//        requestMap.put("size", "2k");
+//        requestMap.put("watermark", true);
+        return requestMap;
+    }
+    
+     
+
+    /**
+     * https://jiutian.10086.cn/portal/common-helpcenter#/document/1157?platformCode=DMX_TYZX
+     * @param config
+     * @param imageData
+     * @return
+     */
+    public ImageEvent buildGenImageResponse(ClientConfiguration config,ImageAgentMessage imageAgentMessage, Map imageData){
+        ImageEvent imageEvent = null;
+        List choices = (List)imageData.get("choices");
+        if(choices == null || choices.size() == 0) {
+            String response = (String) imageData.get("response");
+            imageEvent = new ImageEvent();
+            imageEvent.setResponse(response);
+            imageEvent.setContentEvent((String)imageData.get("contentEvent"));
+            return imageEvent;
+        }
+        
+        Map choice = (Map)choices.get(0);
+
+        String finishReason = (String)choice.get("finish_reason");
+        List imageContentData = (List)choice.get("data");
+        int size = imageContentData.size();
+        
+        if(size > 0) {
+            imageEvent = new ImageEvent();
+            if (imageContentData.size() == 1) {
+                Map image = (Map) imageContentData.get(0);
+                String imageUrl = (String) image.get("url");
+                imageEvent.setGenImageUrl(imageUrl);
+                imageEvent.setImageUrl(genImageFileBase64Download.downloadImage(config,  imageAgentMessage,downImageUrl,imageUrl));
+
+            } else {
+                for (int i = 0; i < size; i++) {
+                    Map image = (Map) imageContentData.get(i);
+                    String imageUrl = (String) image.get("url");
+                    imageEvent.addImageUrl(imageUrl);
+                    imageEvent.addImageUrl(genImageFileBase64Download.downloadImage(config,  imageAgentMessage,downImageUrl,imageUrl));
+                }
+            }
+            imageEvent.setFinishReason(finishReason);
+        }
+         
+        return imageEvent;
+    }
 
     @Override
     protected Map<String, Object> buildInputImagesMessage(String message,String... imageUrls) {

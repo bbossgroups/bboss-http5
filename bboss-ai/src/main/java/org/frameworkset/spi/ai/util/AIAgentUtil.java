@@ -95,9 +95,9 @@ public class AIAgentUtil {
     public static ImageEvent multimodalImageGeneration(String poolName, String url, Object message) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
-        message = agentAdapter.buildGenImageRequestParameter(message);
-        Map data = HttpRequestProxy.sendJsonBody(config,message,url,Map.class);
-        ImageEvent imageEvent = agentAdapter.buildGenImageResponse(data);
+        Object newmessage = agentAdapter.buildGenImageRequestParameter(config,message);
+        Map data = HttpRequestProxy.sendJsonBody(config,newmessage,url,Map.class);
+        ImageEvent imageEvent = agentAdapter.buildGenImageResponse(config,(ImageAgentMessage)message, data);
 
         return imageEvent;
 //        Map output = (Map)data.get("output");

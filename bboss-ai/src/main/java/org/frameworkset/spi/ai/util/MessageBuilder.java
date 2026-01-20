@@ -15,6 +15,7 @@ package org.frameworkset.spi.ai.util;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +72,30 @@ public class MessageBuilder {
         contentData.put("text", message);
 
         contents.add(contentData);
+        userMessage.put("content", contents);
+        return userMessage;
+    }
+
+    public static Map<String,Object> buildGenImageMessage(ImageAgentMessage imageAgentMessage){
+        Map<String, Object> userMessage = new LinkedHashMap<>();
+        userMessage.put("role",ROLE_USER);
+
+        List contents = new ArrayList<>();
+        Map contentData = new LinkedHashMap();
+        contentData.put("text", imageAgentMessage.getMessage());
+        
+        
+
+        contents.add(contentData);
+        List<String> imageUrls = imageAgentMessage.getImageUrls();
+        if(imageUrls != null && imageUrls.size() > 0) {
+            for(String imageUrl:imageUrls){
+                contentData = new LinkedHashMap();
+                contentData.put("image", imageUrl);
+                contents.add(contentData);
+            }
+            
+        }
         userMessage.put("content", contents);
         return userMessage;
     }

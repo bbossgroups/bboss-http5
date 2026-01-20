@@ -314,16 +314,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private long keepAlive = 1000l * 60l * 60l;
 	private String beanName;
 
-//	public boolean isEvictExpiredConnections() {
-//		return evictExpiredConnections;
-//	}
-//
-//	public void setEvictExpiredConnections(boolean evictExpiredConnections) {
-//		this.evictExpiredConnections = evictExpiredConnections;
-//	}
-
-//	private boolean evictExpiredConnections = false;
-
+    /**
+     * 服务扩展配置
+     */
+    private Map<String,Object> extendConfigs;
 	/**
 	 *
 	 */
@@ -342,7 +336,22 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	}
 
-	public static RequestConfig getDefaultRequestConfig() {
+    public void setExtendConfigs(Map<String, Object> extendConfigs) {
+        this.extendConfigs = extendConfigs;
+    }
+
+    public String getExtendConfig(String key){
+        if(this.extendConfigs == null){
+            return null;
+        }
+        return (String)this.extendConfigs.get(key);
+    }
+
+    public Map<String, Object> getExtendConfigs() {
+        return extendConfigs;
+    }
+
+    public static RequestConfig getDefaultRequestConfig() {
 		return defaultRequestConfig;
 	}
 
@@ -1022,10 +1031,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 if (kerberosConfig != null) {
                     clientConfiguration.setKerberosConfig(kerberosConfig);
                 }
+                Map<String, Object> extendConfigs = ClientConfiguration._getValuesWithPrex(name, "http.extendConfigs", context);
+                if (extendConfigs != null){
+                    clientConfiguration.setExtendConfigs(extendConfigs);
+                }
             }
             else{
                 ClientConfiguration tmp = clientConfigs.get(name);
                 clientConfiguration.setKerberosConfig(tmp.getKerberosConfig());
+                clientConfiguration.setExtendConfigs(tmp.getExtendConfigs());
             }
 
             String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");

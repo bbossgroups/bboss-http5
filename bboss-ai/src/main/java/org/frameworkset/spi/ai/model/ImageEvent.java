@@ -24,16 +24,28 @@ import java.util.List;
  * @Date 2025/10/30
  */
 public class ImageEvent extends MultimodalGeneration{
-   
+   private String contentEvent;
+    private String response ;//-> 当前调用量太大，请稍后重试！
     /**
-     * 图片地址
+     * 下载后加工处理后的图片地址:可能是base64码，也可能是url地址
      */
     private String imageUrl;
+    
+    /**
+     * 生成的图片地址:可能是base64码，也可能是url地址
+     */
+    private String genImageUrl;
+    
     private String imageSize;
     private List<String> imageUrls;
+    private List<String> genImageUrls;
 
     private List<String> imageSizes;
 
+    /**
+     * 获取下载后加工处理后的图片地址:可能是base64码，也可能是url地址
+     * @return
+     */
     public String getImageUrl() {
         return imageUrl;
     }
@@ -42,11 +54,33 @@ public class ImageEvent extends MultimodalGeneration{
         this.imageUrl = imageUrl;
     }
 
+    public void setGenImageUrl(String genImageUrl) {
+        this.genImageUrl = genImageUrl;
+    }
+
+    /**
+     * 获取AI生成的图片地址:可能是base64码，也可能是url地址
+     * @return
+     */
+    public String getGenImageUrl() {
+        return genImageUrl;
+    }
+
     public void addImageUrl(String imageUrl) {
         if(imageUrls == null){
             imageUrls = new ArrayList<>();
         }
         imageUrls.add(imageUrl);
+    }
+    public void addGenImageUrl(String genImageUrl) {
+        if(genImageUrls == null){
+            genImageUrls = new ArrayList<>();
+        }
+        genImageUrls.add(genImageUrl);
+    }
+
+    public List<String> getGenImageUrls() {
+        return genImageUrls;
     }
 
     public List<String> getImageUrls() {
@@ -75,5 +109,21 @@ public class ImageEvent extends MultimodalGeneration{
             imageSizes = new ArrayList<>();
         }
         imageSizes.add(imageSize);
+    }
+
+    public String getContentEvent() {
+        return contentEvent;
+    }
+
+    public void setContentEvent(String contentEvent) {
+        this.contentEvent = contentEvent;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
     }
 }

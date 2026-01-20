@@ -344,6 +344,19 @@ public class HttpRequestProxy {
         return httpGetforString(poolname, url, (String) null, (String) null, (Map) null,responseHandler);
     }
 
+    public static <T> T httpGet(ClientConfiguration clientConfiguration, String url,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        return httpGetforString(clientConfiguration, url, (String) null, (String) null, (Map) null,responseHandler);
+    }
+
+
+    public static <T> T httpGet(String poolname, String url,HttpClientResponseHandler<T> responseHandler, Object params) throws HttpProxyRequestException {
+        return httpGet(  poolname,   url,   (String) null,   (String) null,  params, (Map) null, responseHandler);
+    }
+
+    public static <T> T httpGet(ClientConfiguration clientConfiguration, String url,HttpClientResponseHandler<T> responseHandler, Object params) throws HttpProxyRequestException {
+        return httpGet(  clientConfiguration,   url,   (String) null,   (String) null,  params, (Map) null, responseHandler);
+    }
+
     public static <T> T httpGet(String poolname, String url,Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpGetforString(poolname, url, (String) null, (String) null, headers,responseHandler);
     }

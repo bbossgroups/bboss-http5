@@ -19,13 +19,19 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.material.DownImageBase64HttpClientResponseHandler;
+import org.frameworkset.spi.ai.material.DownImageFileHttpClientResponseHandler;
+import org.frameworkset.spi.ai.model.AIConstants;
+import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ServerEvent;
 import org.frameworkset.spi.ai.model.StreamData;
 import org.frameworkset.spi.reactor.FluxSinkStatus;
 import org.frameworkset.spi.reactor.ReactorCallException;
 import org.frameworkset.spi.reactor.StreamDataHandler;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
@@ -44,7 +50,18 @@ public class AIResponseUtil {
  
 
 
-  
+  public static HttpClientResponseHandler<String>  buildDownImageHttpClientResponseHandler(ClientConfiguration config, ImageAgentMessage imageAgentMessage, String imageUrl){
+      String type  = imageAgentMessage.getStoreImageType();
+      HttpClientResponseHandler<String> handler = null;
+      if(type == null || type.equals(AIConstants.STOREIMAGETYPE_BASE64)){
+          handler = new DownImageBase64HttpClientResponseHandler();
+      }
+      else if(type.equals(AIConstants.STOREIMAGETYPE_FILE)){
+          handler = new DownImageFileHttpClientResponseHandler( config,imageAgentMessage,  imageUrl);
+      }
+      return handler;
+      
+  }
 
   
 

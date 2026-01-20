@@ -16,10 +16,13 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.material.GenImageFileBase64Download;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
+import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +36,15 @@ import java.util.Map;
  */
 public abstract class AgentAdapter {
     private org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AgentAdapter.class);
+    protected GenFileDownload genImageFileBase64Download;
+
+    protected GenFileDownload genAudioFileDownload;
+
+    protected GenFileDownload genVidioFileDownload;
+    protected AgentAdapter initAgentAdapter(){
+        genImageFileBase64Download = new GenImageFileBase64Download();
+        return this;
+    }
     /**
      * 构建生成图片请求参数
      * @param imageAgentMessage
@@ -199,15 +211,21 @@ public abstract class AgentAdapter {
         }
         return requestMap;
     }
-    public abstract ImageEvent buildGenImageResponse(Map imageData);
+    public abstract ImageEvent buildGenImageResponse(ClientConfiguration config, ImageAgentMessage imageAgentMessage,Map imageData);
    
-    public Object buildGenImageRequestParameter(Object imageAgentMessage){
+    public Object buildGenImageRequestParameter(ClientConfiguration clientConfiguration, Object imageAgentMessage){
         if(imageAgentMessage instanceof ImageAgentMessage){
-            return buildGenImageRequestMap((ImageAgentMessage)imageAgentMessage);
+            ImageAgentMessage temp = (ImageAgentMessage)imageAgentMessage;
+            imageAgentMessage = buildGenImageRequestMap(temp);
+            if(temp.getGenImageStoreDir() == null)
+                temp.setGenImageStoreDir(clientConfiguration.getExtendConfig("genImageStoreDir"));
+            if(temp.getEndpoint() == null)
+                temp.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
+            if(temp.getStoreImageType() == null)
+                temp.setStoreImageType(clientConfiguration.getExtendConfig("storeImageType"));
         }
-        else{
-            return imageAgentMessage;
-        }
+        return imageAgentMessage;
+        
     }
     
  

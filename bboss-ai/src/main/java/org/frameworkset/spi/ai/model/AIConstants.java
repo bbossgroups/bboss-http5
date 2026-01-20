@@ -36,5 +36,7 @@ public class AIConstants {
 
     public static final String AI_CHAT_REQUEST_POST_FORM = "postForm";
     
+    public static final String STOREIMAGETYPE_BASE64 = "base64";
+    public static final String STOREIMAGETYPE_FILE = "file";
 
 }

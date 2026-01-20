@@ -16,11 +16,10 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.model.AgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
 import org.frameworkset.spi.ai.util.MessageBuilder;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.*;
 
@@ -47,7 +46,7 @@ public class QwenAgentAdapter extends AgentAdapter{
         // 构建消息历史列表，包含之前的会话记忆
 
         List<Map<String, Object>> messages = new ArrayList<>();
-        Map<String, Object> userMessage = MessageBuilder.buildGenImageMessage(imageAgentMessage.getMessage());
+        Map<String, Object> userMessage = MessageBuilder.buildGenImageMessage(imageAgentMessage);
         messages.add(userMessage);
         input.put("messages", messages);
         requestMap.put("input", input);
@@ -61,17 +60,21 @@ public class QwenAgentAdapter extends AgentAdapter{
         Map parameters = imageAgentMessage.getParameters();
         if(SimpleStringUtil.isEmpty( parameters)){
             // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
-            parameters = new LinkedHashMap();
-            parameters.put("negative_prompt","");
-            parameters.put("prompt_extend",true);
-            parameters.put("watermark",false);
-            parameters.put("size","1328*1328");
+//            parameters = new LinkedHashMap();
+//            parameters.put("negative_prompt","");
+//            parameters.put("prompt_extend",true);
+//            parameters.put("watermark",false);
+//            parameters.put("size","1328*1328");
         }
-        requestMap.put("parameters", parameters);
+        else{
+            requestMap.put("parameters", parameters);
+        }
+        
+       
         
         return requestMap;
     }
-    public ImageEvent buildGenImageResponse(Map imageData){
+    public ImageEvent buildGenImageResponse(ClientConfiguration config,ImageAgentMessage imageAgentMessage, Map imageData){
         Map output = (Map)imageData.get("output");
         List choices = (List)output.get("choices");
         if(choices == null || choices.size() == 0)
@@ -90,13 +93,15 @@ public class QwenAgentAdapter extends AgentAdapter{
                     Map image = (Map) imageContentData.get(0);
                     String imageUrl = (String) image.get("image");
 
-                    imageEvent.setImageUrl(imageUrl);
+                    imageEvent.setGenImageUrl(imageUrl);
+                    imageEvent.setImageUrl(genImageFileBase64Download.downloadImage(config,imageAgentMessage,null,imageUrl));
                 }
                 else{
                     for(int i = 0; i < size; i++){
                         Map image = (Map) imageContentData.get(i);
                         String imageUrl = (String) image.get("image");
-                        imageEvent.addImageUrl(imageUrl);
+                        imageEvent.addGenImageUrl(imageUrl);
+                        imageEvent.addImageUrl(genImageFileBase64Download.downloadImage(config,  imageAgentMessage,null,imageUrl));
                     }
                 }
                 imageEvent.setFinishReason(finishReason);

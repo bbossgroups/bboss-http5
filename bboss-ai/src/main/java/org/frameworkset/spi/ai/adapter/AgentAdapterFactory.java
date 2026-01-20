@@ -31,16 +31,16 @@ import java.util.Map;
 public class AgentAdapterFactory {
     private static Map<String,AgentAdapter> agentAdapters = new LinkedHashMap<>();
     static{
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_DOUBAO,new DoubaoAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_QWEN,new QwenAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_DEEPSEEK,new DeepseekAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_KIMI,new KimiAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_NONE,new NoneAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_SILICONFLOW,new SiliconflowAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_OPENAI,new OpenaiAgentAdapter());
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_BAIDU,new BaiduAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_DOUBAO,new DoubaoAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_QWEN,new QwenAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_DEEPSEEK,new DeepseekAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_KIMI,new KimiAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_NONE,new NoneAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_SILICONFLOW,new SiliconflowAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_OPENAI,new OpenaiAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_BAIDU,new BaiduAgentAdapter().initAgentAdapter());
 
-        agentAdapters.put(AIConstants.AI_MODEL_TYPE_JIUTIAN,new JiutianAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_JIUTIAN,new JiutianAgentAdapter().initAgentAdapter());
     }
     
     public static AgentAdapter getAgentAdapter(String modelType) {
