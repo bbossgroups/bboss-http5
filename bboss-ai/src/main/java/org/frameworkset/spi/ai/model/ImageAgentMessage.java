@@ -19,22 +19,15 @@ import org.frameworkset.spi.ai.material.StoreFilePathFunction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 图片生成报文
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class ImageAgentMessage extends AgentMessage<ImageAgentMessage>{
-    /**
-     * 图片生成存储目录
-     */
-    private String genImageStoreDir;
-    private String endpoint;
+public class ImageAgentMessage extends StoreAgentMessage<ImageAgentMessage>{
+   
     private String storeImageType ;
-    private StoreFilePathFunction storeFilePathFunction;
-     
     private List<String> imageUrls;
     public ImageAgentMessage setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
@@ -52,37 +45,7 @@ public class ImageAgentMessage extends AgentMessage<ImageAgentMessage>{
     public List<String> getImageUrls() {
         return imageUrls;
     }
-    public String getStoreFilePath() {
-        return storeFilePath;
-    }
-
-    public ImageAgentMessage setStoreFilePath(String storeFilePath) {
-        this.storeFilePath = storeFilePath;
-        return this;
-    }
-
-    /**
-     * 存储图片文件相对路径，包含名称
-     */
-    private String storeFilePath;
-
-    public String getGenImageStoreDir() {
-        return genImageStoreDir;
-    }
-
-    public ImageAgentMessage setGenImageStoreDir(String genImageStoreDir) {
-        this.genImageStoreDir = genImageStoreDir;
-        return this;
-    }
-
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    public ImageAgentMessage setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-        return this;
-    }
+     
 
     public String getStoreImageType() {
         return storeImageType;
@@ -93,13 +56,5 @@ public class ImageAgentMessage extends AgentMessage<ImageAgentMessage>{
         return this;
     }
 
-
-    public StoreFilePathFunction getStoreFilePathFunction() {
-        return storeFilePathFunction;
-    }
-
-    public ImageAgentMessage setStoreFilePathFunction(StoreFilePathFunction storeFilePathFunction) {
-        this.storeFilePathFunction = storeFilePathFunction;
-        return this;
-    }
+ 
 }

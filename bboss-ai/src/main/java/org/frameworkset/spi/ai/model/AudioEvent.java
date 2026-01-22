@@ -20,11 +20,22 @@ package org.frameworkset.spi.ai.model;
  * @Date 2025/11/4
  */
 public class AudioEvent  extends MultimodalGeneration{
+    /**
+     * 下载本地音频文件地址或者基于endpoint合成的新音频文件地址
+     */
     private String audioUrl;
     private String audioBase64;
+    /**
+     * 模型生成的音频文件url地址
+     */
+    private String genAudioUrl;
 
     public String getAudioUrl() {
         return audioUrl;
+    }
+
+    public void setGenAudioUrl(String genAudioUrl) {
+        this.genAudioUrl = genAudioUrl;
     }
 
     public void setAudioUrl(String audioUrl) {

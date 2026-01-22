@@ -23,11 +23,8 @@ import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.material.DownImageBase64HttpClientResponseHandler;
-import org.frameworkset.spi.ai.material.DownImageFileHttpClientResponseHandler;
-import org.frameworkset.spi.ai.model.AIConstants;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ServerEvent;
-import org.frameworkset.spi.ai.model.StreamData;
+import org.frameworkset.spi.ai.material.DownFileHttpClientResponseHandler;
+import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.reactor.FluxSinkStatus;
 import org.frameworkset.spi.reactor.ReactorCallException;
 import org.frameworkset.spi.reactor.StreamDataHandler;
@@ -53,15 +50,22 @@ public class AIResponseUtil {
   public static HttpClientResponseHandler<String>  buildDownImageHttpClientResponseHandler(ClientConfiguration config, ImageAgentMessage imageAgentMessage, String imageUrl){
       String type  = imageAgentMessage.getStoreImageType();
       HttpClientResponseHandler<String> handler = null;
-      if(type == null || type.equals(AIConstants.STOREIMAGETYPE_BASE64)){
+      if(type == null || type.equals(AIConstants.STORETYPE_BASE64) || type.equals(AIConstants.STORETYPE_URL)){
           handler = new DownImageBase64HttpClientResponseHandler();
       }
-      else if(type.equals(AIConstants.STOREIMAGETYPE_FILE)){
-          handler = new DownImageFileHttpClientResponseHandler( config,imageAgentMessage,  imageUrl);
+      else if(type.equals(AIConstants.STORETYPE_FILE)){
+          handler = new DownFileHttpClientResponseHandler( config,imageAgentMessage,  imageUrl);
       }
       return handler;
       
   }
+
+    public static HttpClientResponseHandler<String>  buildDownAudioHttpClientResponseHandler(ClientConfiguration config, AudioAgentMessage audioAgentMessage, String audioUrl){
+         
+        return new DownFileHttpClientResponseHandler( config,audioAgentMessage,  audioUrl);
+        
+
+    }
 
   
 

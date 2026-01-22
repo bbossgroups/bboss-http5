@@ -16,9 +16,8 @@ package org.frameworkset.spi.ai.material;
  */
 
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.frameworkset.spi.ai.model.AudioAgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.material.DownImageBase64HttpClientResponseHandler;
-import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
@@ -30,7 +29,7 @@ import java.util.Map;
  * @author biaoping.yin
  * @Date 2026/1/20
  */
-public class JiutianGenImageFileBase64Download implements GenFileDownload {
+public class JiutianGenFileDownload implements GenFileDownload {
 
 //    @Override
 //    public String downloadImage(ClientConfiguration config, String imageUrl) {
@@ -66,6 +65,11 @@ public class JiutianGenImageFileBase64Download implements GenFileDownload {
         HttpClientResponseHandler<String> httpClientResponseHandler = AIResponseUtil.buildDownImageHttpClientResponseHandler(config,imageAgentMessage,imageUrl);
         
         return HttpRequestProxy.httpGet(config, downUrl, httpClientResponseHandler, params);
+    }
+
+    @Override
+    public String downloadAudio(ClientConfiguration config, AudioAgentMessage audioAgentMessage, String downUrl, String audioUrl) {
+        return null;
     }
 
 }

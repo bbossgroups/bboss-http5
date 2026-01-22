@@ -40,6 +40,25 @@ public class AIAgent {
     public ImageEvent genImage(String url,ImageAgentMessage imageAgentMessage){
         return AIAgentUtil.multimodalImageGeneration(url,imageAgentMessage);
     }
+    /**
+     * 调用音频合成模型，生成音频
+     * @param url
+     * @param audioAgentMessage
+     * @return
+     */
+    public AudioEvent genAudio(String url, AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.multimodalAudioGeneration(url,audioAgentMessage);
+    }
+    /**
+     * 调用音频合成模型，生成音频
+     * @param maasName
+     * @param url
+     * @param audioAgentMessage
+     * @return
+     */
+    public AudioEvent genAudio(String maasName, String url, AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.multimodalAudioGeneration(maasName,url,audioAgentMessage);
+    }
 
     /**
      * 实现流式图片识别处理

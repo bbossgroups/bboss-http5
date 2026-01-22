@@ -153,30 +153,37 @@ public class AIAgentUtil {
      * @return
      */
     public static AudioEvent multimodalAudioGeneration(String poolName, String url, Object message) {
-        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
-        Map output = (Map)data.get("output");
-        Map audio = (Map)output.get("audio");
-        String finishReason = (String)output.get("finish_reason");
 
-        if(audio == null && finishReason == null)
-            return null;
-        AudioEvent audioEvent = new AudioEvent();
-        audioEvent.setFinishReason(finishReason);
-        String audioUrl = (String)audio.get("url");
-        String auditData = (String)audio.get("data");
-        Object expiresAt_ = audio.get("expires_at");
-        if(expiresAt_ != null) {
-            if (expiresAt_ instanceof Long) {
-                audioEvent.setExpiresAt((Long) expiresAt_);
-            } else {
-                audioEvent.setExpiresAt((Integer) expiresAt_);
-            }
-        }
-        audioEvent.setAudioBase64(auditData);
-        audioEvent.setAudioUrl(audioUrl);
-
-
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
+        Object newmessage = agentAdapter.buildGenAudioRequestParameter(config,message);
+        Map data = HttpRequestProxy.sendJsonBody(config,newmessage,url,Map.class);
+        AudioEvent audioEvent = agentAdapter.buildGenAudioResponse(config,(AudioAgentMessage)message, data);
         return audioEvent;
+//        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
+//        Map output = (Map)data.get("output");
+//        Map audio = (Map)output.get("audio");
+//        String finishReason = (String)output.get("finish_reason");
+//
+//        if(audio == null && finishReason == null)
+//            return null;
+//        AudioEvent audioEvent = new AudioEvent();
+//        audioEvent.setFinishReason(finishReason);
+//        String audioUrl = (String)audio.get("url");
+//        String auditData = (String)audio.get("data");
+//        Object expiresAt_ = audio.get("expires_at");
+//        if(expiresAt_ != null) {
+//            if (expiresAt_ instanceof Long) {
+//                audioEvent.setExpiresAt((Long) expiresAt_);
+//            } else {
+//                audioEvent.setExpiresAt((Integer) expiresAt_);
+//            }
+//        }
+//        audioEvent.setAudioBase64(auditData);
+//        audioEvent.setAudioUrl(audioUrl);
+
+
+//        return audioEvent;
     }
 
     /**

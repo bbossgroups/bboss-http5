@@ -35,8 +35,33 @@ public class AIConstants {
 
 
     public static final String AI_CHAT_REQUEST_POST_FORM = "postForm";
-    
-    public static final String STOREIMAGETYPE_BASE64 = "base64";
-    public static final String STOREIMAGETYPE_FILE = "file";
+
+    /**
+     * file: 下载到本地目录
+     * storeImageType = file
+     * base64: 下载为base64编码
+     * #storeImageType = base64  
+     * url: 不下载，不适用于九天图片生成模型
+     * #storeImageType = url
+     */
+    public static final String STORETYPE_BASE64 = "base64";
+    /**
+     * file: 下载到本地目录
+     * storeImageType = file
+     * base64: 下载为base64编码
+     * #storeImageType = base64  
+     * url: 不下载，不适用于九天图片生成模型
+     * #storeImageType = url
+     */
+    public static final String STORETYPE_FILE = "file";
+    /**
+     * file: 下载到本地目录
+     * storeImageType = file
+     * base64: 下载为base64编码
+     * #storeImageType = base64  
+     * url: 不下载，不适用于九天图片生成模型
+     * #storeImageType = url
+     */
+    public static final String STORETYPE_URL = "url";
 
 }

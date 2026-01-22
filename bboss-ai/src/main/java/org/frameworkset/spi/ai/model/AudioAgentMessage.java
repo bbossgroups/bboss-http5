@@ -1,4 +1,4 @@
-package org.frameworkset.spi.ai.material;
+package org.frameworkset.spi.ai.model;
 /**
  * Copyright 2026 bboss
  * <p>
@@ -15,16 +15,26 @@ package org.frameworkset.spi.ai.material;
  * limitations under the License.
  */
 
-import org.frameworkset.spi.ai.model.AudioAgentMessage;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.remote.http.ClientConfiguration;
-
 /**
+ * 语音生成模型消息
  * @author biaoping.yin
- * @Date 2026/1/20
+ * @Date 2026/1/4
  */
-public interface GenFileDownload {
+public class AudioAgentMessage extends StoreAgentMessage<AudioAgentMessage> {
+    /**
+     * 存储音频文件类型:
+     * file 下载文件
+     * url 不下载文件
+     */
+    private String storeAudioType;
 
-    public String downloadImage(ClientConfiguration config, ImageAgentMessage imageAgentMessage, String downUrl, String imageUrl);
-    public String downloadAudio(ClientConfiguration config, AudioAgentMessage audioAgentMessage, String downUrl, String audioUrl);
+    
+    public String getStoreAudioType() {
+        return storeAudioType;
+    }
+
+    public AudioAgentMessage setStoreAudioType(String storeAudioType) {
+        this.storeAudioType = storeAudioType;
+        return this;
+    }
 }

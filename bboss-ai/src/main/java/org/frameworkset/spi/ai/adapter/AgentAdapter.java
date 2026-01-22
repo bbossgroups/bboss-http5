@@ -16,7 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.material.GenImageFileBase64Download;
+import org.frameworkset.spi.ai.material.GenMaterialFileDownload;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.material.GenFileDownload;
@@ -36,13 +36,11 @@ import java.util.Map;
  */
 public abstract class AgentAdapter {
     private org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AgentAdapter.class);
-    protected GenFileDownload genImageFileBase64Download;
+    protected GenFileDownload genFileDownload;
 
-    protected GenFileDownload genAudioFileDownload;
-
-    protected GenFileDownload genVidioFileDownload;
+ 
     protected AgentAdapter initAgentAdapter(){
-        genImageFileBase64Download = new GenImageFileBase64Download();
+        genFileDownload = new GenMaterialFileDownload();
         return this;
     }
     /**
@@ -217,8 +215,8 @@ public abstract class AgentAdapter {
         if(imageAgentMessage instanceof ImageAgentMessage){
             ImageAgentMessage temp = (ImageAgentMessage)imageAgentMessage;
             imageAgentMessage = buildGenImageRequestMap(temp);
-            if(temp.getGenImageStoreDir() == null)
-                temp.setGenImageStoreDir(clientConfiguration.getExtendConfig("genImageStoreDir"));
+            if(temp.getGenFileStoreDir() == null)
+                temp.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
             if(temp.getEndpoint() == null)
                 temp.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
             if(temp.getStoreImageType() == null)
@@ -313,5 +311,29 @@ public abstract class AgentAdapter {
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
     }
+    protected abstract Object buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
 
+    /**
+     * 构建音频生成请求参数
+     * @param clientConfiguration
+     * @param audioAgentMessage
+     * @return
+     */
+    public Object buildGenAudioRequestParameter(ClientConfiguration clientConfiguration, Object audioAgentMessage) {
+        if(audioAgentMessage instanceof AudioAgentMessage){
+            AudioAgentMessage temp = (AudioAgentMessage)audioAgentMessage;
+            audioAgentMessage = buildGenAudioRequestMap(temp);
+            if(temp.getGenFileStoreDir() == null)
+                temp.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
+            if(temp.getEndpoint() == null)
+                temp.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
+            if(temp.getStoreAudioType() == null){
+                temp.setStoreAudioType(clientConfiguration.getExtendConfig("storeAudioType"));
+            }
+           
+        }
+        return audioAgentMessage;
+    }
+
+    public abstract AudioEvent buildGenAudioResponse(ClientConfiguration config, AudioAgentMessage message, Map data);
 }

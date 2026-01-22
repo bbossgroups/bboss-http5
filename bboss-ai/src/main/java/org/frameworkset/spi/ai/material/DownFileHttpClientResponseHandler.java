@@ -19,25 +19,23 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
-import org.frameworkset.spi.ai.model.ChatObject;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
+import org.frameworkset.spi.ai.model.StoreAgentMessage;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.io.*;
-import java.util.Base64;
 
 /**
  * @author biaoping.yin
  * @Date 2026/1/20
  */
-public class DownImageFileHttpClientResponseHandler implements HttpClientResponseHandler<String> {
+public class DownFileHttpClientResponseHandler implements HttpClientResponseHandler<String> {
     private ClientConfiguration clientConfiguration;
-    private String imageUrl;
-    private ImageAgentMessage imageAgentMessage;
-    public DownImageFileHttpClientResponseHandler(ClientConfiguration clientConfiguration, ImageAgentMessage imageAgentMessage, String imageUrl) {
+    private String url;
+    private StoreAgentMessage storeAgentMessage;
+    public DownFileHttpClientResponseHandler(ClientConfiguration clientConfiguration, StoreAgentMessage storeAgentMessage, String url) {
         this.clientConfiguration = clientConfiguration;
-        this.imageUrl = imageUrl;
-        this.imageAgentMessage = imageAgentMessage;
+        this.url = url;
+        this.storeAgentMessage = storeAgentMessage;
 
     }
 
@@ -45,13 +43,13 @@ public class DownImageFileHttpClientResponseHandler implements HttpClientRespons
     public String handleResponse(ClassicHttpResponse response) throws HttpException, IOException {
         if (response.getCode() == 200) {
             String storeFilePath = null;
-            if(imageAgentMessage.getStoreFilePathFunction() != null){
-                storeFilePath = imageAgentMessage.getStoreFilePathFunction().getStoreFilePath(imageUrl);
+            if(storeAgentMessage.getStoreFilePathFunction() != null){
+                storeFilePath = storeAgentMessage.getStoreFilePathFunction().getStoreFilePath(url);
             }
             else{
-                storeFilePath = imageAgentMessage.getStoreFilePath();
+                storeFilePath = storeAgentMessage.getStoreFilePath();
             }
-            String targetPath = generateFilePath(imageUrl,storeFilePath); // 根据URL生成目标文件路径
+            String targetPath = generateFilePath(url,storeFilePath); // 根据URL生成目标文件路径
             File file = new File(targetPath);
             if(!file.getParentFile().exists())
                 file.getParentFile().mkdirs();
@@ -65,20 +63,20 @@ public class DownImageFileHttpClientResponseHandler implements HttpClientRespons
                 }
                 outputStream.flush();
             }
-            if(imageAgentMessage.getEndpoint() == null) {
+            if(storeAgentMessage.getEndpoint() == null) {
                 return targetPath; // 返回下载文件路径
             }
             else{
-                return SimpleStringUtil.getRealPath(imageAgentMessage.getEndpoint(),storeFilePath);
+                return SimpleStringUtil.getRealPath(storeAgentMessage.getEndpoint(),storeFilePath);
             }
         } else {
             throw new IOException("Download failed: " + response.getCode());
         }
     }
    
-    private String generateFilePath(String imageUrl,String storeFilePath) {
+    private String generateFilePath(String url,String storeFilePath) {
         // 根据imageUrl生成本地文件路径
-        String fileName = SimpleStringUtil.getRealPath(imageAgentMessage.getGenImageStoreDir(),storeFilePath);
+        String fileName = SimpleStringUtil.getRealPath(storeAgentMessage.getGenFileStoreDir(),storeFilePath);
         return fileName;
     }
 

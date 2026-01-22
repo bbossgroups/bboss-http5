@@ -16,6 +16,8 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.frameworkset.spi.ai.model.AudioAgentMessage;
+import org.frameworkset.spi.ai.model.AudioEvent;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
 import org.frameworkset.spi.ai.util.MessageBuilder;
@@ -29,8 +31,55 @@ import java.util.*;
  * @Date 2026/1/4
  */
 public class QwenAgentAdapter extends AgentAdapter{
-    
-   
+    public AudioEvent buildGenAudioResponse(ClientConfiguration config, AudioAgentMessage message, Map data){
+        Map output = (Map)data.get("output");
+        Map audio = (Map)output.get("audio");
+        String finishReason = (String)output.get("finish_reason");
+
+        if(audio == null && finishReason == null)
+            return null;
+        AudioEvent audioEvent = new AudioEvent();
+        audioEvent.setFinishReason(finishReason);
+        String audioUrl = (String)audio.get("url");
+        String auditData = (String)audio.get("data");
+        Object expiresAt_ = audio.get("expires_at");
+        if(expiresAt_ != null) {
+            if (expiresAt_ instanceof Long) {
+                audioEvent.setExpiresAt((Long) expiresAt_);
+            } else {
+                audioEvent.setExpiresAt((Integer) expiresAt_);
+            }
+        }
+        audioEvent.setAudioBase64(auditData);
+
+        if(audioUrl != null) {
+            audioEvent.setGenAudioUrl(audioUrl);
+            audioEvent.setAudioUrl(genFileDownload.downloadAudio(config, message, null, audioUrl));
+        }
+        return audioEvent;
+    }
+    @Override
+    protected Object buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage) {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", audioAgentMessage.getModel());
+
+
+
+
+        Map<String,Object> inputVoice = new LinkedHashMap();
+        inputVoice.put("text",audioAgentMessage.getMessage());
+        if(audioAgentMessage.getParameters() != null){
+            inputVoice.putAll(audioAgentMessage.getParameters());
+        }
+        else{
+            inputVoice.put("voice","Cherry");
+            inputVoice.put("language_type","Chinese");
+        }
+        
+
+        requestMap.put("input",inputVoice);
+        return requestMap;
+    }
 
     @Override
     protected Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage) {
@@ -94,14 +143,14 @@ public class QwenAgentAdapter extends AgentAdapter{
                     String imageUrl = (String) image.get("image");
 
                     imageEvent.setGenImageUrl(imageUrl);
-                    imageEvent.setImageUrl(genImageFileBase64Download.downloadImage(config,imageAgentMessage,null,imageUrl));
+                    imageEvent.setImageUrl(genFileDownload.downloadImage(config,imageAgentMessage,null,imageUrl));
                 }
                 else{
                     for(int i = 0; i < size; i++){
                         Map image = (Map) imageContentData.get(i);
                         String imageUrl = (String) image.get("image");
                         imageEvent.addGenImageUrl(imageUrl);
-                        imageEvent.addImageUrl(genImageFileBase64Download.downloadImage(config,  imageAgentMessage,null,imageUrl));
+                        imageEvent.addImageUrl(genFileDownload.downloadImage(config,  imageAgentMessage,null,imageUrl));
                     }
                 }
                 imageEvent.setFinishReason(finishReason);
@@ -109,4 +158,6 @@ public class QwenAgentAdapter extends AgentAdapter{
         }
         return imageEvent;
     }
+
+
 }

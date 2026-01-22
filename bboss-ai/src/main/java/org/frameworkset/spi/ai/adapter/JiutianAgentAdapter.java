@@ -16,7 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.material.JiutianGenImageFileBase64Download;
+import org.frameworkset.spi.ai.material.JiutianGenFileDownload;
 import org.frameworkset.spi.ai.model.AIConstants;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
@@ -41,7 +41,7 @@ public class JiutianAgentAdapter extends QwenAgentAdapter{
 
     @Override
     protected AgentAdapter initAgentAdapter(){
-        genImageFileBase64Download = new JiutianGenImageFileBase64Download();
+        genFileDownload = new JiutianGenFileDownload();
         return this;
     }
     
@@ -108,14 +108,14 @@ public class JiutianAgentAdapter extends QwenAgentAdapter{
                 Map image = (Map) imageContentData.get(0);
                 String imageUrl = (String) image.get("url");
                 imageEvent.setGenImageUrl(imageUrl);
-                imageEvent.setImageUrl(genImageFileBase64Download.downloadImage(config,  imageAgentMessage,downImageUrl,imageUrl));
+                imageEvent.setImageUrl(genFileDownload.downloadImage(config,  imageAgentMessage,downImageUrl,imageUrl));
 
             } else {
                 for (int i = 0; i < size; i++) {
                     Map image = (Map) imageContentData.get(i);
                     String imageUrl = (String) image.get("url");
                     imageEvent.addImageUrl(imageUrl);
-                    imageEvent.addImageUrl(genImageFileBase64Download.downloadImage(config,  imageAgentMessage,downImageUrl,imageUrl));
+                    imageEvent.addImageUrl(genFileDownload.downloadImage(config,  imageAgentMessage,downImageUrl,imageUrl));
                 }
             }
             imageEvent.setFinishReason(finishReason);

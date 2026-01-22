@@ -15,6 +15,8 @@ package org.frameworkset.spi.ai.material;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.model.AIConstants;
+import org.frameworkset.spi.ai.model.AudioAgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
@@ -24,39 +26,25 @@ import org.frameworkset.spi.remote.http.HttpRequestProxy;
  * @author biaoping.yin
  * @Date 2026/1/20
  */
-public class GenImageFileBase64Download implements GenFileDownload {
+public class GenMaterialFileDownload implements GenFileDownload {
 
-//    @Override
-//    public String downloadImage(ClientConfiguration config, String imageUrl) {
-//        String downUrl = "/largemodel/moma/api/v1/fs/getFile";
-//        Map<String,Object> params = new LinkedHashMap<>();
-//        params.put("key",imageUrl);
-//        StringBuilder url = new StringBuilder();
-//        HttpRequestProxy.httpGet(config,downUrl,new HttpClientResponseHandler<Void>(){
-//            /**
-//             * Processes an {@link ClassicHttpResponse} and returns some value
-//             * corresponding to that response.
-//             *
-//             * @param response The response to process
-//             * @return A value determined by the response
-//             * @throws IOException   in case of a problem or the connection was aborted
-//             * @throws HttpException in case of an HTTP protocol violation.
-//             */
-//            @Override
-//            public Void handleResponse(ClassicHttpResponse response) throws HttpException, IOException {
-//                //将响应作为字节流写入一个文件中
-//                
-//                return null;
-//            }
-//
-//        },params);
-//    }
+
     
     @Override
     public String downloadImage(ClientConfiguration config, ImageAgentMessage imageAgentMessage, String downUrl, String imageUrl) {
     //    String downUrl = "/largemodel/moma/api/v1/fs/getFile";
-        
+        if(imageAgentMessage.getStoreImageType() == null || imageAgentMessage.getStoreImageType().equals(AIConstants.STORETYPE_URL)){
+            return imageUrl;
+        }
         return HttpRequestProxy.httpGet(config, imageUrl, AIResponseUtil.buildDownImageHttpClientResponseHandler(config,imageAgentMessage,imageUrl));
+    }
+
+    @Override
+    public String downloadAudio(ClientConfiguration config, AudioAgentMessage audioAgentMessage, String downUrl, String audioUrl) {
+        if(audioAgentMessage.getStoreAudioType() == null || audioAgentMessage.getStoreAudioType().equals(AIConstants.STORETYPE_URL)){
+            return audioUrl;
+        }
+        return HttpRequestProxy.httpGet(config, audioUrl, AIResponseUtil.buildDownAudioHttpClientResponseHandler(config,audioAgentMessage,audioUrl));
     }
 
 }

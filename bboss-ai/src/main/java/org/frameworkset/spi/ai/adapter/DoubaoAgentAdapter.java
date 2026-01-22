@@ -16,7 +16,6 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.model.AgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
@@ -124,7 +123,7 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
 
             
             imageEvent.setGenImageUrl(url);
-            imageEvent.setImageUrl(genImageFileBase64Download.downloadImage(config,   imageAgentMessage,null,url));
+            imageEvent.setImageUrl(genFileDownload.downloadImage(config,   imageAgentMessage,null,url));
             imageEvent.setImageSize(size);
             return imageEvent;
         }
@@ -133,7 +132,7 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
                 Map imgInfo = (Map) data.get(i);
                 String url = (String) imgInfo.get("url");
                 String size = (String) imgInfo.get("size");
-                imageEvent.addImageUrl(genImageFileBase64Download.downloadImage(config,   imageAgentMessage,null,url));
+                imageEvent.addImageUrl(genFileDownload.downloadImage(config,   imageAgentMessage,null,url));
                 imageEvent.addImageSize(size);
                 imageEvent.addGenImageUrl(url);
             }
