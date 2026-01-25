@@ -16,11 +16,11 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.model.AudioAgentMessage;
-import org.frameworkset.spi.ai.model.AudioEvent;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.ai.model.*;
+import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
+import org.frameworkset.spi.reactor.BaseStreamDataHandler;
+import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.*;
@@ -58,8 +58,34 @@ public class QwenAgentAdapter extends AgentAdapter{
         }
         return audioEvent;
     }
+
+    protected SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){
+        return new SSEHeaderSetFunction() {
+            @Override
+            public void setSSEHeaders(Map headers) {
+
+                headers.put("X-DashScope-SSE", "enable");
+            }
+        };
+    }
+
+    /**
+     * 处理音频识别流数据
+     * {"output":{"audio":{"data":"xxxx",
+     *   "expires_at":1769158890,
+     *   "id":"audio_66356352-8808-49bd-9c9c-d0283a3e2eb1"},
+     *   "finish_reason":"null"},
+     *   "usage":{"characters":53},
+     *   "request_id":"66356352-8808-49bd-9c9c-d0283a3e2eb1"}
+     * @param data
+     * @return
+     */
     @Override
-    protected Object buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage) {
+    public StreamData parseAudioGenStreamContentFromData(String data){
+        return AIResponseUtil.parseQianwenAudioGenStreamContentFromData(data);
+    }
+    @Override
+    protected Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage) {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", audioAgentMessage.getModel());
 

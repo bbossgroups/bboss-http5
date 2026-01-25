@@ -34,6 +34,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class AIAgentUtil {
     public static Flux<String> streamChatCompletion(String poolName,String url,Object chatMessage) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
-        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
         BaseStreamDataHandler<String> streamDataHandler = new BaseStreamDataHandler<String>() {
             @Override
             public boolean handle(String line, FluxSink<String> sink, BooleanWrapperInf firstEventTag) {
@@ -143,7 +144,19 @@ public class AIAgentUtil {
 
         return multimodalImageGeneration(null, url, message) ;
     }
+    /**
+     * 调用音频合成模型，流式生成音频，实时播放
+     * @param poolName
+     * @param url
+     * @param audioAgentMessage
+     * @return
+     */
+    public static Flux<ServerEvent> streamAudioGenerationEvent(String poolName, String url, AudioAgentMessage audioAgentMessage) {       
+      
 
+            return AIAgentUtil.streamChatCompletionEvent(poolName, url, audioAgentMessage);
+            
+    }
 
     /**
      * 调用音频合成模型，生成音频
@@ -152,14 +165,16 @@ public class AIAgentUtil {
      * @param message
      * @return
      */
-    public static AudioEvent multimodalAudioGeneration(String poolName, String url, Object message) {
+    public static AudioEvent multimodalAudioGeneration(String poolName, String url, AudioAgentMessage message) {
+        
+            ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+            AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config, message);
+            Object newmessage = agentAdapter.buildGenAudioRequestParameter(config, message);
 
-        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
-        Object newmessage = agentAdapter.buildGenAudioRequestParameter(config,message);
-        Map data = HttpRequestProxy.sendJsonBody(config,newmessage,url,Map.class);
-        AudioEvent audioEvent = agentAdapter.buildGenAudioResponse(config,(AudioAgentMessage)message, data);
-        return audioEvent;
+            Map data = HttpRequestProxy.sendJsonBody(config, newmessage, url, Map.class);
+            AudioEvent audioEvent = agentAdapter.buildGenAudioResponse(config, message, data);
+            return audioEvent;
+        
 //        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
 //        Map output = (Map)data.get("output");
 //        Map audio = (Map)output.get("audio");
@@ -192,7 +207,7 @@ public class AIAgentUtil {
      * @param message
      * @return
      */
-    public static AudioEvent multimodalAudioGeneration(String url, Object message) {
+    public static AudioEvent multimodalAudioGeneration(String url, AudioAgentMessage message) {
 
         return multimodalAudioGeneration(null, url, message) ;
     }
@@ -209,7 +224,7 @@ public class AIAgentUtil {
     public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object chatMessage) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
-        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
         BaseStreamDataHandler<ServerEvent> streamDataHandler = new BaseStreamDataHandler<ServerEvent>() {
             @Override
             public boolean handle(String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag) {
@@ -250,8 +265,11 @@ public class AIAgentUtil {
                         };
                         if (chatObject.getAIChatRequestType() == null || chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_BODY_JSON)){
                             Map header = new LinkedHashMap();
+                            
                             if (chatObject.isStream()) {
-                                header.put("Accept", "text/event-stream");
+                                chatObject.getSseHeaderSetFunction().setSSEHeaders( header);
+//                                header.put("Accept", "text/event-stream");
+//                                header.put("X-DashScope-SSE", "enable");
                             }
 
                             if (message != null) {
@@ -267,7 +285,8 @@ public class AIAgentUtil {
                         else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
                             Map header = new LinkedHashMap();
                             if (chatObject.isStream()) {
-                                header.put("Accept", "text/event-stream");
+//                                header.put("Accept", "text/event-stream");
+                                chatObject.getSseHeaderSetFunction().setSSEHeaders( header);
                             }
                             data = message;
 
@@ -336,7 +355,7 @@ public class AIAgentUtil {
     public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
-        ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(message);
+        ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(config,message);
         message = chatObject.getMessage();
         String data = null;
 
@@ -378,7 +397,7 @@ public class AIAgentUtil {
     public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
-        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(chatMessage);
+        final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
         streamDataHandler.setStream(chatObject.isStream());
         streamDataHandler.setAgentAdapter(agentAdapter);
         streamDataHandler.setChatObject(chatObject);

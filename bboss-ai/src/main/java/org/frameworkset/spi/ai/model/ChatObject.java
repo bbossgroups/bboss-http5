@@ -17,6 +17,8 @@ package org.frameworkset.spi.ai.model;
 
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
+import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 /**
  * @author biaoping.yin
@@ -26,11 +28,25 @@ public class ChatObject {
     private boolean isStream;
     private Object message;
     private String aiChatRequestType = AIConstants.AI_CHAT_REQUEST_BODY_JSON;
-    
+    private SSEHeaderSetFunction sseHeaderSetFunction;
     private StreamDataBuilder streamDataBuilder;
 
     public String getDoneData(AgentAdapter agentAdapter) {
         return streamDataBuilder.getDoneData(agentAdapter);
+    }
+ 
+
+    public void setSseHeaderSetFunction(SSEHeaderSetFunction sseHeaderSetFunction) {
+        if(sseHeaderSetFunction != null) {
+            this.sseHeaderSetFunction = sseHeaderSetFunction;
+        }
+        else{
+            this.sseHeaderSetFunction = SSEHeaderSetFunction.DEFAULT_SSEHEADERSETFUNCTION;
+        }
+    }
+
+    public SSEHeaderSetFunction getSseHeaderSetFunction() {
+        return sseHeaderSetFunction;
     }
 
     /**

@@ -22,6 +22,8 @@ import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
+import org.frameworkset.spi.reactor.BaseStreamDataHandler;
+import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.ArrayList;
@@ -43,6 +45,11 @@ public abstract class AgentAdapter {
         genFileDownload = new GenMaterialFileDownload();
         return this;
     }
+
+    public GenFileDownload getGenFileDownload() {
+        return genFileDownload;
+    }
+
     /**
      * 构建生成图片请求参数
      * @param imageAgentMessage
@@ -121,6 +128,21 @@ public abstract class AgentAdapter {
     public String getImageParserDoneData(){
         return getDoneData();
     }
+    /**
+     * 处理音频识别流数据
+     * {"output":{"audio":{"data":"xxxx",
+     *   "expires_at":1769158890,
+     *   "id":"audio_66356352-8808-49bd-9c9c-d0283a3e2eb1"},
+     *   "finish_reason":"null"},
+     *   "usage":{"characters":53},
+     *   "request_id":"66356352-8808-49bd-9c9c-d0283a3e2eb1"}
+     * @param data
+     * @return
+     */
+    public StreamData parseAudioGenStreamContentFromData(String data){
+        return AIResponseUtil.parseQianwenAudioGenStreamContentFromData(data);
+    }
+
     /**
      * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
      * LLM和图像识别：data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
@@ -227,9 +249,13 @@ public abstract class AgentAdapter {
     }
     
  
+    protected SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){
+        return SSEHeaderSetFunction.DEFAULT_SSEHEADERSETFUNCTION;
+    }
 
-    public ChatObject buildOpenAIRequestParameter(Object agentMessage){
+    public ChatObject buildOpenAIRequestParameter(ClientConfiguration clientConfiguration,Object agentMessage){
         ChatObject chatObject = new ChatObject();
+        SSEHeaderSetFunction sseHeaderSetFunction = null;
         Map parameters = null;
         Boolean stream = false;
         String aiChatRequestType = null;
@@ -254,6 +280,12 @@ public abstract class AgentAdapter {
                 public String getDoneData(AgentAdapter agentAdapter) {
                     return agentAdapter.getDoneData();
                 }
+
+ 
+                @Override
+                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
+                    
+                }
             };
         }
         else if(agentMessage instanceof ImageVLAgentMessage){
@@ -277,6 +309,44 @@ public abstract class AgentAdapter {
                 public String getDoneData(AgentAdapter agentAdapter) {
                     return agentAdapter.getImageParserDoneData();
                 }
+ 
+                @Override
+                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
+
+                }
+            };
+        }
+        else if(agentMessage instanceof AudioAgentMessage){
+            AudioAgentMessage audioAgentMessage = (AudioAgentMessage)agentMessage;
+            parameters = this._buildGenAudioRequestMap(audioAgentMessage,clientConfiguration);
+            stream = audioAgentMessage.getStream();
+            aiChatRequestType = this.getAIChatRequestType();
+            agentMessage = parameters;
+            sseHeaderSetFunction = getAudioGenSSEHeaderSetFunction();
+            streamDataBuilder = new StreamDataBuilder() {
+                @Override
+                public StreamData build(AgentAdapter agentAdapter, String line) {
+                    return agentAdapter.parseAudioGenStreamContentFromData(line);
+                }
+
+                @Override
+                public boolean isDone(AgentAdapter agentAdapter,String data) {
+                    return agentAdapter.isDone(data);
+                }
+
+                @Override
+                public String getDoneData(AgentAdapter agentAdapter) {
+                    return agentAdapter.getDoneData();
+                }
+ 
+                @Override
+                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
+                    String url = serverEvent.getGenUrl();
+                    if(url != null) {
+                        GenFileDownload genFileDownload = agentAdapter.getGenFileDownload();  
+                        serverEvent.setUrl(genFileDownload.downloadAudio(clientConfiguration, audioAgentMessage, null, url));
+                    }
+                }
             };
         }
         else if(agentMessage instanceof Map){
@@ -297,6 +367,11 @@ public abstract class AgentAdapter {
                 public String getDoneData(AgentAdapter agentAdapter) {
                     return agentAdapter.getDoneData();
                 }
+          
+                @Override
+                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
+
+                }
             };
         }
          
@@ -304,14 +379,26 @@ public abstract class AgentAdapter {
         if(stream == null){
             stream = false;
         }
-       
+        chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);
         chatObject.setAiChatRequestType(aiChatRequestType);
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
     }
-    protected abstract Object buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
+    protected abstract Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
+
+    private Map<String, Object> _buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage,ClientConfiguration clientConfiguration){
+        
+        if(audioAgentMessage.getGenFileStoreDir() == null)
+            audioAgentMessage.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
+        if(audioAgentMessage.getEndpoint() == null)
+            audioAgentMessage.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
+        if(audioAgentMessage.getStoreAudioType() == null){
+            audioAgentMessage.setStoreAudioType(clientConfiguration.getExtendConfig("storeAudioType"));
+        }
+        return buildGenAudioRequestMap(audioAgentMessage);
+    }
 
     /**
      * 构建音频生成请求参数
@@ -322,14 +409,8 @@ public abstract class AgentAdapter {
     public Object buildGenAudioRequestParameter(ClientConfiguration clientConfiguration, Object audioAgentMessage) {
         if(audioAgentMessage instanceof AudioAgentMessage){
             AudioAgentMessage temp = (AudioAgentMessage)audioAgentMessage;
-            audioAgentMessage = buildGenAudioRequestMap(temp);
-            if(temp.getGenFileStoreDir() == null)
-                temp.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
-            if(temp.getEndpoint() == null)
-                temp.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
-            if(temp.getStoreAudioType() == null){
-                temp.setStoreAudioType(clientConfiguration.getExtendConfig("storeAudioType"));
-            }
+            audioAgentMessage = this._buildGenAudioRequestMap(temp,clientConfiguration);
+          
            
         }
         return audioAgentMessage;

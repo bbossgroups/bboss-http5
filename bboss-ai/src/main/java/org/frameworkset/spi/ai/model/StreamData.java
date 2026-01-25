@@ -26,13 +26,28 @@ public class StreamData {
     private String data;
     private  String finishReason;
     private boolean done;
+    private String url;
     
     public StreamData(){
     }
-    public StreamData(int type, String data, String finishReason){
+    public StreamData(int type, String data, String url,String finishReason){
     	this.type = type;
     	this.data = data;
         this.finishReason = finishReason;
+        this.url = url;
+    }
+    public StreamData(int type, String data, String finishReason){
+        this.type = type;
+        this.data = data;
+        this.finishReason = finishReason;
+    }
+
+    public StreamData(int type, String data, String url, String finishReason,boolean done){
+        this.type = type;
+        this.data = data;
+        this.finishReason = finishReason;
+        this.done = done;
+        this.url = url;
     }
     public StreamData(int type, String data, String finishReason,boolean done){
         this.type = type;
@@ -69,4 +84,8 @@ public class StreamData {
     public void setFinishReason(String finishReason) {
         this.finishReason = finishReason;
     }
+    
+    public String getUrl() {
+		return url;
+	}
 }

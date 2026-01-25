@@ -24,6 +24,7 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.material.DownImageBase64HttpClientResponseHandler;
 import org.frameworkset.spi.ai.material.DownFileHttpClientResponseHandler;
+import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.reactor.FluxSinkStatus;
 import org.frameworkset.spi.reactor.ReactorCallException;
@@ -107,6 +108,11 @@ public class AIResponseUtil {
 
     }
 
+    /**
+     * 处理音频识别流数据
+     * @param output
+     * @return
+     */
     private static StreamData parseAudioStreamContentFromData(Map output){
         try {
 
@@ -147,6 +153,49 @@ public class AIResponseUtil {
                     if (logger.isDebugEnabled())
                         logger.debug("choices is not list:{}");
                 }
+            }
+
+        } catch (Exception e) {
+            throw new ReactorCallException("ParseAudioStreamContentFromData failed:",e);
+        }
+        return null;
+    }
+
+    /**
+     * 处理音频识别流数据
+     * {"output":{"audio":{"data":"xxxx",
+     *   "expires_at":1769158890,
+     *   "id":"audio_66356352-8808-49bd-9c9c-d0283a3e2eb1"},
+     *   "finish_reason":"null"},
+     *   "usage":{"characters":53},
+     *   "request_id":"66356352-8808-49bd-9c9c-d0283a3e2eb1"}
+     * @param data
+     * @return
+     */
+    public static StreamData parseQianwenAudioGenStreamContentFromData(String data){
+        try {
+            Map _data = SimpleStringUtil.json2Object(data,Map.class);
+            Map output = (Map)_data.get("output");
+            Map audio = (Map)output.get("audio");
+            String finishReason = (String)output.get("finish_reason");
+            if (audio != null ) {
+                String audioData = (String)audio.get("data");
+                if(SimpleStringUtil.isNotEmpty(audioData)) {
+                    return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
+                }
+                else{
+                    if(finishReason != null && finishReason.equals("stop")) {
+                        String url = (String)audio.get("url");
+                        return new StreamData(ServerEvent.CONTENT, audioData,url, finishReason, true);
+                    }
+                    else {
+                        logger.info("audio data is empty:{},finishReason:{}", audioData, finishReason);
+//                        return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
+                    }
+                }
+            }
+            else{
+                logger.info("audio data is null.");
             }
 
         } catch (Exception e) {
@@ -514,7 +563,10 @@ public class AIResponseUtil {
      * @param firstEventTag
      * @return
      */
-    public static boolean handleServerEventData(AgentAdapter agentAdapter, boolean stream, String line, FluxSink<ServerEvent> sink, BooleanWrapperInf firstEventTag, StreamDataBuilder streamDataBuilder){
+    public static boolean handleServerEventData(AgentAdapter agentAdapter, 
+                                                boolean stream, String line, FluxSink<ServerEvent> sink, 
+                                                BooleanWrapperInf firstEventTag, 
+                                                StreamDataBuilder streamDataBuilder){
         if(logger.isDebugEnabled()){
             logger.debug("line: " + line);
         }
@@ -563,9 +615,14 @@ public class AIResponseUtil {
                     if(!content.isDone()) {
                         serverEvent.setData(content.getData());
                     }
+                   
+                    String url = content.getUrl();
+                    serverEvent.setGenUrl(url);
                     serverEvent.setType(ServerEvent.DATA);
+                    
                     serverEvent.setContentType(content.getType());
                     serverEvent.setDone(content.isDone());
+                    
                     sink.next(serverEvent);
                     return content.isDone();
                 }
@@ -575,10 +632,12 @@ public class AIResponseUtil {
                         firstEventTag.set(false);
                         serverEvent.setFirst(true);
                     }
+                    serverEvent.setGenUrl(content.getUrl());
                     serverEvent.setFinishReason(content.getFinishReason());
                     serverEvent.setType(ServerEvent.DATA);
                     serverEvent.setContentType(content.getType());
                     serverEvent.setDone(content.isDone());
+                    streamDataBuilder.handleServerEvent(agentAdapter,serverEvent);
                     sink.next(serverEvent);
                     return content.isDone();
                 }

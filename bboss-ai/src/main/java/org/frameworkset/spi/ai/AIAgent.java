@@ -49,6 +49,27 @@ public class AIAgent {
     public AudioEvent genAudio(String url, AudioAgentMessage audioAgentMessage){
         return AIAgentUtil.multimodalAudioGeneration(url,audioAgentMessage);
     }
+
+    /**
+     * 调用音频合成模型，生成音频
+     * @param url
+     * @param audioAgentMessage
+     * @return
+     */
+    public Flux<ServerEvent> streamAudioGen(String url, AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.streamAudioGenerationEvent(null,url,audioAgentMessage);
+    }
+
+    /**
+     * 调用音频合成模型，生成音频
+     * @param maasName
+     * @param url
+     * @param audioAgentMessage
+     * @return
+     */
+    public Flux<ServerEvent> streamAudioGen(String maasName, String url, AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.streamAudioGenerationEvent(maasName,url,audioAgentMessage);
+    }
     /**
      * 调用音频合成模型，生成音频
      * @param maasName

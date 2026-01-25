@@ -19,6 +19,8 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.model.ChatObject;
 
+import java.util.Map;
+
 /**
  * @author biaoping.yin
  * @Date 2025/10/19
@@ -27,6 +29,8 @@ public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
     protected HttpUriRequestBase httpUriRequestBase;
     protected AgentAdapter agentAdapter;
     protected boolean stream;
+   
+ 
     protected ChatObject chatObject;
     public boolean isStream() {
         return stream;
@@ -42,6 +46,8 @@ public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
     public HttpUriRequestBase getHttpUriRequestBase() {
         return httpUriRequestBase;
     }
+    
+     
 
     public void setAgentAdapter(AgentAdapter agentAdapter) {
         this.agentAdapter = agentAdapter;
@@ -59,8 +65,10 @@ public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
 
     public void setChatObject(ChatObject chatObject) {
         this.chatObject = chatObject;
+        
     }
 
+    
 
     public String getDoneData() {
         return chatObject.getDoneData(this.agentAdapter);

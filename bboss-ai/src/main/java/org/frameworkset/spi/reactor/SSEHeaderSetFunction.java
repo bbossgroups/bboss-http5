@@ -1,4 +1,4 @@
-package org.frameworkset.spi.ai.util;
+package org.frameworkset.spi.reactor;
 /**
  * Copyright 2026 bboss
  * <p>
@@ -15,18 +15,18 @@ package org.frameworkset.spi.ai.util;
  * limitations under the License.
  */
 
-import org.frameworkset.spi.ai.adapter.AgentAdapter;
-import org.frameworkset.spi.ai.model.ChatObject;
-import org.frameworkset.spi.ai.model.ServerEvent;
-import org.frameworkset.spi.ai.model.StreamData;
+import java.util.Map;
 
 /**
  * @author biaoping.yin
- * @Date 2026/1/12
+ * @Date 2026/1/23
  */
-public interface StreamDataBuilder {
-    StreamData build(AgentAdapter agentAdapter , String line);
-    boolean isDone(AgentAdapter agentAdapter,String data);
-    String getDoneData(AgentAdapter agentAdapter);
-    void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent);
+public interface SSEHeaderSetFunction {
+    public final static SSEHeaderSetFunction DEFAULT_SSEHEADERSETFUNCTION = new SSEHeaderSetFunction() {
+        @Override
+        public void setSSEHeaders(Map headers) {
+            headers.put("Accept", "text/event-stream");
+        }
+    };
+    void setSSEHeaders(Map headers);
 }
