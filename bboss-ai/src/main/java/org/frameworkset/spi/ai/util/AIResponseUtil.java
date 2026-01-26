@@ -226,6 +226,17 @@ public class AIResponseUtil {
                 Map choice = choices.get(0);
                 String finishReason = (String)choice.get("finish_reason");
                 Map delta = (Map)choice.get("delta");
+                if(delta == null){
+                    if(finishReason != null && finishReason.equals("stop")) {
+
+                        return new StreamData(ServerEvent.CONTENT, (String)null,(String)null, finishReason, true);
+                    }
+                    else {
+                        logger.info("delta is null:{}", data);
+
+                        return null;
+                    }
+                }
                 String audioData = (String)delta.get("content");
                 if(SimpleStringUtil.isNotEmpty(audioData)) {
                     return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
