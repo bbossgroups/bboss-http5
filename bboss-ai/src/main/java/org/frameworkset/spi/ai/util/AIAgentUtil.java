@@ -17,15 +17,19 @@ package org.frameworkset.spi.ai.util;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.ParseException;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.adapter.AgentAdapterFactory;
+import org.frameworkset.spi.ai.material.ReponseStoreFilePathFunction;
+import org.frameworkset.spi.ai.material.StoreFilePathFunction;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.reactor.BaseStreamDataHandler;
 import org.frameworkset.spi.reactor.ReactorCallException;
 import org.frameworkset.spi.remote.http.BaseURLResponseHandler;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
+import org.frameworkset.spi.remote.http.ResponseStatus;
 import org.frameworkset.util.concurrent.BooleanWrapperInf;
 import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
 import org.slf4j.Logger;
@@ -167,14 +171,29 @@ public class AIAgentUtil {
      */
     public static AudioEvent multimodalAudioGeneration(String poolName, String url, AudioAgentMessage message) {
         
-            ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-            AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config, message);
-            Object newmessage = agentAdapter.buildGenAudioRequestParameter(config, message);
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config, message);
+        Object newmessage = agentAdapter.buildGenAudioRequestParameter(config, message);
+        AudioEvent audioEvent = null;
+        try {
+            StoreFilePathFunction storeFilePathFunction = message.getStoreFilePathFunction();
+            if (storeFilePathFunction != null && storeFilePathFunction instanceof ReponseStoreFilePathFunction) {
+                String audioUrl = HttpRequestProxy.sendJsonBody(config, newmessage, url, AIResponseUtil.buildDownAudioHttpClientResponseHandler(config, message));
+                audioEvent = new AudioEvent();
+                audioEvent.setAudioUrl(audioUrl);
 
-            Map data = HttpRequestProxy.sendJsonBody(config, newmessage, url, Map.class);
-            AudioEvent audioEvent = agentAdapter.buildGenAudioResponse(config, message, data);
-            return audioEvent;
-        
+            } else {
+                Map data = HttpRequestProxy.sendJsonBody(config, newmessage, url, Map.class);
+                audioEvent = agentAdapter.buildGenAudioResponse(config, message, data);
+
+            }
+        }
+        catch(Exception e){
+            audioEvent = new AudioEvent();
+            audioEvent.setCode(ResponseStatus.ERROR_CODE);
+            audioEvent.setErrorMessage(SimpleStringUtil.exceptionToString(e));
+        }
+        return audioEvent;
 //        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
 //        Map output = (Map)data.get("output");
 //        Map audio = (Map)output.get("audio");

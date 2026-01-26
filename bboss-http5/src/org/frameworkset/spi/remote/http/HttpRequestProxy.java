@@ -2223,7 +2223,25 @@ public class HttpRequestProxy {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolname);
         return  sendJsonBody(  clientConfiguration,  requestBody,   url,   headers  , responseHandler);
     }
-
+    public static <T> T sendJsonBody(String poolname,Object requestBody, String url,
+                                     HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolname);
+        return sendJsonBody( clientConfiguration, requestBody,  url,
+                 responseHandler);
+    }
+    public static <T> T sendJsonBody(ClientConfiguration clientConfiguration,Object requestBody, String url,
+                                     HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        String data = null;
+        if(requestBody != null){
+            if(requestBody instanceof String){
+                data = (String)requestBody;
+            }
+            else{
+                data = SimpleStringUtil.object2json(requestBody);
+            }
+        }
+        return  sendBody( clientConfiguration, data,   url,   (Map)null,ContentType.APPLICATION_JSON, responseHandler);
+    }
     public static <T> T sendJsonBody(ClientConfiguration clientConfiguration,String requestBody, String url, Map headers  ,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
 
         return  sendBody( clientConfiguration, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);

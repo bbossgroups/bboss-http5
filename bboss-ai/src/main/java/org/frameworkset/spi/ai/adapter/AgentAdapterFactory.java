@@ -41,6 +41,9 @@ public class AgentAdapterFactory {
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_BAIDU,new BaiduAgentAdapter().initAgentAdapter());
 
         agentAdapters.put(AIConstants.AI_MODEL_TYPE_JIUTIAN,new JiutianAgentAdapter().initAgentAdapter());
+        agentAdapters.put(AIConstants.AI_MODEL_TYPE_ZHIPU,new ZhipuAgentAdapter().initAgentAdapter());
+
+        
     }
     
     public static AgentAdapter getAgentAdapter(String modelType) {

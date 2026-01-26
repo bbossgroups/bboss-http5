@@ -54,8 +54,9 @@ public class AgentMessage<T extends AgentMessage> {
         return model;
     }
 
-    public void setModel(String model) {
+    public T setModel(String model) {
         this.model = model;
+        return (T)this;
     }
 
     public Map getParameters() {

@@ -20,7 +20,9 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.frameworkset.spi.ai.model.StoreAgentMessage;
+import org.frameworkset.spi.remote.http.BaseURLResponseHandler;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
+import org.frameworkset.spi.remote.http.ResponseUtil;
 
 import java.io.*;
 
@@ -28,7 +30,7 @@ import java.io.*;
  * @author biaoping.yin
  * @Date 2026/1/20
  */
-public class DownFileHttpClientResponseHandler implements HttpClientResponseHandler<String> {
+public class DownFileHttpClientResponseHandler extends BaseURLResponseHandler<String> {
     private ClientConfiguration clientConfiguration;
     private String url;
     private StoreAgentMessage storeAgentMessage;
@@ -41,7 +43,8 @@ public class DownFileHttpClientResponseHandler implements HttpClientResponseHand
 
     @Override
     public String handleResponse(ClassicHttpResponse response) throws HttpException, IOException {
-        if (response.getCode() == 200) {
+        int status = response.getCode();
+        if (status == 200) {
             String storeFilePath = null;
             if(storeAgentMessage.getStoreFilePathFunction() != null){
                 storeFilePath = storeAgentMessage.getStoreFilePathFunction().getStoreFilePath(url);
@@ -70,7 +73,7 @@ public class DownFileHttpClientResponseHandler implements HttpClientResponseHand
                 return SimpleStringUtil.getRealPath(storeAgentMessage.getEndpoint(),storeFilePath);
             }
         } else {
-            throw new IOException("Download failed: " + response.getCode());
+            throw ResponseUtil.buildException(  url,  response,  status);
         }
     }
    

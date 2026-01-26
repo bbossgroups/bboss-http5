@@ -47,7 +47,7 @@ public class ResponseUtil {
 
 	private static Logger logger = LoggerFactory.getLogger(ResponseUtil.class);
 	public static <K,T> Map<K,T> handleMapResponse(String url,HttpResponse response_,Class<K> keyType,Class<T> beanType)
-            throws ClientProtocolException, IOException, ParseException {
+            throws  IOException, ParseException {
         ClassicHttpResponse response = (ClassicHttpResponse)response_;
 		int status = response.getCode();
 
@@ -55,17 +55,24 @@ public class ResponseUtil {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson2Map(  entity,  keyType,  beanType) : null;
 		} else {
-			HttpEntity entity = response.getEntity();
-			if (entity != null ) {
-				if (logger.isDebugEnabled()) {
-					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
-			}
-			else
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+            throw buildException(  url,  response,  status);
 		}
 	}
+
+    public static HttpProxyRequestException buildException(String url,ClassicHttpResponse response,int status)
+            throws  IOException, ParseException {
+       
+        HttpEntity entity = response.getEntity();
+        if (entity != null ) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
+            }
+            return new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
+        }
+        else
+            return  new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+        
+    }
 
 
 	public static <T> List<T> handleListResponse(String url,HttpResponse response_, Class<T> resultType)
@@ -78,15 +85,8 @@ public class ResponseUtil {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson2List(  entity,  resultType) : null;
 		} else {
-			HttpEntity entity = response.getEntity();
-			if (entity != null ) {
-				if (logger.isDebugEnabled()) {
-					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
-			}
-			else
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+            throw buildException(url,response,status);
+			
 		}
 	}
 	public static <T> Set<T> handleSetResponse(String url,HttpResponse response_, Class<T> resultType)
@@ -98,15 +98,7 @@ public class ResponseUtil {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson2Set(  entity,  resultType) : null;
 		} else {
-			HttpEntity entity = response.getEntity();
-			if (entity != null ) {
-				if (logger.isDebugEnabled()) {
-					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
-			}
-			else
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+            throw buildException(  url,  response,  status);
 		}
 	}
 	public static String handleStringResponse(String url, HttpResponse response_, InvokeContext invokeContext)
@@ -120,14 +112,7 @@ public class ResponseUtil {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? BBossEntityUtils.toString(entity,invokeContext.getResponseCharset()) : null;
 		} else {
-			HttpEntity entity = response.getEntity();
-			if (entity != null )
-				throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
-						.append(url).append(" failed,").append("status=").append(status).append(":")
-						.append(BBossEntityUtils.toString(entity,invokeContext.getResponseCharset())).toString());
-			else
-				throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
-                        .append(url).append(",Unexpected response status: " ).append( status).toString());
+            throw buildException(  url,  response,  status);
 		}
 	}
 
@@ -140,13 +125,7 @@ public class ResponseUtil {
             HttpEntity entity = response.getEntity();
             return entity != null ? BBossEntityUtils.toString(entity) : null;
         } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null )
-                throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
-                        .append(url).append(" failed,").append("status=").append(status).append(":")
-                        .append(BBossEntityUtils.toString(entity)).toString());
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
+            throw buildException(  url,  response,  status);
         }
     }
 
@@ -301,15 +280,7 @@ public class ResponseUtil {
 			HttpEntity entity = response_.getEntity();
 			return entity != null ? converJson(  entity,  resultType) : null;
 		} else {
-			HttpEntity entity = response_.getEntity();
-			if (entity != null ) {
-				if (logger.isDebugEnabled()) {
-					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
-			}
-			else
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+            throw buildException(  url,  (ClassicHttpResponse) response,  status);
 		}
 	}
 
@@ -330,15 +301,7 @@ public class ResponseUtil {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson(  entity, containType, resultType) : null;
 		} else {
-			HttpEntity entity = response.getEntity();
-			if (entity != null ) {
-				if (logger.isDebugEnabled()) {
-					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
-			}
-			else
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+            throw buildException(  url,  response,  status);
 		}
 	}
 

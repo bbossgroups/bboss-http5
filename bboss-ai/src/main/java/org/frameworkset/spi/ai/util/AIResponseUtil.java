@@ -68,6 +68,13 @@ public class AIResponseUtil {
 
     }
 
+    public static HttpClientResponseHandler<String>  buildDownAudioHttpClientResponseHandler(ClientConfiguration config, AudioAgentMessage audioAgentMessage){
+
+        return new DownFileHttpClientResponseHandler( config,audioAgentMessage,  (String)null);
+
+
+    }
+
   
 
     public static boolean handleStringExceptionData(Throwable throwable,FluxSink<String> sink, BooleanWrapperInf firstEventTag){
@@ -196,6 +203,54 @@ public class AIResponseUtil {
             }
             else{
                 logger.info("audio data is null.");
+            }
+
+        } catch (Exception e) {
+            throw new ReactorCallException("ParseAudioStreamContentFromData failed:",e);
+        }
+        return null;
+    }
+
+    /**
+     * 处理音频识别流数据
+     * {"id":"2026012618501535d155fd2f884b93","created":1769424615,"model":"glm-tts",
+     * "choices":[{"index":0,"delta":{"role":"assistant","content":"","return_sample_rate":24000,"return_format":"pcm"}}]}
+     * @param data
+     * @return
+     */
+    public static StreamData parseZhipuAudioGenStreamContentFromData(String data){
+        try {
+            Map _data = SimpleStringUtil.json2Object(data,Map.class);
+            List<Map> choices = (List<Map>)_data.get("choices");
+            if(choices != null && choices.size() > 0){
+                Map choice = choices.get(0);
+                String finishReason = (String)choice.get("finish_reason");
+                Map delta = (Map)choice.get("delta");
+                String audioData = (String)delta.get("content");
+                if(SimpleStringUtil.isNotEmpty(audioData)) {
+                    return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
+                }
+                else{
+                    if(finishReason != null && finishReason.equals("stop")) {
+                        
+                        return new StreamData(ServerEvent.CONTENT, audioData,(String)null, finishReason, true);
+                    }
+                    else {
+                        logger.info("audio data is empty:{},finishReason:{}", audioData, finishReason);
+//                        
+                    }
+                }
+            }
+          
+            else{
+//                {"error":{"code":"1214","message":"音色id不存在"}}
+                Map error = (Map)_data.get("error");
+                if(error != null) {
+                    throw new ReactorCallException("ParseAudioStreamContentFromData failed:"+data);
+                }
+                else {
+                    logger.info("audio data:", data);
+                }
             }
 
         } catch (Exception e) {
