@@ -59,7 +59,7 @@ public class QwenAgentAdapter extends AgentAdapter{
         return audioEvent;
     }
 
-    protected SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){
+    public SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){
         return new SSEHeaderSetFunction() {
             @Override
             public void setSSEHeaders(Map headers) {

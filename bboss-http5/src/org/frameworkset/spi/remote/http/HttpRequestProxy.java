@@ -838,6 +838,10 @@ public class HttpRequestProxy {
         return httpPost(clientConfiguration, url, (String) null, (String) null, params, (Map<String, File>) null, headers, responseHandler);
     }
 
+    public static  <T> T  httpPost(ClientConfiguration clientConfiguration,String url, Object params, Map<String, File> files,Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        return httpPost(clientConfiguration, url, (String) null, (String) null, params, files, headers, responseHandler);
+    }
+
     /**
      * 公用post方法
      *

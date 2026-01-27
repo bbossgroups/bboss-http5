@@ -15,21 +15,22 @@ package org.frameworkset.spi.ai.adapter;
  * limitations under the License.
  */
 
+import com.frameworkset.util.FileUtil;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.material.GenMaterialFileDownload;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.material.GenFileDownload;
+import org.frameworkset.spi.ai.util.AudioDataBuilder;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.reactor.BaseStreamDataHandler;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * 智能体适配器：针对不同厂家的模型平台服务进行适配，包括请求参数转换、结果转换等
@@ -84,7 +85,9 @@ public abstract class AgentAdapter {
     protected Object handleImageParserMessages(List<Map<String, Object>> messages){
         return messages;
     }
-    protected Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
+    
+    
+    public Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
 
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model",imageAgentMessage.getModel());
@@ -99,9 +102,17 @@ public abstract class AgentAdapter {
         else{
             messages = new ArrayList<>();
         }
+        List<String > imageUrls = imageAgentMessage.getImageUrls();
 
-        Map<String, Object> userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(),imageAgentMessage.getImageUrls().toArray(new String[]{}));
+        Map<String, Object> userMessage = null;
+        if(imageUrls != null && imageUrls.size() > 0) {
+            userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(), imageUrls.toArray(new String[]{}));
+        }
+        else{
+            userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(), (String[])null);
+        }
         messages.add(userMessage);
+        imageAgentMessage.addSessionMessage(userMessage);
 
         requestMap.put("messages", handleImageParserMessages(messages));
         Map parameters = imageAgentMessage.getParameters();
@@ -162,14 +173,34 @@ public abstract class AgentAdapter {
     public StreamData parseImageParserStreamContentFromData(String data){
         return AIResponseUtil.parseStreamContentFromData(data);
     }
+
+    /**
+     * 语音识别数据解析
+     * @param data
+     * @return
+     */
+    public StreamData parseAudioStreamContentFromData(String data){
+        return AIResponseUtil.parseAudioStreamContentFromData(data);
+    }
+
+    
     
     /**
-     * 获取智能问答请求参数类型
+     * 获取图片识别模型智能问答请求参数类型
      * @return
      */
     public String getAIImageParsertRequestType(){
         return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
         
+    }
+
+    /**
+     * 获取音频识别模型智能问答请求参数类型
+     * @return
+     */
+    public String getAIAudioParsertRequestType(){
+        return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
+
     }
 
     /**
@@ -189,7 +220,7 @@ public abstract class AgentAdapter {
      * @param chatAgentMessage
      * @return
      */
-    protected Map buildOpenAIRequestMap(ChatAgentMessage chatAgentMessage){
+    public Map buildOpenAIRequestMap(ChatAgentMessage chatAgentMessage){
         String message = chatAgentMessage.getMessage();
         Map<String, Object> userMessage = MessageBuilder.buildUserMessage( message);
         Map<String, Object> requestMap = new HashMap<>();
@@ -249,146 +280,28 @@ public abstract class AgentAdapter {
     }
     
  
-    protected SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){
+    public SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){
         return SSEHeaderSetFunction.DEFAULT_SSEHEADERSETFUNCTION;
     }
 
     public ChatObject buildOpenAIRequestParameter(ClientConfiguration clientConfiguration,Object agentMessage){
-        ChatObject chatObject = new ChatObject();
-        SSEHeaderSetFunction sseHeaderSetFunction = null;
-        Map parameters = null;
-        Boolean stream = false;
-        String aiChatRequestType = null;
-        StreamDataBuilder streamDataBuilder = null;
-        if(agentMessage instanceof ChatAgentMessage){
-            parameters = buildOpenAIRequestMap((ChatAgentMessage)agentMessage);
-            stream = (Boolean)parameters.get("stream");
-            aiChatRequestType = this.getAIChatRequestType();
-            agentMessage = parameters;
-            streamDataBuilder = new StreamDataBuilder() {
-                @Override
-                public StreamData build(AgentAdapter agentAdapter, String line) {
-                    return agentAdapter.parseStreamContentFromData(line);
-                }
-
-                @Override
-                public boolean isDone(AgentAdapter agentAdapter,String data) {
-                    return agentAdapter.isDone(data);
-                }
-
-                @Override
-                public String getDoneData(AgentAdapter agentAdapter) {
-                    return agentAdapter.getDoneData();
-                }
-
- 
-                @Override
-                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
-                    
-                }
-            };
+        AgentMessage _agentMessage = null;
+        if(agentMessage instanceof AgentMessage){
+            _agentMessage =  ((AgentMessage)agentMessage);
+        }          
+        else if (agentMessage instanceof Map){
+            _agentMessage = new MapAgentMessage((Map)agentMessage);
         }
-        else if(agentMessage instanceof ImageVLAgentMessage){
-            parameters = buildImageVLRequestMap((ImageVLAgentMessage)agentMessage);;
-            stream = (Boolean)parameters.get("stream");
-            aiChatRequestType = this.getAIImageParsertRequestType();
-            agentMessage = parameters;
-            streamDataBuilder = new StreamDataBuilder() {
-                @Override
-                public StreamData build(AgentAdapter agentAdapter, String line) {
-                    return agentAdapter.parseImageParserStreamContentFromData(line);
-                }
-
-
-                @Override
-                public boolean isDone(AgentAdapter agentAdapter,String data) {
-                    return agentAdapter.isImageParserDone(data);
-                }
-
-                @Override
-                public String getDoneData(AgentAdapter agentAdapter) {
-                    return agentAdapter.getImageParserDoneData();
-                }
- 
-                @Override
-                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
-
-                }
-            };
+        else{
+            _agentMessage = new ObjectAgentMessage(agentMessage);
         }
-        else if(agentMessage instanceof AudioAgentMessage){
-            AudioAgentMessage audioAgentMessage = (AudioAgentMessage)agentMessage;
-            parameters = this._buildGenAudioRequestMap(audioAgentMessage,clientConfiguration);
-            stream = audioAgentMessage.getStream();
-            aiChatRequestType = this.getAIChatRequestType();
-            agentMessage = parameters;
-            sseHeaderSetFunction = getAudioGenSSEHeaderSetFunction();
-            streamDataBuilder = new StreamDataBuilder() {
-                @Override
-                public StreamData build(AgentAdapter agentAdapter, String line) {
-                    return agentAdapter.parseAudioGenStreamContentFromData(line);
-                }
-
-                @Override
-                public boolean isDone(AgentAdapter agentAdapter,String data) {
-                    return agentAdapter.isDone(data);
-                }
-
-                @Override
-                public String getDoneData(AgentAdapter agentAdapter) {
-                    return agentAdapter.getDoneData();
-                }
- 
-                @Override
-                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
-                    String url = serverEvent.getGenUrl();
-                    if(url != null) {
-                        GenFileDownload genFileDownload = agentAdapter.getGenFileDownload();  
-                        serverEvent.setUrl(genFileDownload.downloadAudio(clientConfiguration, audioAgentMessage, null, url));
-                    }
-                }
-            };
-        }
-        else if(agentMessage instanceof Map){
-            parameters =  (Map)agentMessage;
-            stream = (Boolean)parameters.get("stream");
-            streamDataBuilder = new StreamDataBuilder() {
-                @Override
-                public StreamData build(AgentAdapter agentAdapter, String line) {
-                    return agentAdapter.parseStreamContentFromData(line);
-                }
-
-                @Override
-                public boolean isDone(AgentAdapter agentAdapter,String data) {
-                    return agentAdapter.isDone(data);
-                }
-
-                @Override
-                public String getDoneData(AgentAdapter agentAdapter) {
-                    return agentAdapter.getDoneData();
-                }
-          
-                @Override
-                public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
-
-                }
-            };
-        }
+        return _agentMessage.buildChatObject(clientConfiguration,this);
          
-
-        if(stream == null){
-            stream = false;
-        }
-        chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
-        chatObject.setMessage(agentMessage);
-        chatObject.setStream(stream);
-        chatObject.setAiChatRequestType(aiChatRequestType);
-        chatObject.setStreamDataBuilder(streamDataBuilder);
-        return chatObject;
+ 
     }
     protected abstract Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
 
-    private Map<String, Object> _buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage,ClientConfiguration clientConfiguration){
+    public Map<String, Object> _buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage,ClientConfiguration clientConfiguration){
         
         if(audioAgentMessage.getGenFileStoreDir() == null)
             audioAgentMessage.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
@@ -397,7 +310,11 @@ public abstract class AgentAdapter {
         if(audioAgentMessage.getStoreAudioType() == null){
             audioAgentMessage.setStoreAudioType(clientConfiguration.getExtendConfig("storeAudioType"));
         }
-        return buildGenAudioRequestMap(audioAgentMessage);
+        Map params = buildGenAudioRequestMap(audioAgentMessage);
+        if(audioAgentMessage.getStream() != null){
+            params.put("stream", audioAgentMessage.getStream());
+        }
+        return params;
     }
 
     /**
@@ -417,4 +334,77 @@ public abstract class AgentAdapter {
     }
 
     public abstract AudioEvent buildGenAudioResponse(ClientConfiguration config, AudioAgentMessage message, Map data);
+
+    public Map buildAudioSTTRequestMap(AudioSTTAgentMessage audioSTTAgentMessage) {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", audioSTTAgentMessage.getModel());
+
+        // 构建消息历史列表，包含之前的会话记忆
+        List<Map<String, Object>> messages = audioSTTAgentMessage.getSessionMemory() !=  null?
+                new ArrayList<>(audioSTTAgentMessage.getSessionMemory()):new ArrayList<>();
+        Object audio = audioSTTAgentMessage.getAudio();
+        // 添加当前用户消息
+        Map<String, Object> userMessage = null;
+        if(audio != null) {
+            userMessage = MessageBuilder.buildAudioSystemMessage(audioSTTAgentMessage.getMessage());
+        }
+        else{
+            userMessage = MessageBuilder.buildAudioUserMessage(audioSTTAgentMessage.getMessage());
+        }
+        messages.add(userMessage);
+        audioSTTAgentMessage.addSessionMessage(userMessage);
+       
+        if(audio != null) {
+            AudioDataBuilder audioDataBuilder = audioSTTAgentMessage.getAudioDataBuilder();
+            if (audioDataBuilder == null) {
+                audioDataBuilder = () -> {
+                    String base64Audio = null;
+
+
+                    if (audio instanceof File) {
+
+                        try {
+                            byte[] audioBytes = FileUtil.getBytes((File) audio);
+                            String contentType = audioSTTAgentMessage.getContentType();
+                            if (contentType == null) {
+                                contentType = "audio/wav";
+                            }
+                            base64Audio = "data:" + contentType + ";base64," +
+                                    Base64.getEncoder().encodeToString(audioBytes);
+                        } catch (IOException e) {
+                            throw new AIRuntimeException(e);
+                        }
+
+                    } else if (audio instanceof byte[]) {
+                        base64Audio = "data:" + audioSTTAgentMessage.getContentType() + ";base64," +
+                                Base64.getEncoder().encodeToString((byte[]) audio);
+                    } else if (audio instanceof String) {
+                        base64Audio = (String) audio;
+                    }
+                    return base64Audio;
+
+                };
+            }
+
+            //直接设置音频url地址
+//        MessageBuilder.buildAudioMessage("https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3");
+            //将音频文件转换为base64编码
+            userMessage = MessageBuilder.buildAudioMessage(audioDataBuilder);
+
+            messages.add(userMessage);
+        }
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("messages", messages);
+        requestMap.put("input", input);
+        Map parameters = audioSTTAgentMessage.getParameters();
+        if(parameters != null) {
+            requestMap.put("parameters", parameters);
+        }
+        if(audioSTTAgentMessage.getStream() != null){
+            requestMap.put("stream", audioSTTAgentMessage.getStream());
+        }
+        if(audioSTTAgentMessage.getResultFormat() != null)
+            requestMap.put("result_format", audioSTTAgentMessage.getResultFormat());
+        return requestMap;
+    }
 }

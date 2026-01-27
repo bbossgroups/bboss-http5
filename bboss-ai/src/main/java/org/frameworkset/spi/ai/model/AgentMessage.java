@@ -15,6 +15,9 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -46,6 +49,15 @@ public class AgentMessage<T extends AgentMessage> {
         return message;
     }
 
+    /**
+     * 构建流式风格接口ChatObject对象
+     * @param clientConfiguration
+     * @param agentAdapter
+     * @return
+     */
+    public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter){
+        return null;
+    }
     public void setMessage(String message) {
         this.message = message;
     }

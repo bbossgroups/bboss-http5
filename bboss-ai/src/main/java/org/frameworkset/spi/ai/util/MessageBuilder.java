@@ -41,8 +41,20 @@ public class MessageBuilder {
     }
     public static Map<String,Object> buildAudioSystemMessage(String message){
         // 添加当前用户消息
+ 
+        return buildAudioUserMessage(  message,  ROLE_SYSTEM);
+    }
+
+    public static Map<String,Object> buildAudioUserMessage(String message){
+        // 添加当前用户消息
+ 
+        return buildAudioUserMessage(  message,  ROLE_USER);
+    }
+
+    public static Map<String,Object> buildAudioUserMessage(String message,String role){
+        // 添加当前用户消息
         Map<String, Object> userMessage = new HashMap<>();
-        userMessage.put("role", ROLE_SYSTEM);
+        userMessage.put("role", role);
         List<Map> contents = new ArrayList<>();
         Map contentData = new LinkedHashMap();
         contentData.put("text", message);
@@ -112,15 +124,17 @@ public class MessageBuilder {
         List contents = new ArrayList<>();
         Map contentData = null;
        
-        for (String imageUrl:imageUrls) {
-            contentData = new LinkedHashMap();
-            contentData.put("type", TYPE_IMAGE);
-            String _imageUrl = imageUrl;
-            contentData.put("image_url", new HashMap<String, String>() {{
+        if(imageUrls != null && imageUrls.length > 0) {
+            for (String imageUrl : imageUrls) {
+                contentData = new LinkedHashMap();
+                contentData.put("type", TYPE_IMAGE);
+                String _imageUrl = imageUrl;
+                contentData.put("image_url", new HashMap<String, String>() {{
 
-                put("url", _imageUrl);
-            }});
-            contents.add(contentData);
+                    put("url", _imageUrl);
+                }});
+                contents.add(contentData);
+            }
         }
 
         contentData = new LinkedHashMap();

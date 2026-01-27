@@ -117,12 +117,14 @@ public class AIResponseUtil {
 
     /**
      * 处理音频识别流数据
-     * @param output
+     * @param data
      * @return
      */
-    private static StreamData parseAudioStreamContentFromData(Map output){
+    public static StreamData parseAudioStreamContentFromData(String data){
         try {
-
+            Map map = SimpleStringUtil.json2Object(data, Map.class);
+            Map output = (Map) map.get("output");
+            
             Object choices_ = output.get("choices");
             if (choices_ != null ) {
                 if (choices_ instanceof List) {
@@ -162,6 +164,56 @@ public class AIResponseUtil {
                 }
             }
 
+        } catch (Exception e) {
+            throw new ReactorCallException("ParseAudioStreamContentFromData failed:",e);
+        }
+        return null;
+    }
+
+    /**
+     * 处理智谱音频识别流数据
+     * {"id":"2026012723020247e5f256dc1248d0","created":1769526122,"model":"glm-asr-2512","delta":"诗歌","type":"transcript.text.delta"}
+     * @param data
+     * @return
+     */
+    public static StreamData parseZhipuAudioStreamContentFromData(String data){
+        try {
+            Map output = SimpleStringUtil.json2Object(data, Map.class);
+
+            String delta = (String)output.get("delta");
+            
+            if (delta != null ) {
+                 
+                return new StreamData(ServerEvent.CONTENT, delta, null);
+                
+            }
+            
+            else{
+                String finishReason = (String) output.get("type");
+                if(finishReason != null  ) {
+                    if (finishReason.equals("transcript.text.done")) {
+                        return new StreamData(ServerEvent.CONTENT, null, "stop", true);
+                    } else {
+                        logger.info("audio data is empty:{},finishReason:{}", data, finishReason);
+                        //                        return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
+                    }
+                }
+                else {
+//                {"error":{"code":"1214","message":"音色id不存在"}}
+                    Map error = (Map) output.get("error");
+                    if (error != null) {
+                        throw new ReactorCallException("ParseAudioStreamContentFromData failed:" + data);
+                    } else {
+                        logger.info("audio data:", data);
+                    }
+                }
+            }
+           
+
+                     
+
+        }catch (ReactorCallException e) {
+            throw e;
         } catch (Exception e) {
             throw new ReactorCallException("ParseAudioStreamContentFromData failed:",e);
         }
@@ -264,7 +316,9 @@ public class AIResponseUtil {
                 }
             }
 
-        } catch (Exception e) {
+        }  catch (ReactorCallException e) {
+            throw e;
+        }catch (Exception e) {
             throw new ReactorCallException("ParseAudioStreamContentFromData failed:",e);
         }
         return null;
@@ -279,12 +333,7 @@ public class AIResponseUtil {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("choices");
-            if(choices_ == null){
-                Map output = (Map) map.get("output");
-                if(output != null){
-                    return parseAudioStreamContentFromData(output);
-                }
-            }
+     
             if (choices_ != null ) {
                 if (choices_ instanceof List) {
                     List<Map> choices = (List<Map>) choices_;
@@ -372,12 +421,7 @@ public class AIResponseUtil {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("parts");
             String finishReason = (String) map.get("finished");
-            if(choices_ == null){
-                Map output = (Map) map.get("output");
-                if(output != null){
-                    return parseAudioStreamContentFromData(output);
-                }
-            }
+      
             if (choices_ != null ) {
                 if (choices_ instanceof List) {
                     List<Map> choices = (List<Map>) choices_;
@@ -571,7 +615,7 @@ public class AIResponseUtil {
         if (line.startsWith("data: ") || line.startsWith("data:")) {
             String data = line.substring(5).trim();
 
-            if (agentAdapter.isDone(  data)) {
+            if (streamDataBuilder.isDone( agentAdapter,   data)) {
                 return true;
             }
             if (!data.isEmpty()) {
@@ -657,7 +701,7 @@ public class AIResponseUtil {
 
         }
         if(SimpleStringUtil.isNotEmpty( data)){
-            if (agentAdapter.isDone(  data)) {
+            if (streamDataBuilder.isDone( agentAdapter, data)) {
 
                 ServerEvent serverEvent = new ServerEvent();
                 if(firstEventTag.get()) {

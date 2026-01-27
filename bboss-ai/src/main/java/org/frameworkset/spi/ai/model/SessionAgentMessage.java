@@ -15,6 +15,8 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.util.MessageBuilder;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,11 @@ public class SessionAgentMessage<T extends SessionAgentMessage> extends AgentMes
     /** 使用静态变量存储会话记忆（实际项目中建议使用缓存或数据库）*/
     private List<Map<String, Object>> sessionMemory;
 
+    /**
+     * 会话窗口大小，默认20
+     */
+    private int sessionSize = 20;
+
     public T setSessionMemory(List<Map<String, Object>> sessionMemory) {
         this.sessionMemory = sessionMemory;
         return (T)this;
@@ -35,6 +42,39 @@ public class SessionAgentMessage<T extends SessionAgentMessage> extends AgentMes
     public List<Map<String, Object>> getSessionMemory() {
         return sessionMemory;
     }
-    
 
+
+    public T setSessionSize(int sessionSize) {
+        this.sessionSize = sessionSize;
+        return (T)this;
+    }
+
+    public int getSessionSize() {
+        return sessionSize;
+    }
+    public T addSessionMessage(Map<String, Object> message){        
+        if(sessionMemory == null){
+            return (T)this;
+        }
+        sessionMemory.add(message);
+        if(sessionMemory.size() > sessionSize){
+            sessionMemory.remove(0);
+        }
+        return (T)this;
+    }
+
+    public T addSessionMessage(String message){
+        if(sessionMemory == null){
+            return (T)this;
+        }
+        Map<String, Object> assistantMessage = MessageBuilder.buildAssistantMessage(message);
+        sessionMemory.add(assistantMessage);
+
+        // 维护记忆窗口大小为sessionSize
+    
+        if(sessionMemory.size() > sessionSize){
+            sessionMemory.remove(0);
+        }
+        return (T)this;
+    }
 }

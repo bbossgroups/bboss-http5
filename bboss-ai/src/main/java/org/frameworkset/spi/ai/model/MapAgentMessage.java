@@ -20,47 +20,38 @@ import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
- * 图片识别报文体
  * @author biaoping.yin
- * @Date 2026/1/4
+ * @Date 2026/1/27
  */
-public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage>{
-    private List<String> imageUrls;
-
+public class MapAgentMessage extends AgentMessage<MapAgentMessage>{
+    private Map agentMessage;
+    public MapAgentMessage(Map agentMessage){
+        this.agentMessage = agentMessage;
+    }
     @Override
     public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter) {
         ChatObject chatObject = new ChatObject();
         SSEHeaderSetFunction sseHeaderSetFunction = null;
-        Map parameters = null;
-        Boolean stream = false;
         String aiChatRequestType = null;
-        Object agentMessage = null;
         StreamDataBuilder streamDataBuilder = null;
-
-        parameters = agentAdapter.buildImageVLRequestMap(this);
-        stream = (Boolean)parameters.get("stream");
-        aiChatRequestType = agentAdapter.getAIImageParsertRequestType();
-        agentMessage = parameters;
+        Boolean stream = (Boolean)agentMessage.get("stream");
         streamDataBuilder = new StreamDataBuilder() {
             @Override
             public StreamData build(AgentAdapter agentAdapter, String line) {
-                return agentAdapter.parseImageParserStreamContentFromData(line);
+                return agentAdapter.parseStreamContentFromData(line);
             }
-
 
             @Override
             public boolean isDone(AgentAdapter agentAdapter,String data) {
-                return agentAdapter.isImageParserDone(data);
+                return agentAdapter.isDone(data);
             }
 
             @Override
             public String getDoneData(AgentAdapter agentAdapter) {
-                return agentAdapter.getImageParserDoneData();
+                return agentAdapter.getDoneData();
             }
 
             @Override
@@ -68,6 +59,9 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
 
             }
         };
+        
+
+
         if(stream == null){
             stream = false;
         }
@@ -77,22 +71,5 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
         chatObject.setAiChatRequestType(aiChatRequestType);
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
-    }
-
-    public ImageVLAgentMessage setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-        return this;
-    }
-
-    public ImageVLAgentMessage addImageUrl(String imageUrl) {
-        if(imageUrls == null){
-            imageUrls = new ArrayList<>();
-        }
-        imageUrls.add(imageUrl);
-        return this;
-    }
-
-    public List<String> getImageUrls() {
-        return imageUrls;
     }
 }

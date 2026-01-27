@@ -20,6 +20,9 @@ import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
+import java.io.File;
+import java.util.Map;
+
 /**
  * @author biaoping.yin
  * @Date 2026/1/4
@@ -30,6 +33,7 @@ public class ChatObject {
     private String aiChatRequestType = AIConstants.AI_CHAT_REQUEST_BODY_JSON;
     private SSEHeaderSetFunction sseHeaderSetFunction;
     private StreamDataBuilder streamDataBuilder;
+    private Map<String, File> files;
 
     public String getDoneData(AgentAdapter agentAdapter) {
         return streamDataBuilder.getDoneData(agentAdapter);
@@ -85,5 +89,12 @@ public class ChatObject {
     public StreamDataBuilder getStreamDataBuilder() {
         return streamDataBuilder;
     }
-    
+
+    public Map<String, File> getFiles() {
+        return files;
+    }
+
+    public void setFiles(Map<String, File> files) {
+        this.files = files;
+    }
 }

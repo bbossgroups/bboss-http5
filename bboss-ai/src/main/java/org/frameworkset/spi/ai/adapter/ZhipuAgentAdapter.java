@@ -15,15 +15,16 @@ package org.frameworkset.spi.ai.adapter;
  * limitations under the License.
  */
 
-import org.frameworkset.spi.ai.model.AudioAgentMessage;
-import org.frameworkset.spi.ai.model.AudioEvent;
-import org.frameworkset.spi.ai.model.StreamData;
+import com.frameworkset.util.FileUtil;
+import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
+import org.frameworkset.spi.ai.util.AudioDataBuilder;
+import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * 阿里百炼通义系列模型智能体适配器
@@ -53,9 +54,7 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", audioAgentMessage.getModel());
         requestMap.put("input", audioAgentMessage.getMessage());
-        if(audioAgentMessage.getStream() != null  ){
-            requestMap.put("stream", audioAgentMessage.getStream());
-        }
+    
         if(audioAgentMessage.getParameters() != null && audioAgentMessage.getParameters().size() > 0){
             requestMap.putAll(audioAgentMessage.getParameters());
         }
@@ -100,5 +99,67 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
             audioEvent.setAudioUrl(genFileDownload.downloadAudio(config, message, null, audioUrl));
         }
         return audioEvent;
+    }
+    /**
+     * 获取音频识别模型智能问答请求参数类型
+     * @return
+     */
+    public String getAIAudioParsertRequestType(){
+        return AIConstants.AI_CHAT_REQUEST_POST_FORM;
+
+    }
+
+    /**
+     * 解析语音识别流数据
+     * @param data
+     * @return
+     */
+    public StreamData parseAudioStreamContentFromData(String data){
+        return AIResponseUtil.parseZhipuAudioStreamContentFromData(data);
+    }
+    @Override
+    public Map buildAudioSTTRequestMap(AudioSTTAgentMessage audioSTTAgentMessage) {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", audioSTTAgentMessage.getModel());
+        requestMap.put("prompt", audioSTTAgentMessage.getMessage());
+        
+        Object audio = audioSTTAgentMessage.getAudio();
+        // 添加当前用户消息
+        Map<String, Object> userMessage = null;
+        if(audio != null) {
+            userMessage = MessageBuilder.buildAudioSystemMessage(audioSTTAgentMessage.getMessage());
+        }
+        else{
+            userMessage = MessageBuilder.buildAudioUserMessage(audioSTTAgentMessage.getMessage());
+        }
+        
+        audioSTTAgentMessage.addSessionMessage(userMessage);
+
+        if(audio != null) {
+            if(audio instanceof File){
+                Map<String,File> files = new LinkedHashMap<>();
+                files.put("file",(File)audio);
+                audioSTTAgentMessage.setFiles( files);
+            }
+            else if (audio instanceof byte[]) {
+                requestMap.put("file_base64","data:" + audioSTTAgentMessage.getContentType() + ";base64," +
+                        Base64.getEncoder().encodeToString((byte[]) audio));
+            } else if (audio instanceof String) {
+                requestMap.put("file_base64",audio);
+            }
+            else{
+                throw new AIRuntimeException("audio must be File or byte[] or String");
+            }
+        }
+        
+        Map parameters = audioSTTAgentMessage.getParameters();
+        if(parameters != null) {
+            requestMap.putAll( parameters);
+        }
+        if(audioSTTAgentMessage.getStream() != null){
+            requestMap.put("stream", audioSTTAgentMessage.getStream());
+        }
+         
+        return requestMap;
     }
 }

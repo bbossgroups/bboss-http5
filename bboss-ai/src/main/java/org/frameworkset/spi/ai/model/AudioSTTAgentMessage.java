@@ -16,22 +16,60 @@ package org.frameworkset.spi.ai.model;
  */
 
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.util.AudioDataBuilder;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
 import java.util.Map;
 
 /**
- * 图片识别报文体
+ * 语音识别消息模型
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage>{
-    private List<String> imageUrls;
+public class AudioSTTAgentMessage<T> extends SessionAgentMessage<AudioSTTAgentMessage> {
+    /**
+     * 音频数据,支持:url,base64编码数据,MultipartFile,File 对象
+     */
+    private T audio;
 
+    private String resultFormat;
+    private AudioDataBuilder audioDataBuilder;
+    private String contentType;
+
+    private Map<String, File> files;
+
+    /**
+     * 音频数据,支持:url,base64编码数据,MultipartFile,File 对象
+     * @param audio
+     * @return
+     */
+    public AudioSTTAgentMessage setAudio(T audio) {
+        this.audio = audio;
+        return this;
+    }
+
+    public T getAudio() {
+        return audio;
+    }
+
+    public void setFiles(Map<String, File> files) {
+        this.files = files;
+    }
+
+    public Map<String, File> getFiles() {
+        return files;
+    }
+
+    /**
+     * 构建流式风格接口ChatObject对象
+     *
+     * @param clientConfiguration
+     * @param agentAdapter
+     * @return
+     */
     @Override
     public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter) {
         ChatObject chatObject = new ChatObject();
@@ -42,25 +80,25 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
         Object agentMessage = null;
         StreamDataBuilder streamDataBuilder = null;
 
-        parameters = agentAdapter.buildImageVLRequestMap(this);
+        parameters = agentAdapter.buildAudioSTTRequestMap(this);
         stream = (Boolean)parameters.get("stream");
-        aiChatRequestType = agentAdapter.getAIImageParsertRequestType();
+        aiChatRequestType = agentAdapter.getAIAudioParsertRequestType();
         agentMessage = parameters;
         streamDataBuilder = new StreamDataBuilder() {
             @Override
             public StreamData build(AgentAdapter agentAdapter, String line) {
-                return agentAdapter.parseImageParserStreamContentFromData(line);
+                return agentAdapter.parseAudioStreamContentFromData(line);
             }
 
 
             @Override
             public boolean isDone(AgentAdapter agentAdapter,String data) {
-                return agentAdapter.isImageParserDone(data);
+                return agentAdapter.isDone(data);
             }
 
             @Override
             public String getDoneData(AgentAdapter agentAdapter) {
-                return agentAdapter.getImageParserDoneData();
+                return agentAdapter.getDoneData();
             }
 
             @Override
@@ -74,25 +112,36 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
         chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);
+        chatObject.setFiles( files);
         chatObject.setAiChatRequestType(aiChatRequestType);
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
     }
 
-    public ImageVLAgentMessage setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
+    public AudioDataBuilder getAudioDataBuilder() {
+        return audioDataBuilder;
+    }
+
+    public AudioSTTAgentMessage setAudioDataBuilder(AudioDataBuilder audioDataBuilder) {
+        this.audioDataBuilder = audioDataBuilder;
+        return this;
+    }
+    
+    public String getResultFormat() {
+		return resultFormat;
+	}
+
+    public AudioSTTAgentMessage setResultFormat(String resultFormat) {
+        this.resultFormat = resultFormat;
         return this;
     }
 
-    public ImageVLAgentMessage addImageUrl(String imageUrl) {
-        if(imageUrls == null){
-            imageUrls = new ArrayList<>();
-        }
-        imageUrls.add(imageUrl);
-        return this;
+    public String getContentType() {
+        return contentType;
     }
 
-    public List<String> getImageUrls() {
-        return imageUrls;
+    public AudioSTTAgentMessage setContentType(String contentType) {
+        this.contentType = contentType;
+        return this;
     }
 }

@@ -15,6 +15,14 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.material.GenFileDownload;
+import org.frameworkset.spi.ai.util.StreamDataBuilder;
+import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
+
+import java.util.Map;
+
 /**
  * 语音生成模型消息
  * @author biaoping.yin
@@ -36,5 +44,58 @@ public class AudioAgentMessage extends StoreAgentMessage<AudioAgentMessage> {
     public AudioAgentMessage setStoreAudioType(String storeAudioType) {
         this.storeAudioType = storeAudioType;
         return this;
+    }
+
+    @Override
+    public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter) {
+        ChatObject chatObject = new ChatObject();
+        SSEHeaderSetFunction sseHeaderSetFunction = null;
+        Map parameters = null;
+        Boolean stream = false;
+        String aiChatRequestType = null;
+        StreamDataBuilder streamDataBuilder = null;
+        Object agentMessage = null;       
+        parameters = agentAdapter._buildGenAudioRequestMap(this,clientConfiguration);
+        stream = (Boolean)parameters.get("stream");
+        aiChatRequestType = agentAdapter.getAIChatRequestType();
+        agentMessage = parameters;
+        sseHeaderSetFunction = agentAdapter.getAudioGenSSEHeaderSetFunction();
+        streamDataBuilder = new StreamDataBuilder() {
+            @Override
+            public StreamData build(AgentAdapter agentAdapter, String line) {
+                return agentAdapter.parseAudioGenStreamContentFromData(line);
+            }
+
+            @Override
+            public boolean isDone(AgentAdapter agentAdapter,String data) {
+                return agentAdapter.isDone(data);
+            }
+
+            @Override
+            public String getDoneData(AgentAdapter agentAdapter) {
+                return agentAdapter.getDoneData();
+            }
+
+            @Override
+            public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
+                String url = serverEvent.getGenUrl();
+                if(url != null) {
+                    GenFileDownload genFileDownload = agentAdapter.getGenFileDownload();
+                    serverEvent.setUrl(genFileDownload.downloadAudio(clientConfiguration, AudioAgentMessage.this, null, url));
+                }
+            }
+        };
+         
+
+
+        if(stream == null){
+            stream = false;
+        }
+        chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
+        chatObject.setMessage(agentMessage);
+        chatObject.setStream(stream);
+        chatObject.setAiChatRequestType(aiChatRequestType);
+        chatObject.setStreamDataBuilder(streamDataBuilder);
+        return chatObject;
     }
 }

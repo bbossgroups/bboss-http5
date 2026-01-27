@@ -82,6 +82,17 @@ public class AIAgent {
     }
 
     /**
+     * 实现流式音频识别处理
+     * @param maasName
+     * @param url
+     * @param audioSTTAgentMessage
+     * @return
+     */
+    public Flux<ServerEvent> streamAudioParser(String maasName, String url, AudioSTTAgentMessage audioSTTAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent(maasName,url,audioSTTAgentMessage);
+    }
+
+    /**
      * 实现流式图片识别处理
      * @param maasName
      * @param url
@@ -136,7 +147,16 @@ public class AIAgent {
     }
 
 
-
+    /**
+     * 实现同步音频识别处理
+     * @param maasName
+     * @param url
+     * @param audioSTTAgentMessage
+     * @return
+     */
+    public ServerEvent audioParser(String maasName, String url, AudioSTTAgentMessage audioSTTAgentMessage){
+        return AIAgentUtil.audioParser(maasName,url,audioSTTAgentMessage);
+    }
     /**
      * 实现同步智能问答,在指定的数据源上执行
      */

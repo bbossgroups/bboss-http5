@@ -37,6 +37,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Schedulers;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -308,8 +309,14 @@ public class AIAgentUtil {
                                 chatObject.getSseHeaderSetFunction().setSSEHeaders( header);
                             }
                             data = message;
-
-                            HttpRequestProxy.httpPost(clientConfiguration, url,message,  header, responseHandler);
+                            Map<String,File> files = chatObject.getFiles();
+                            if(files == null) {
+                                HttpRequestProxy.httpPost(clientConfiguration, url,message,  header, responseHandler);
+                            }
+                            else{
+                                HttpRequestProxy.httpPost(clientConfiguration, url,message,files,  header, responseHandler);
+                            }
+                            
                         }
                         else {
                             throw new ReactorCallException("Unsupported request type: "+chatObject.getAIChatRequestType());
@@ -359,6 +366,16 @@ public class AIAgentUtil {
 
 
     }
+
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent audioParser(String poolName,String url,Object message) {
+        return chatCompletionEvent(poolName,url,message);
+
+
+
+    }
     /**
      * 同步调用模型服务，返回问答内容
      */
@@ -397,8 +414,13 @@ public class AIAgentUtil {
         }
         else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
 
-
-            return HttpRequestProxy.httpPost(config, url,message,  (Map)null, responseHandler);
+            Map<String,File> files = chatObject.getFiles();
+            if(files == null) {
+                return HttpRequestProxy.httpPost(config, url, message, (Map) null, responseHandler);
+            }
+            else{
+                return HttpRequestProxy.httpPost(config, url, message, files, (Map) null,responseHandler);
+            }
         }
         else {
             throw new ReactorCallException("Unsupported request type: "+chatObject.getAIChatRequestType());
