@@ -76,6 +76,10 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
             public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
 
             }
+            @Override
+            public ChatObject getChatObject() {
+                return chatObject;
+            }
         };
     
 

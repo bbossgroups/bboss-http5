@@ -87,7 +87,7 @@ public class AudioSTTAgentMessage<T> extends SessionAgentMessage<AudioSTTAgentMe
         streamDataBuilder = new StreamDataBuilder() {
             @Override
             public StreamData build(AgentAdapter agentAdapter, String line) {
-                return agentAdapter.parseAudioStreamContentFromData(line);
+                return agentAdapter.parseAudioStreamContentFromData(this,line);
             }
 
 
@@ -104,6 +104,10 @@ public class AudioSTTAgentMessage<T> extends SessionAgentMessage<AudioSTTAgentMe
             @Override
             public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
 
+            }
+            @Override
+            public ChatObject getChatObject() {
+                return chatObject;
             }
         };
         if(stream == null){

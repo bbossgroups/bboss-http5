@@ -29,4 +29,5 @@ public interface StreamDataBuilder {
     boolean isDone(AgentAdapter agentAdapter,String data);
     String getDoneData(AgentAdapter agentAdapter);
     void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent);
+    ChatObject getChatObject();
 }

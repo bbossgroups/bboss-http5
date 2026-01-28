@@ -120,7 +120,7 @@ public class AIResponseUtil {
      * @param data
      * @return
      */
-    public static StreamData parseAudioStreamContentFromData(String data){
+    public static StreamData parseAudioStreamContentFromData(StreamDataBuilder streamDataBuilder,String data){
         try {
             Map map = SimpleStringUtil.json2Object(data, Map.class);
             Map output = (Map) map.get("output");
@@ -172,41 +172,46 @@ public class AIResponseUtil {
 
     /**
      * 处理智谱音频识别流数据
+     * stream:
      * {"id":"2026012723020247e5f256dc1248d0","created":1769526122,"model":"glm-asr-2512","delta":"诗歌","type":"transcript.text.delta"}
+     * 同步：
      * @param data
      * @return
      */
-    public static StreamData parseZhipuAudioStreamContentFromData(String data){
+    public static StreamData parseZhipuAudioStreamContentFromData(StreamDataBuilder streamDataBuilder,String data){
         try {
             Map output = SimpleStringUtil.json2Object(data, Map.class);
 
-            String delta = (String)output.get("delta");
-            
-            if (delta != null ) {
-                 
-                return new StreamData(ServerEvent.CONTENT, delta, null);
-                
-            }
-            
-            else{
-                String finishReason = (String) output.get("type");
-                if(finishReason != null  ) {
-                    if (finishReason.equals("transcript.text.done")) {
-                        return new StreamData(ServerEvent.CONTENT, null, "stop", true);
+            if(streamDataBuilder.getChatObject().isStream()) {
+                String delta = (String) output.get("delta");
+
+                if (delta != null) {
+
+                    return new StreamData(ServerEvent.CONTENT, delta, null);
+
+                } else {
+                    String finishReason = (String) output.get("type");
+                    if (finishReason != null) {
+                        if (finishReason.equals("transcript.text.done")) {
+                            return new StreamData(ServerEvent.CONTENT, null, "stop", true);
+                        } else {
+                            logger.info("audio data is empty:{},finishReason:{}", data, finishReason);
+                            //                        return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
+                        }
                     } else {
-                        logger.info("audio data is empty:{},finishReason:{}", data, finishReason);
-                        //                        return new StreamData(ServerEvent.CONTENT, audioData, finishReason);
-                    }
-                }
-                else {
 //                {"error":{"code":"1214","message":"音色id不存在"}}
-                    Map error = (Map) output.get("error");
-                    if (error != null) {
-                        throw new ReactorCallException("ParseAudioStreamContentFromData failed:" + data);
-                    } else {
-                        logger.info("audio data:", data);
+                        Map error = (Map) output.get("error");
+                        if (error != null) {
+                            throw new ReactorCallException("ParseAudioStreamContentFromData failed:" + data);
+                        } else {
+                            logger.info("audio data:", data);
+                        }
                     }
                 }
+            }
+            else{
+                String text = (String) output.get("text");
+                return new StreamData(ServerEvent.CONTENT, text, "stop",true);                
             }
            
 

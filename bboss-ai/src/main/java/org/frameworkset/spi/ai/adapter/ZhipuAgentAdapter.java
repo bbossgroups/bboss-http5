@@ -20,6 +20,7 @@ import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.AudioDataBuilder;
 import org.frameworkset.spi.ai.util.MessageBuilder;
+import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.io.File;
@@ -114,8 +115,8 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
      * @param data
      * @return
      */
-    public StreamData parseAudioStreamContentFromData(String data){
-        return AIResponseUtil.parseZhipuAudioStreamContentFromData(data);
+    public StreamData parseAudioStreamContentFromData(StreamDataBuilder streamDataBuilder, String data){
+        return AIResponseUtil.parseZhipuAudioStreamContentFromData(  streamDataBuilder,data);
     }
     @Override
     public Map buildAudioSTTRequestMap(AudioSTTAgentMessage audioSTTAgentMessage) {

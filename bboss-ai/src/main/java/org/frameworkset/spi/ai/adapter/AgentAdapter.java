@@ -179,8 +179,8 @@ public abstract class AgentAdapter {
      * @param data
      * @return
      */
-    public StreamData parseAudioStreamContentFromData(String data){
-        return AIResponseUtil.parseAudioStreamContentFromData(data);
+    public StreamData parseAudioStreamContentFromData(StreamDataBuilder streamDataBuilder,String data){
+        return AIResponseUtil.parseAudioStreamContentFromData(  streamDataBuilder,data);
     }
 
     

@@ -58,6 +58,10 @@ public class MapAgentMessage extends AgentMessage<MapAgentMessage>{
             public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
 
             }
+            @Override
+            public ChatObject getChatObject() {
+                return chatObject;
+            }
         };
         
 

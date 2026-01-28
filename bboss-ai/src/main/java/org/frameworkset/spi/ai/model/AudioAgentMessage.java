@@ -84,6 +84,10 @@ public class AudioAgentMessage extends StoreAgentMessage<AudioAgentMessage> {
                     serverEvent.setUrl(genFileDownload.downloadAudio(clientConfiguration, AudioAgentMessage.this, null, url));
                 }
             }
+            @Override
+            public ChatObject getChatObject() {
+                return chatObject;
+            }
         };
          
 

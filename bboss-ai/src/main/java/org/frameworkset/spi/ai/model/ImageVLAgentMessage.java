@@ -67,6 +67,10 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
             public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
 
             }
+            @Override
+            public ChatObject getChatObject() {
+                return chatObject;
+            }
         };
         if(stream == null){
             stream = false;
