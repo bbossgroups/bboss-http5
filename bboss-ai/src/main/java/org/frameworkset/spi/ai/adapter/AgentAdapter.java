@@ -24,7 +24,6 @@ import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.util.AudioDataBuilder;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
-import org.frameworkset.spi.reactor.BaseStreamDataHandler;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
@@ -106,10 +105,10 @@ public abstract class AgentAdapter {
 
         Map<String, Object> userMessage = null;
         if(imageUrls != null && imageUrls.size() > 0) {
-            userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(), imageUrls.toArray(new String[]{}));
+            userMessage = buildInputImagesMessage(imageAgentMessage.getPrompt(), imageUrls.toArray(new String[]{}));
         }
         else{
-            userMessage = buildInputImagesMessage(imageAgentMessage.getMessage(), (String[])null);
+            userMessage = buildInputImagesMessage(imageAgentMessage.getPrompt(), (String[])null);
         }
         messages.add(userMessage);
         imageAgentMessage.addSessionMessage(userMessage);
@@ -221,7 +220,7 @@ public abstract class AgentAdapter {
      * @return
      */
     public Map buildOpenAIRequestMap(ChatAgentMessage chatAgentMessage){
-        String message = chatAgentMessage.getMessage();
+        String message = chatAgentMessage.getPrompt();
         Map<String, Object> userMessage = MessageBuilder.buildUserMessage( message);
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", chatAgentMessage.getModel());
@@ -346,10 +345,10 @@ public abstract class AgentAdapter {
         // 添加当前用户消息
         Map<String, Object> userMessage = null;
         if(audio != null) {
-            userMessage = MessageBuilder.buildAudioSystemMessage(audioSTTAgentMessage.getMessage());
+            userMessage = MessageBuilder.buildAudioSystemMessage(audioSTTAgentMessage.getPrompt());
         }
         else{
-            userMessage = MessageBuilder.buildAudioUserMessage(audioSTTAgentMessage.getMessage());
+            userMessage = MessageBuilder.buildAudioUserMessage(audioSTTAgentMessage.getPrompt());
         }
         messages.add(userMessage);
         audioSTTAgentMessage.addSessionMessage(userMessage);

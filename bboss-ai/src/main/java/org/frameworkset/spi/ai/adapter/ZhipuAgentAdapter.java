@@ -15,16 +15,13 @@ package org.frameworkset.spi.ai.adapter;
  * limitations under the License.
  */
 
-import com.frameworkset.util.FileUtil;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
-import org.frameworkset.spi.ai.util.AudioDataBuilder;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -54,7 +51,7 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
     protected Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage) {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", audioAgentMessage.getModel());
-        requestMap.put("input", audioAgentMessage.getMessage());
+        requestMap.put("input", audioAgentMessage.getPrompt());
     
         if(audioAgentMessage.getParameters() != null && audioAgentMessage.getParameters().size() > 0){
             requestMap.putAll(audioAgentMessage.getParameters());
@@ -122,16 +119,16 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
     public Map buildAudioSTTRequestMap(AudioSTTAgentMessage audioSTTAgentMessage) {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", audioSTTAgentMessage.getModel());
-        requestMap.put("prompt", audioSTTAgentMessage.getMessage());
+        requestMap.put("prompt", audioSTTAgentMessage.getPrompt());
         
         Object audio = audioSTTAgentMessage.getAudio();
         // 添加当前用户消息
         Map<String, Object> userMessage = null;
         if(audio != null) {
-            userMessage = MessageBuilder.buildAudioSystemMessage(audioSTTAgentMessage.getMessage());
+            userMessage = MessageBuilder.buildAudioSystemMessage(audioSTTAgentMessage.getPrompt());
         }
         else{
-            userMessage = MessageBuilder.buildAudioUserMessage(audioSTTAgentMessage.getMessage());
+            userMessage = MessageBuilder.buildAudioUserMessage(audioSTTAgentMessage.getPrompt());
         }
         
         audioSTTAgentMessage.addSessionMessage(userMessage);

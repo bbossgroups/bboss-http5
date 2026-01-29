@@ -51,7 +51,7 @@ public class JiutianAgentAdapter extends QwenAgentAdapter{
         Map<String, Object> requestMap = new HashMap<>();
 
         requestMap.put("model", imageAgentMessage.getModel());
-        requestMap.put("prompt", imageAgentMessage.getMessage());
+        requestMap.put("prompt", imageAgentMessage.getPrompt());
         List<String> imageUrls = imageAgentMessage.getImageUrls();
         if(imageUrls != null && imageUrls.size() > 0){
             requestMap.put("filePath", imageUrls.get(0));

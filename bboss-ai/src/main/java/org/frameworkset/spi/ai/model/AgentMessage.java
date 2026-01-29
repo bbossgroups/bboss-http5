@@ -27,7 +27,10 @@ import java.util.Map;
  */
 public class AgentMessage<T extends AgentMessage> {
 
-    private String message;
+    /**
+     * 提示词工程
+     */
+    private String prompt;
     private String model ;
     private Map parameters;
     private Boolean stream;
@@ -45,8 +48,8 @@ public class AgentMessage<T extends AgentMessage> {
      */
     private String modelType;
 
-    public String getMessage() {
-        return message;
+    public String getPrompt() {
+        return prompt;
     }
 
     /**
@@ -58,8 +61,8 @@ public class AgentMessage<T extends AgentMessage> {
     public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter){
         return null;
     }
-    public void setMessage(String message) {
-        this.message = message;
+    public void setPrompt(String prompt) {
+        this.prompt = prompt;
     }
 
     public String getModel() {

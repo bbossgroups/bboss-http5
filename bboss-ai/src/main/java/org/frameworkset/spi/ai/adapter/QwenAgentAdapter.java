@@ -19,7 +19,6 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
-import org.frameworkset.spi.reactor.BaseStreamDataHandler;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
@@ -93,7 +92,7 @@ public class QwenAgentAdapter extends AgentAdapter{
 
 
         Map<String,Object> inputVoice = new LinkedHashMap();
-        inputVoice.put("text",audioAgentMessage.getMessage());
+        inputVoice.put("text",audioAgentMessage.getPrompt());
         if(audioAgentMessage.getParameters() != null){
             inputVoice.putAll(audioAgentMessage.getParameters());
         }

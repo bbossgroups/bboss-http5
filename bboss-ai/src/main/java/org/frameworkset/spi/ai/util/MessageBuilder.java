@@ -94,7 +94,7 @@ public class MessageBuilder {
 
         List contents = new ArrayList<>();
         Map contentData = new LinkedHashMap();
-        contentData.put("text", imageAgentMessage.getMessage());
+        contentData.put("text", imageAgentMessage.getPrompt());
         
         
 
