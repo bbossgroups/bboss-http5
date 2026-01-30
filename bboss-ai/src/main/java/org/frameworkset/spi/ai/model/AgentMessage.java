@@ -35,6 +35,8 @@ public class AgentMessage<T extends AgentMessage> {
     private Map parameters;
     private Boolean stream;
     private Double temperature;
+    private Map header = null;
+//        header.put("X-DashScope-Async","enable");
     /**
      * 消息级别模型类型，优先级高于模型服务级别配置，取值参考：
      * public class AIConstants {
@@ -51,6 +53,18 @@ public class AgentMessage<T extends AgentMessage> {
     public String getPrompt() {
         return prompt;
     }
+    
+    public T addHeader(String key,String value){
+        if(header == null){
+            header = new java.util.LinkedHashMap<>();
+        }
+        header.put(key, value);
+        return (T)this;
+    }
+
+    public Map getHeader() {
+        return header;
+    }
 
     /**
      * 构建流式风格接口ChatObject对象
@@ -61,8 +75,9 @@ public class AgentMessage<T extends AgentMessage> {
     public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter){
         return null;
     }
-    public void setPrompt(String prompt) {
+    public T setPrompt(String prompt) {
         this.prompt = prompt;
+        return (T)this;
     }
 
     public String getModel() {

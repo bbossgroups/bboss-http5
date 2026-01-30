@@ -40,6 +40,20 @@ public class AIAgent {
     public ImageEvent genImage(String url,ImageAgentMessage imageAgentMessage){
         return AIAgentUtil.multimodalImageGeneration(url,imageAgentMessage);
     }
+
+    /**
+     * 提交视频生成任务
+     * @param maasName
+     * @param url
+     * @param videoAgentMessage
+     * @return
+     */
+    public VideoTask submitVideoTask(String maasName,String url,VideoAgentMessage videoAgentMessage){
+        return AIAgentUtil.submitVideoTask(maasName,url,videoAgentMessage);
+    }
+    public VideoTask submitVideoTask(String url,VideoAgentMessage videoAgentMessage){
+        return AIAgentUtil.submitVideoTask(url,videoAgentMessage);
+    }
     /**
      * 调用音频合成模型，生成音频
      * @param url
