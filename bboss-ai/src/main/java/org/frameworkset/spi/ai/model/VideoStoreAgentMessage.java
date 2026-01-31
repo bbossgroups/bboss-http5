@@ -15,16 +15,23 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
-/**
- * @author biaoping.yin
- * @Date 2026/1/29
- */
-public class VideoTask extends MultimodalGeneration{
-    private String taskId;
-    private String taskStatus;
-    private String requestId;
+import org.frameworkset.spi.ai.material.StoreFilePathFunction;
 
-  
+/**
+ * 图片生成报文
+ * @author biaoping.yin
+ * @Date 2026/1/4
+ */
+public  class VideoStoreAgentMessage extends StoreAgentMessage<VideoStoreAgentMessage>{
+    private String taskId;
+    private String videoTaskResultUrl;
+
+    /**
+     * 存储音频文件类型:
+     * file 下载文件
+     * url 不下载文件
+     */
+    private String storeVideoType;
 
     public String getTaskId() {
         return taskId;
@@ -34,20 +41,19 @@ public class VideoTask extends MultimodalGeneration{
         this.taskId = taskId;
     }
 
-    public String getTaskStatus() {
-        return taskStatus;
+    public String getStoreVideoType() {
+        return storeVideoType;
     }
 
-    public void setTaskStatus(String taskStatus) {
-        this.taskStatus = taskStatus;
+    public void setStoreVideoType(String storeVideoType) {
+        this.storeVideoType = storeVideoType;
     }
 
-    public String getRequestId() {
-        return requestId;
+    public String getVideoTaskResultUrl() {
+        return videoTaskResultUrl;
     }
 
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
+    public void setVideoTaskResultUrl(String videoTaskResultUrl) {
+        this.videoTaskResultUrl = videoTaskResultUrl;
     }
-
 }

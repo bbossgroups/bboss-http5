@@ -35,7 +35,7 @@ public class AgentMessage<T extends AgentMessage> {
     private Map parameters;
     private Boolean stream;
     private Double temperature;
-    private Map header = null;
+    private Map headers = null;
 //        header.put("X-DashScope-Async","enable");
     /**
      * 消息级别模型类型，优先级高于模型服务级别配置，取值参考：
@@ -55,15 +55,21 @@ public class AgentMessage<T extends AgentMessage> {
     }
     
     public T addHeader(String key,String value){
-        if(header == null){
-            header = new java.util.LinkedHashMap<>();
+        if(headers == null){
+            headers = new java.util.LinkedHashMap<>();
         }
-        header.put(key, value);
+        headers.put(key, value);
         return (T)this;
     }
 
-    public Map getHeader() {
-        return header;
+    public Map getHeaders() {
+        return headers;
+    }
+    
+    public boolean containsHeader(String key){
+        if(headers == null)
+            return false;
+        return headers.containsKey(key);
     }
 
     /**

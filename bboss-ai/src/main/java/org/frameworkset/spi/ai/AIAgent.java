@@ -54,6 +54,14 @@ public class AIAgent {
     public VideoTask submitVideoTask(String url,VideoAgentMessage videoAgentMessage){
         return AIAgentUtil.submitVideoTask(url,videoAgentMessage);
     }
+
+    public VideoGenResult getVideoTaskResult(String maasName, VideoStoreAgentMessage videoStoreAgentMessage){
+        return AIAgentUtil.getVideoTaskResult(maasName,videoStoreAgentMessage);
+    }
+
+    public VideoGenResult getVideoTaskResult( VideoStoreAgentMessage videoStoreAgentMessage){
+        return AIAgentUtil.getVideoTaskResult(null,videoStoreAgentMessage);
+    }
     /**
      * 调用音频合成模型，生成音频
      * @param url

@@ -24,6 +24,9 @@ public class VideoAgentMessage extends AgentMessage<VideoAgentMessage> {
     
     private String languageType;
 
+
+    private String audioUrl;
+
     public String getLanguageType() {
         return languageType;
     }
@@ -32,4 +35,14 @@ public class VideoAgentMessage extends AgentMessage<VideoAgentMessage> {
         this.languageType = languageType;
         return this;
     }
+
+    public String getAudioUrl() {
+        return audioUrl;
+    }
+
+    public VideoAgentMessage setAudioUrl(String audioUrl) {
+        this.audioUrl = audioUrl;
+        return this;
+    }
+
 }

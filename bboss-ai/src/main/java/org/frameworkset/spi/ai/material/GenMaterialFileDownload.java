@@ -18,6 +18,7 @@ package org.frameworkset.spi.ai.material;
 import org.frameworkset.spi.ai.model.AIConstants;
 import org.frameworkset.spi.ai.model.AudioAgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
+import org.frameworkset.spi.ai.model.VideoStoreAgentMessage;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
@@ -45,6 +46,14 @@ public class GenMaterialFileDownload implements GenFileDownload {
             return audioUrl;
         }
         return HttpRequestProxy.httpGet(config, audioUrl, AIResponseUtil.buildDownAudioHttpClientResponseHandler(config,audioAgentMessage,audioUrl));
+    }
+
+    @Override
+    public String downloadVideo(ClientConfiguration config, VideoStoreAgentMessage videoStoreAgentMessage, String downUrl, String videoUrl) {
+        if(videoStoreAgentMessage.getStoreVideoType() == null || videoStoreAgentMessage.getStoreVideoType().equals(AIConstants.STORETYPE_URL)){
+            return videoUrl;
+        }
+        return HttpRequestProxy.httpGet(config, videoUrl, AIResponseUtil.buildDownVideoHttpClientResponseHandler(config,videoStoreAgentMessage,videoUrl));
     }
 
 }

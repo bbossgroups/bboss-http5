@@ -17,7 +17,6 @@ package org.frameworkset.spi.ai.util;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.ParseException;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.adapter.AgentAdapterFactory;
@@ -39,7 +38,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -99,44 +97,23 @@ public class AIAgentUtil {
      * @return
      */
     public static ImageEvent multimodalImageGeneration(String poolName, String url, Object message) {
-        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
-        Object newmessage = agentAdapter.buildGenImageRequestParameter(config,message);
-        Map data = HttpRequestProxy.sendJsonBody(config,newmessage,url,Map.class);
-        ImageEvent imageEvent = agentAdapter.buildGenImageResponse(config,(ImageAgentMessage)message, data);
+        ImageEvent imageEvent = null;       
+
+        try {
+            ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
+            AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
+            Object newmessage = agentAdapter.buildGenImageRequestParameter(config,message);
+            Map data = HttpRequestProxy.sendJsonBody(config,newmessage,url,Map.class);
+            imageEvent = agentAdapter.buildGenImageResponse(config,(ImageAgentMessage)message, data);
+        }
+        catch(Exception e){
+            imageEvent = new ImageEvent();
+            imageEvent.setCode(ResponseStatus.ERROR_CODE);
+            imageEvent.setMessage(SimpleStringUtil.exceptionToString(e));
+        }
 
         return imageEvent;
-//        Map output = (Map)data.get("output");
-//        List choices = (List)output.get("choices");
-//        if(choices == null || choices.size() == 0)
-//            return null;
-//        Map choice = (Map)choices.get(0);
-//        Map messageData = (Map)choice.get("message");
-//        
-//        String finishReason = (String)choice.get("finish_reason");
-//        List imageContentData = (List)messageData.get("content");
-//        
-//        if(imageContentData != null ){
-//            int size = imageContentData.size();
-//            if(size > 0) {
-//                imageEvent = new ImageEvent();
-//                if(size == 1) {
-//                    Map image = (Map) imageContentData.get(0);
-//                    String imageUrl = (String) image.get("image");
-//
-//                    imageEvent.setImageUrl(imageUrl);
-//                }
-//                else{
-//                    for(int i = 0; i < size; i++){
-//                        Map image = (Map) imageContentData.get(i);
-//                        String imageUrl = (String) image.get("image");
-//                        imageEvent.addImageUrl(imageUrl);
-//                    }
-//                }
-//                imageEvent.setFinishReason(finishReason);
-//            }
-//        }
-//        return imageEvent;
+
     }
 
     /**
@@ -192,7 +169,7 @@ public class AIAgentUtil {
         catch(Exception e){
             audioEvent = new AudioEvent();
             audioEvent.setCode(ResponseStatus.ERROR_CODE);
-            audioEvent.setErrorMessage(SimpleStringUtil.exceptionToString(e));
+            audioEvent.setMessage(SimpleStringUtil.exceptionToString(e));
         }
         return audioEvent;
 //        Map data = HttpRequestProxy.sendJsonBody(poolName,message,url,Map.class);
@@ -445,4 +422,32 @@ public class AIAgentUtil {
         return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
     }
 
+    public static VideoTask submitVideoTask(String maasName, String url, VideoAgentMessage videoAgentMessage) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(maasName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,videoAgentMessage);
+        Object params = agentAdapter.buildVideoRequestParameter(clientConfiguration,videoAgentMessage);
+        Map taskInfo = HttpRequestProxy.sendJsonBody(maasName,params,url,videoAgentMessage.getHeaders(),Map.class);
+        VideoTask task = agentAdapter.buildVideoResponseTask(clientConfiguration,videoAgentMessage,  taskInfo);
+        
+        return task;
+    }
+
+    public static VideoTask submitVideoTask( String url, VideoAgentMessage videoAgentMessage) {
+        return submitVideoTask(null,   url,  videoAgentMessage) ;
+    }
+    
+    public static VideoGenResult getVideoTaskResult(String maasName, VideoStoreAgentMessage videoStoreAgentMessage) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(maasName);
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,null);
+        agentAdapter._buildGetVideoResultRquestMap(videoStoreAgentMessage,clientConfiguration);
+        Map taskInfo = HttpRequestProxy.httpGetforObject(maasName,videoStoreAgentMessage.getVideoTaskResultUrl(),Map.class);
+        VideoGenResult videoGenResult = agentAdapter.buildVideoGenResult(clientConfiguration,videoStoreAgentMessage,taskInfo);
+        
+//        Map output = (Map)taskInfo.get("output");
+//        result.put("taskId",output.get("task_id"));
+//        result.put("taskStatus",output.get("task_status"));
+//        result.put("videoUrl",output.get("video_url"));
+//        result.put("requestId",taskInfo.get("request_id"));
+        return videoGenResult;
+    }
 }

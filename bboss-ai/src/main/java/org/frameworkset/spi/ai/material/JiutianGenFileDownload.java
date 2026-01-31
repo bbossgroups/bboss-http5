@@ -18,6 +18,7 @@ package org.frameworkset.spi.ai.material;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.frameworkset.spi.ai.model.AudioAgentMessage;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
+import org.frameworkset.spi.ai.model.VideoStoreAgentMessage;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
@@ -69,6 +70,11 @@ public class JiutianGenFileDownload implements GenFileDownload {
 
     @Override
     public String downloadAudio(ClientConfiguration config, AudioAgentMessage audioAgentMessage, String downUrl, String audioUrl) {
+        return null;
+    }
+
+    @Override
+    public String downloadVideo(ClientConfiguration config, VideoStoreAgentMessage videoStoreAgentMessage, String downUrl, String videoUrl) {
         return null;
     }
 

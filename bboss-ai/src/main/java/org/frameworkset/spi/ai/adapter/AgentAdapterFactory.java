@@ -62,7 +62,7 @@ public class AgentAdapterFactory {
     
     public static AgentAdapter getAgentAdapter(ClientConfiguration clientConfiguration,Object message) {
         String modelType = null;
-        if(message instanceof AgentMessage){
+        if(message !=null && message instanceof AgentMessage){
             modelType = ((AgentMessage)message).getModelType();
             if(modelType == null || modelType.equals("")){
                 modelType = clientConfiguration.getModelType();

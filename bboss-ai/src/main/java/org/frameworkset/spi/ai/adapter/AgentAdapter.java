@@ -39,7 +39,7 @@ import java.util.*;
 public abstract class AgentAdapter {
     private org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AgentAdapter.class);
     protected GenFileDownload genFileDownload;
-
+ 
  
     protected AgentAdapter initAgentAdapter(){
         genFileDownload = new GenMaterialFileDownload();
@@ -273,6 +273,13 @@ public abstract class AgentAdapter {
                 temp.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
             if(temp.getStoreImageType() == null)
                 temp.setStoreImageType(clientConfiguration.getExtendConfig("storeImageType"));
+
+            if(temp.getGenFileStoreDir() != null)
+                temp.setGenFileStoreDir(temp.getGenFileStoreDir().trim());
+            if(temp.getEndpoint() != null)
+                temp.setEndpoint(temp.getEndpoint().trim());
+            if(temp.getStoreImageType() != null)
+                temp.setStoreImageType(temp.getStoreImageType().trim());
         }
         return imageAgentMessage;
         
@@ -301,7 +308,7 @@ public abstract class AgentAdapter {
     protected abstract Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
 
     public Map<String, Object> _buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage,ClientConfiguration clientConfiguration){
-        
+
         if(audioAgentMessage.getGenFileStoreDir() == null)
             audioAgentMessage.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
         if(audioAgentMessage.getEndpoint() == null)
@@ -315,6 +322,21 @@ public abstract class AgentAdapter {
         }
         return params;
     }
+
+    public Map<String, Object> _buildGetVideoResultRquestMap(VideoStoreAgentMessage videoStoreAgentMessage,ClientConfiguration clientConfiguration){
+
+        if(videoStoreAgentMessage.getGenFileStoreDir() == null)
+            videoStoreAgentMessage.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
+        if(videoStoreAgentMessage.getEndpoint() == null)
+            videoStoreAgentMessage.setEndpoint(clientConfiguration.getExtendConfig("endpoint"));
+        if(videoStoreAgentMessage.getStoreVideoType() == null){
+            videoStoreAgentMessage.setStoreVideoType(clientConfiguration.getExtendConfig("storeVideoType"));
+        }
+       
+        return buildGetVideoResultRquestMap(  videoStoreAgentMessage);
+    }
+
+    protected abstract Map<String, Object> buildGetVideoResultRquestMap(VideoStoreAgentMessage videoStoreAgentMessage);
 
     /**
      * 构建音频生成请求参数
@@ -405,5 +427,16 @@ public abstract class AgentAdapter {
         if(audioSTTAgentMessage.getResultFormat() != null)
             requestMap.put("result_format", audioSTTAgentMessage.getResultFormat());
         return requestMap;
+    }
+    protected abstract Object buildGenVideoRequestMap(VideoAgentMessage videoAgentMessage,ClientConfiguration clientConfiguration);
+
+    public Object buildVideoRequestParameter(ClientConfiguration clientConfiguration, VideoAgentMessage videoAgentMessage) {
+        return this.buildGenVideoRequestMap(videoAgentMessage,clientConfiguration);
+    }
+
+    public abstract VideoTask buildVideoResponseTask(ClientConfiguration clientConfiguration, VideoAgentMessage videoAgentMessage,Map taskInfo);
+
+    public VideoGenResult buildVideoGenResult(ClientConfiguration clientConfiguration,VideoStoreAgentMessage videoStoreAgentMessage,Map taskInfo) {
+        return null;
     }
 }

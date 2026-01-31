@@ -30,6 +30,9 @@ import java.util.*;
  * @Date 2026/1/4
  */
 public class QwenAgentAdapter extends AgentAdapter{
+    public String getVideoTaskResultUrl(VideoStoreAgentMessage videoStoreAgentMessage){
+        return "/api/v1/tasks/"+videoStoreAgentMessage.getTaskId();
+    }
     public AudioEvent buildGenAudioResponse(ClientConfiguration config, AudioAgentMessage message, Map data){
         Map output = (Map)data.get("output");
         Map audio = (Map)output.get("audio");
@@ -56,6 +59,96 @@ public class QwenAgentAdapter extends AgentAdapter{
             audioEvent.setAudioUrl(genFileDownload.downloadAudio(config, message, null, audioUrl));
         }
         return audioEvent;
+    }
+    public VideoGenResult buildVideoGenResult(ClientConfiguration clientConfiguration,VideoStoreAgentMessage videoStoreAgentMessage,Map taskInfo) {
+        VideoGenResult result = new VideoGenResult();
+        Map output = (Map)taskInfo.get("output");
+        if(output != null) {
+            result.setTaskId((String) output.get("task_id"));
+            result.setTaskStatus((String) output.get("task_status"));
+            result.setVideoGenUrl((String) output.get("video_url"));
+            if(result.getVideoGenUrl() != null && result.getVideoGenUrl().length() > 0) {
+                result.setVideoUrl(genFileDownload.downloadVideo(clientConfiguration, videoStoreAgentMessage, null, result.getVideoGenUrl()));
+            }
+            result.setSubmitTime((String) output.get("submit_time"));
+            result.setScheduledTime((String) output.get("scheduled_time"));
+            result.setEndTime((String) output.get("end_time"));
+            result.setOrigPrompt((String) output.get("orig_prompt"));
+//            "submit_time": "2025-09-29 14:18:52.331",
+//                    "scheduled_time": "2025-09-29 14:18:59.290",
+//                    "end_time": "2025-09-29 14:23:39.407",
+//                    "orig_prompt": "一幅史诗级可爱的场景。一只小巧可爱的卡通小猫将军，身穿细节精致的金色盔甲，头戴一个稍大的头盔，勇敢地站在悬崖上。他骑着一匹虽小但英勇的战马，说：”青海长云暗雪山，孤城遥望玉门关。黄沙百战穿金甲，不破楼兰终不还。“。悬崖下方，一支由老鼠组成的、数量庞大、无穷无尽的军队正带着临时制作的武器向前冲锋。这是一个戏剧性的、大规模的战斗场景，灵感来自中国古代的战争史诗。远处的雪山上空，天空乌云密布。整体氛围是“可爱”与“霸气”的搞笑和史诗般的融合。",
+
+       
+            result.setCode((String) output.get("code"));
+            result.setMessage((String) output.get("message"));
+        }
+        result.setRequestId((String) taskInfo.get("request_id"));
+//        result.put("taskId",output.get("task_id"));
+//        result.put("taskStatus",output.get("task_status"));
+//        result.put("videoUrl",output.get("video_url"));
+//        result.put("requestId",taskInfo.get("request_id"));
+        return result;
+    }
+    public VideoTask buildVideoResponseTask(ClientConfiguration clientConfiguration, VideoAgentMessage videoAgentMessage,Map taskInfo ){
+        Map output = (Map)taskInfo.get("output");
+        VideoTask result = new VideoTask();
+        if(output != null) {
+            result.setTaskId((String) output.get("task_id"));
+            result.setTaskStatus((String) output.get("task_status"));
+            
+        }
+        else {
+            result.setCode((String) taskInfo.get("code"));
+            result.setMessage((String) taskInfo.get("message"));
+        }
+        result.setRequestId((String) taskInfo.get("request_id"));
+        return result;
+    }
+    @Override
+    protected Object buildGenVideoRequestMap(VideoAgentMessage videoAgentMessage, ClientConfiguration clientConfiguration) {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model",videoAgentMessage.getModel());
+
+
+
+
+        Map<String,Object> inputVoice = new LinkedHashMap();
+        inputVoice.put("prompt",videoAgentMessage.getPrompt());
+//        inputVoice.put("audio_url","https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20250923/hbiayh/%E4%BB%8E%E5%86%9B%E8%A1%8C.mp3");
+        inputVoice.put("language_type",videoAgentMessage.getLanguageType());
+
+        requestMap.put("input",inputVoice);
+
+        /**
+         * "parameters": {
+         *         "size": "832*480",
+         *         "prompt_extend": true,
+         *         "duration": 10,
+         *         "audio": true
+         *     }
+         */
+        Map<String,Object> parameters = videoAgentMessage.getParameters();
+//        parameters.put("size","832*480");
+//        parameters.put("prompt_extend",true);
+//        parameters.put("duration",10);
+//        parameters.put("audio",true);
+        if(parameters != null) {
+
+            requestMap.put("parameters", parameters);
+        }
+        if(!videoAgentMessage.containsHeader("X-DashScope-Async")){
+            videoAgentMessage.addHeader("X-DashScope-Async", "enable");
+        }
+        return requestMap;
+    }
+
+
+    protected Map<String, Object> buildGetVideoResultRquestMap(VideoStoreAgentMessage videoStoreAgentMessage){
+
+        String requestUrl = getVideoTaskResultUrl(videoStoreAgentMessage);
+        videoStoreAgentMessage.setVideoTaskResultUrl(requestUrl);
+        return null;
     }
 
     public SSEHeaderSetFunction getAudioGenSSEHeaderSetFunction(){

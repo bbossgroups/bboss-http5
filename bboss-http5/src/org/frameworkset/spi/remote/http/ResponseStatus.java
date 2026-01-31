@@ -30,14 +30,14 @@ public class ResponseStatus {
     public static final String NOT_AUTHORIZED = "not_authorized";
     public static final String NOT_LOGIN = "not_login";
     
-    public static final int SUCCESS_CODE = 200;
-    public static final int FAIL_CODE = 500;
-    public static final int ERROR_CODE = 501;
-    public static final int TIMEOUT_CODE = 502;
-    public static final int CANCEL_CODE = 506;
-    public static final int NOT_FOUND_CODE = 404;
-    public static final int NOT_SUPPORT_CODE = 405;
-    public static final int NOT_AUTHORIZED_CODE = 403;
-    public static final int NOT_LOGIN_CODE = 401;
+    public static final String SUCCESS_CODE = "200";
+    public static final String FAIL_CODE = "500";
+    public static final String ERROR_CODE = "501";
+    public static final String TIMEOUT_CODE = "502";
+    public static final String CANCEL_CODE = "506";
+    public static final String NOT_FOUND_CODE = "404";
+    public static final String NOT_SUPPORT_CODE = "405";
+    public static final String NOT_AUTHORIZED_CODE = "403";
+    public static final String NOT_LOGIN_CODE = "401";
     
 }

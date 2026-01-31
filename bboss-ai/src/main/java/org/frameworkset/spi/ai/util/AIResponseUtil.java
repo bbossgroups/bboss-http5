@@ -57,6 +57,10 @@ public class AIResponseUtil {
       else if(type.equals(AIConstants.STORETYPE_FILE)){
           handler = new DownFileHttpClientResponseHandler( config,imageAgentMessage,  imageUrl);
       }
+      if(handler == null){
+          logger.warn("unsupport StoreImageType:{}", type);
+          throw new AIRuntimeException("unsupport StoreImageType:"+type);
+      }
       return handler;
       
   }
@@ -65,6 +69,14 @@ public class AIResponseUtil {
          
         return new DownFileHttpClientResponseHandler( config,audioAgentMessage,  audioUrl);
         
+
+    }
+
+    public static HttpClientResponseHandler<String>  buildDownVideoHttpClientResponseHandler(ClientConfiguration config, 
+                                                                                             VideoStoreAgentMessage videoStoreAgentMessage, String videoUrl){
+
+        return new DownFileHttpClientResponseHandler( config,videoStoreAgentMessage,  videoUrl);
+
 
     }
 
