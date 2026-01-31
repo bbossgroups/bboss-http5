@@ -429,8 +429,9 @@ public abstract class AgentAdapter {
         return requestMap;
     }
     protected abstract Object buildGenVideoRequestMap(VideoAgentMessage videoAgentMessage,ClientConfiguration clientConfiguration);
-
+    protected abstract String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage);
     public Object buildVideoRequestParameter(ClientConfiguration clientConfiguration, VideoAgentMessage videoAgentMessage) {
+        videoAgentMessage.setSubmitVideoTaskUrl(getSubmitVideoTaskUrl(  videoAgentMessage));
         return this.buildGenVideoRequestMap(videoAgentMessage,clientConfiguration);
     }
 

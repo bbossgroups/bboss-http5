@@ -422,18 +422,18 @@ public class AIAgentUtil {
         return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
     }
 
-    public static VideoTask submitVideoTask(String maasName, String url, VideoAgentMessage videoAgentMessage) {
+    public static VideoTask submitVideoTask(String maasName,  VideoAgentMessage videoAgentMessage) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(maasName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,videoAgentMessage);
         Object params = agentAdapter.buildVideoRequestParameter(clientConfiguration,videoAgentMessage);
-        Map taskInfo = HttpRequestProxy.sendJsonBody(maasName,params,url,videoAgentMessage.getHeaders(),Map.class);
+        Map taskInfo = HttpRequestProxy.sendJsonBody(maasName,params,videoAgentMessage.getSubmitVideoTaskUrl(),videoAgentMessage.getHeaders(),Map.class);
         VideoTask task = agentAdapter.buildVideoResponseTask(clientConfiguration,videoAgentMessage,  taskInfo);
         
         return task;
     }
 
-    public static VideoTask submitVideoTask( String url, VideoAgentMessage videoAgentMessage) {
-        return submitVideoTask(null,   url,  videoAgentMessage) ;
+    public static VideoTask submitVideoTask( VideoAgentMessage videoAgentMessage) {
+        return submitVideoTask(null,   videoAgentMessage) ;
     }
     
     public static VideoGenResult getVideoTaskResult(String maasName, VideoStoreAgentMessage videoStoreAgentMessage) {

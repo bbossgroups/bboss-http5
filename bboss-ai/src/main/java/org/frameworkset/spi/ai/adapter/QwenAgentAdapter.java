@@ -105,8 +105,17 @@ public class QwenAgentAdapter extends AgentAdapter{
         result.setRequestId((String) taskInfo.get("request_id"));
         return result;
     }
+    protected String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage){
+        if(videoAgentMessage.getFirstFrameUrl() != null) {
+            return "/api/v1/services/aigc/image2video/video-synthesis";
+        }
+        else {
+            return "/api/v1/services/aigc/video-generation/video-synthesis";
+        }
+    }
     @Override
     protected Object buildGenVideoRequestMap(VideoAgentMessage videoAgentMessage, ClientConfiguration clientConfiguration) {
+        
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model",videoAgentMessage.getModel());
 
@@ -115,8 +124,29 @@ public class QwenAgentAdapter extends AgentAdapter{
 
         Map<String,Object> inputVoice = new LinkedHashMap();
         inputVoice.put("prompt",videoAgentMessage.getPrompt());
+        if(videoAgentMessage.getAudioUrl() != null){
+            inputVoice.put("audio_url",videoAgentMessage.getAudioUrl());
+        }
+        if(videoAgentMessage.getImgUrl() != null){
+            inputVoice.put("img_url",videoAgentMessage.getImgUrl());
+        }
+        if(videoAgentMessage.getFirstFrameUrl() != null){
+            inputVoice.put("first_frame_url",videoAgentMessage.getFirstFrameUrl());
+        }
+        
+        if(videoAgentMessage.getLastFrameUrl() != null){
+            inputVoice.put("last_frame_url",videoAgentMessage.getLastFrameUrl());
+        }
+        if(videoAgentMessage.getTemplate() != null){
+            inputVoice.put("template",videoAgentMessage.getTemplate());
+        }
+        if (videoAgentMessage.getNegativePrompt() != null){
+            inputVoice.put("negative_prompt",videoAgentMessage.getNegativePrompt());
+        }
 //        inputVoice.put("audio_url","https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20250923/hbiayh/%E4%BB%8E%E5%86%9B%E8%A1%8C.mp3");
-        inputVoice.put("language_type",videoAgentMessage.getLanguageType());
+        if(videoAgentMessage.getLanguageType() != null) {
+            inputVoice.put("language_type", videoAgentMessage.getLanguageType());
+        }
 
         requestMap.put("input",inputVoice);
 

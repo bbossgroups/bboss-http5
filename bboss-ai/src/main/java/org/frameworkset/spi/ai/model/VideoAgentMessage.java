@@ -26,7 +26,43 @@ public class VideoAgentMessage extends AgentMessage<VideoAgentMessage> {
 
 
     private String audioUrl;
+    
+    private String submitVideoTaskUrl;
 
+    private String template ;
+
+    private String imgUrl;
+    private String firstFrameUrl;
+    private String lastFrameUrl;
+
+    public String getFirstFrameUrl() {
+        return firstFrameUrl;
+    }
+
+    public void setFirstFrameUrl(String firstFrameUrl) {
+        this.firstFrameUrl = firstFrameUrl;
+    }
+
+    public String getLastFrameUrl() {
+        return lastFrameUrl;
+    }
+
+    public void setLastFrameUrl(String lastFrameUrl) {
+        this.lastFrameUrl = lastFrameUrl;
+    }
+
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    /**
+     * 生成视频的图片地址
+     * @param imgUrl
+     */
+    public VideoAgentMessage setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+        return this;
+    }
     public String getLanguageType() {
         return languageType;
     }
@@ -45,4 +81,21 @@ public class VideoAgentMessage extends AgentMessage<VideoAgentMessage> {
         return this;
     }
 
+    public String getSubmitVideoTaskUrl() {
+        return submitVideoTaskUrl;
+    }
+
+    public VideoAgentMessage setSubmitVideoTaskUrl(String submitVideoTaskUrl) {
+        this.submitVideoTaskUrl = submitVideoTaskUrl;
+        return this;
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public VideoAgentMessage setTemplate(String template) {
+        this.template = template;
+        return this;
+    }
 }

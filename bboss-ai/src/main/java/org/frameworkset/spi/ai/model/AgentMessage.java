@@ -31,6 +31,20 @@ public class AgentMessage<T extends AgentMessage> {
      * 提示词工程
      */
     private String prompt;
+
+    public String getNegativePrompt() {
+        return negativePrompt;
+    }
+
+    public T setNegativePrompt(String negativePrompt) {
+        this.negativePrompt = negativePrompt;
+        return (T)this;
+    }
+
+    /**
+     * 反向提示词工程
+     */
+    private String negativePrompt ;
     private String model ;
     private Map parameters;
     private Boolean stream;

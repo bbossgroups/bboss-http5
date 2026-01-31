@@ -44,15 +44,14 @@ public class AIAgent {
     /**
      * 提交视频生成任务
      * @param maasName
-     * @param url
      * @param videoAgentMessage
      * @return
      */
-    public VideoTask submitVideoTask(String maasName,String url,VideoAgentMessage videoAgentMessage){
-        return AIAgentUtil.submitVideoTask(maasName,url,videoAgentMessage);
+    public VideoTask submitVideoTask(String maasName,VideoAgentMessage videoAgentMessage){
+        return AIAgentUtil.submitVideoTask(maasName,videoAgentMessage);
     }
-    public VideoTask submitVideoTask(String url,VideoAgentMessage videoAgentMessage){
-        return AIAgentUtil.submitVideoTask(url,videoAgentMessage);
+    public VideoTask submitVideoTask(VideoAgentMessage videoAgentMessage){
+        return AIAgentUtil.submitVideoTask(videoAgentMessage);
     }
 
     public VideoGenResult getVideoTaskResult(String maasName, VideoStoreAgentMessage videoStoreAgentMessage){
