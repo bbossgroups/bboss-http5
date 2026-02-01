@@ -54,14 +54,14 @@ public class AIAgentUtil {
     /**
      * 创建流式调用的Flux，使用默认数据源
      */
-    public static Flux<String> streamChatCompletion(String url, Object message) {
-        return streamChatCompletion((String)null , url, message);
+    public static Flux<String> streamChatCompletion(Object message) {
+        return streamChatCompletion((String)null , message);
     }
 
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static Flux<String> streamChatCompletion(String poolName,String url,Object chatMessage) {
+    public static Flux<String> streamChatCompletion(String poolName,Object chatMessage) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
         final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
@@ -83,7 +83,7 @@ public class AIAgentUtil {
         streamDataHandler.setStream(chatObject.isStream());
         streamDataHandler.setAgentAdapter(agentAdapter);
         streamDataHandler.setChatObject(chatObject);
-        return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
+        return buildFlux(  clientConfiguration,   chatObject ,  streamDataHandler);
 
     }
     
@@ -92,19 +92,19 @@ public class AIAgentUtil {
     /**
      * 调用图片生成模型，生成图片
      * @param poolName
-     * @param url
      * @param message
      * @return
      */
-    public static ImageEvent multimodalImageGeneration(String poolName, String url, Object message) {
+    public static ImageEvent multimodalImageGeneration(String poolName,  ImageAgentMessage message) {
         ImageEvent imageEvent = null;       
 
         try {
             ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
             AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
             Object newmessage = agentAdapter.buildGenImageRequestParameter(config,message);
-            Map data = HttpRequestProxy.sendJsonBody(config,newmessage,url,Map.class);
-            imageEvent = agentAdapter.buildGenImageResponse(config,(ImageAgentMessage)message, data);
+            
+            Map data = HttpRequestProxy.sendJsonBody(config,newmessage,message.getGenImageCompletionsUrl(),Map.class);
+            imageEvent = agentAdapter.buildGenImageResponse(config,message, data);
         }
         catch(Exception e){
             imageEvent = new ImageEvent();
@@ -118,36 +118,33 @@ public class AIAgentUtil {
 
     /**
      * 调用图片生成模型，生成图片
-     * @param url
      * @param message
      * @return
      */
-    public static ImageEvent multimodalImageGeneration(String url, Object message) {
+    public static ImageEvent multimodalImageGeneration( ImageAgentMessage message) {
 
-        return multimodalImageGeneration(null, url, message) ;
+        return multimodalImageGeneration(null,  message) ;
     }
     /**
      * 调用音频合成模型，流式生成音频，实时播放
      * @param poolName
-     * @param url
      * @param audioAgentMessage
      * @return
      */
-    public static Flux<ServerEvent> streamAudioGenerationEvent(String poolName, String url, AudioAgentMessage audioAgentMessage) {       
+    public static Flux<ServerEvent> streamAudioGenerationEvent(String poolName,   AudioAgentMessage audioAgentMessage) {       
       
 
-            return AIAgentUtil.streamChatCompletionEvent(poolName, url, audioAgentMessage);
+            return AIAgentUtil.streamChatCompletionEvent(poolName,   audioAgentMessage);
             
     }
 
     /**
      * 调用音频合成模型，生成音频
      * @param poolName
-     * @param url
      * @param message
      * @return
      */
-    public static AudioEvent multimodalAudioGeneration(String poolName, String url, AudioAgentMessage message) {
+    public static AudioEvent multimodalAudioGeneration(String poolName,  AudioAgentMessage message) {
         
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config, message);
@@ -156,12 +153,12 @@ public class AIAgentUtil {
         try {
             StoreFilePathFunction storeFilePathFunction = message.getStoreFilePathFunction();
             if (storeFilePathFunction != null && storeFilePathFunction instanceof ReponseStoreFilePathFunction) {
-                String audioUrl = HttpRequestProxy.sendJsonBody(config, newmessage, url, AIResponseUtil.buildDownAudioHttpClientResponseHandler(config, message));
+                String audioUrl = HttpRequestProxy.sendJsonBody(config, newmessage, message.getGenAudioCompletionsUrl(), AIResponseUtil.buildDownAudioHttpClientResponseHandler(config, message));
                 audioEvent = new AudioEvent();
                 audioEvent.setAudioUrl(audioUrl);
 
             } else {
-                Map data = HttpRequestProxy.sendJsonBody(config, newmessage, url, Map.class);
+                Map data = HttpRequestProxy.sendJsonBody(config, newmessage, message.getGenAudioCompletionsUrl(), Map.class);
                 audioEvent = agentAdapter.buildGenAudioResponse(config, message, data);
 
             }
@@ -200,25 +197,24 @@ public class AIAgentUtil {
 
     /**
      * 调用音频合成模型，生成音频
-     * @param url
      * @param message
      * @return
      */
-    public static AudioEvent multimodalAudioGeneration(String url, AudioAgentMessage message) {
+    public static AudioEvent multimodalAudioGeneration( AudioAgentMessage message) {
 
-        return multimodalAudioGeneration(null, url, message) ;
+        return multimodalAudioGeneration(null,  message) ;
     }
     /**
      * 创建流式调用的Flux，使用默认数据源
      */
-    public static Flux<ServerEvent> streamChatCompletionEvent(String url, Object message) {
-        return streamChatCompletionEvent((String)null , url, message);
+    public static Flux<ServerEvent> streamChatCompletionEvent( Object message) {
+        return streamChatCompletionEvent((String)null , message);
     }
 
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,String url,Object chatMessage) {
+    public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,Object chatMessage) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
         final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
@@ -240,11 +236,11 @@ public class AIAgentUtil {
         streamDataHandler.setStream(chatObject.isStream());
         streamDataHandler.setAgentAdapter(agentAdapter);
         streamDataHandler.setChatObject(chatObject);
-        return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
+        return buildFlux(  clientConfiguration,    chatObject ,  streamDataHandler);
 
     }
 
-    private static <T> Flux<T> buildFlux(ClientConfiguration clientConfiguration,String url,ChatObject chatObject ,BaseStreamDataHandler<T> streamDataHandler) {
+    private static <T> Flux<T> buildFlux(ClientConfiguration clientConfiguration,ChatObject chatObject ,BaseStreamDataHandler<T> streamDataHandler) {
         return Flux.<T>create(sink -> {
                     Object data = null;
                     Object message = chatObject.getMessage();
@@ -277,7 +273,7 @@ public class AIAgentUtil {
                                 }
                             }
 
-                            HttpRequestProxy.sendJsonBody(clientConfiguration, (String)data, url, header, responseHandler);
+                            HttpRequestProxy.sendJsonBody(clientConfiguration, (String)data, chatObject.getCompletionsUrl(), header, responseHandler);
                         }
                         else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
                             Map header = new LinkedHashMap();
@@ -288,10 +284,10 @@ public class AIAgentUtil {
                             data = message;
                             Map<String,File> files = chatObject.getFiles();
                             if(files == null) {
-                                HttpRequestProxy.httpPost(clientConfiguration, url,message,  header, responseHandler);
+                                HttpRequestProxy.httpPost(clientConfiguration, chatObject.getCompletionsUrl(),message,  header, responseHandler);
                             }
                             else{
-                                HttpRequestProxy.httpPost(clientConfiguration, url,message,files,  header, responseHandler);
+                                HttpRequestProxy.httpPost(clientConfiguration, chatObject.getCompletionsUrl(),message,files,  header, responseHandler);
                             }
                             
                         }
@@ -328,8 +324,8 @@ public class AIAgentUtil {
     /**
      * 同步调用模型服务，返回问答内容
      */
-    public static ServerEvent imageParser(String url,Object message) {
-        return imageParser(  (String)null,url,  message);
+    public static ServerEvent imageParser(Object message) {
+        return imageParser(  (String)null, message);
 
 
     }
@@ -337,8 +333,8 @@ public class AIAgentUtil {
     /**
      * 同步调用模型服务，返回问答内容
      */
-    public static ServerEvent imageParser(String poolName,String url,Object message) {
-        return chatCompletionEvent(poolName,url,message);
+    public static ServerEvent imageParser(String poolName,Object message) {
+        return chatCompletionEvent(poolName,message);
         
 
 
@@ -347,8 +343,8 @@ public class AIAgentUtil {
     /**
      * 同步调用模型服务，返回问答内容
      */
-    public static ServerEvent audioParser(String poolName,String url,Object message) {
-        return chatCompletionEvent(poolName,url,message);
+    public static ServerEvent audioParser(String poolName,Object message) {
+        return chatCompletionEvent(poolName,message);
 
 
 
@@ -356,8 +352,8 @@ public class AIAgentUtil {
     /**
      * 同步调用模型服务，返回问答内容
      */
-    public static ServerEvent chatCompletionEvent(String url,Object message) {
-        return chatCompletionEvent(  (String)null,url,  message);
+    public static ServerEvent chatCompletionEvent(Object message) {
+        return chatCompletionEvent(  (String)null,  message);
 
 
     }
@@ -365,7 +361,7 @@ public class AIAgentUtil {
     /**
      * 同步调用模型服务，返回问答内容
      */
-    public static ServerEvent chatCompletionEvent(String poolName,String url,Object message) {
+    public static ServerEvent chatCompletionEvent(String poolName,Object message) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
         ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(config,message);
@@ -375,7 +371,7 @@ public class AIAgentUtil {
         BaseURLResponseHandler<ServerEvent> responseHandler = new BaseURLResponseHandler<ServerEvent>() {
             @Override
             public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
-                return AIResponseUtil.handleChatResponse(agentAdapter, url, response, chatObject.getStreamDataBuilder());
+                return AIResponseUtil.handleChatResponse(agentAdapter, chatObject.getCompletionsUrl(), response, chatObject.getStreamDataBuilder());
             }
         };
 
@@ -387,16 +383,16 @@ public class AIAgentUtil {
                     data = SimpleStringUtil.object2json(message);
                 }
             }
-            return HttpRequestProxy.sendJsonBody(config, data, url, (Map)null, responseHandler);
+            return HttpRequestProxy.sendJsonBody(config, data, chatObject.getCompletionsUrl(), (Map)null, responseHandler);
         }
         else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
 
             Map<String,File> files = chatObject.getFiles();
             if(files == null) {
-                return HttpRequestProxy.httpPost(config, url, message, (Map) null, responseHandler);
+                return HttpRequestProxy.httpPost(config, chatObject.getCompletionsUrl(), message, (Map) null, responseHandler);
             }
             else{
-                return HttpRequestProxy.httpPost(config, url, message, files, (Map) null,responseHandler);
+                return HttpRequestProxy.httpPost(config, chatObject.getCompletionsUrl(), message, files, (Map) null,responseHandler);
             }
         }
         else {
@@ -405,21 +401,21 @@ public class AIAgentUtil {
 
 
     }
-    public static <T> Flux<T> streamChatCompletion(String url,Object message,BaseStreamDataHandler<T> streamDataHandler){
-        return streamChatCompletion((String)null ,  url,  message, streamDataHandler);
+    public static <T> Flux<T> streamChatCompletion(Object message,BaseStreamDataHandler<T> streamDataHandler){
+        return streamChatCompletion((String)null ,   message, streamDataHandler);
     }
 
     /**
      * 创建流式调用的Flux,在指定的数据源上执行
      */
-    public static <T> Flux<T> streamChatCompletion(String poolName,String url,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
+    public static <T> Flux<T> streamChatCompletion(String poolName,Object chatMessage,BaseStreamDataHandler<T> streamDataHandler) {
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
         final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
         streamDataHandler.setStream(chatObject.isStream());
         streamDataHandler.setAgentAdapter(agentAdapter);
         streamDataHandler.setChatObject(chatObject);
-        return buildFlux(  clientConfiguration,  url,  chatObject ,  streamDataHandler);
+        return buildFlux(  clientConfiguration,    chatObject ,  streamDataHandler);
     }
 
     public static VideoTask submitVideoTask(String maasName,  VideoAgentMessage videoAgentMessage) {

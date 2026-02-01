@@ -18,6 +18,7 @@ package org.frameworkset.spi.ai.adapter;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
 import org.frameworkset.spi.ai.model.ImageEvent;
+import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
 import java.util.HashMap;
@@ -30,6 +31,16 @@ import java.util.Map;
  * @Date 2026/1/4
  */
 public class DoubaoAgentAdapter  extends QwenAgentAdapter{
+
+    @Override
+    public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
+        return "/api/v3/chat/completions";
+    }
+
+    @Override
+    public String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage) {
+        return "/api/v3/images/generations";
+    }
 
     @Override
     public Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage) {

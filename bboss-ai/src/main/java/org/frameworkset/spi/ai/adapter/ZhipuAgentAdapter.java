@@ -31,6 +31,19 @@ import java.util.*;
  */
 public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
     @Override
+    public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
+        return "/api/paas/v4/chat/completions";
+    }
+    @Override
+    public String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) {
+        return "/api/paas/v4/chat/completions";
+    }
+    @Override
+    public String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage) {
+        return "/api/paas/v4/images/generations";
+    }
+
+    @Override
     /**
      * https://docs.bigmodel.cn/cn/guide/models/sound-and-video/glm-tts#%E5%8D%95%E9%9F%B3%E8%89%B2%E8%B6%85%E6%8B%9F%E4%BA%BAtts
      * 
@@ -57,6 +70,20 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
             requestMap.putAll(audioAgentMessage.getParameters());
         }
         return requestMap;
+    }
+
+    /**
+     * maas平台音频识别服务地址
+     * @param audioSTTAgentMessage
+     * @return
+     */
+    @Override
+    public String getAudioSTTCompletionsUrl(AudioSTTAgentMessage audioSTTAgentMessage){
+        return "/api/paas/v4/audio/transcriptions";
+    }
+    @Override
+    protected String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage){
+        return "/api/paas/v4/audio/speech";
     }
 
     /**

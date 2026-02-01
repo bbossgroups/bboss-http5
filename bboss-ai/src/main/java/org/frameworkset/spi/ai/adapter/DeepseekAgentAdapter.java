@@ -15,11 +15,16 @@ package org.frameworkset.spi.ai.adapter;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.model.ChatAgentMessage;
+
 /**
  * Deepseek模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */
 public class DeepseekAgentAdapter extends QwenAgentAdapter{
- 
+    @Override
+    public String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) {
+        return "/chat/completions";
+    }
 }

@@ -62,7 +62,7 @@ public class AgentMessage<T extends AgentMessage> {
      *
      * }
      */
-    private String modelType;
+//    private String modelType;
 
     public String getPrompt() {
         return prompt;
@@ -150,15 +150,15 @@ public class AgentMessage<T extends AgentMessage> {
         data.put(key, value);
         return (T)this;
     }
-    
-    public String getModelType() {
-		return modelType;
-	}
-    
-    public T setModelType(String modelType) {
-		this.modelType = modelType;
-		return (T)this;
-	}
+//    
+//    public String getModelType() {
+//		return modelType;
+//	}
+//    
+//    public T setModelType(String modelType) {
+//		this.modelType = modelType;
+//		return (T)this;
+//	}
 
     public Boolean getStream() {
         return stream;

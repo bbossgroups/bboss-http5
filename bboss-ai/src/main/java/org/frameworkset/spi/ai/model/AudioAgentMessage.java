@@ -35,7 +35,10 @@ public class AudioAgentMessage extends StoreAgentMessage<AudioAgentMessage> {
      * url 不下载文件
      */
     private String storeAudioType;
-
+    /**
+     * maas平台音频生成服务地址
+     */
+    private String genAudioCompletionsUrl;
     
     public String getStoreAudioType() {
         return storeAudioType;
@@ -44,6 +47,15 @@ public class AudioAgentMessage extends StoreAgentMessage<AudioAgentMessage> {
     public AudioAgentMessage setStoreAudioType(String storeAudioType) {
         this.storeAudioType = storeAudioType;
         return this;
+    }
+
+    public AudioAgentMessage setGenAudioCompletionsUrl(String genAudioCompletionsUrl) {
+        this.genAudioCompletionsUrl = genAudioCompletionsUrl;
+        return this;
+    }
+
+    public String getGenAudioCompletionsUrl() {
+        return genAudioCompletionsUrl;
     }
 
     @Override
@@ -95,6 +107,7 @@ public class AudioAgentMessage extends StoreAgentMessage<AudioAgentMessage> {
         if(stream == null){
             stream = false;
         }
+        chatObject.setCompletionsUrl(this.getGenAudioCompletionsUrl());
         chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);

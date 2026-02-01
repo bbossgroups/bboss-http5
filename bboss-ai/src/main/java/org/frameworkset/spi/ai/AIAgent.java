@@ -30,15 +30,14 @@ public class AIAgent {
     /**
      * 实现图片生成功能
      * @param maasName
-     * @param url
      * @param imageAgentMessage
      * @return
      */
-    public ImageEvent genImage(String maasName,String url,ImageAgentMessage imageAgentMessage){
-        return AIAgentUtil.multimodalImageGeneration(maasName,url,imageAgentMessage);
+    public ImageEvent genImage(String maasName, ImageAgentMessage imageAgentMessage){
+        return AIAgentUtil.multimodalImageGeneration(maasName, imageAgentMessage);
     }
-    public ImageEvent genImage(String url,ImageAgentMessage imageAgentMessage){
-        return AIAgentUtil.multimodalImageGeneration(url,imageAgentMessage);
+    public ImageEvent genImage( ImageAgentMessage imageAgentMessage){
+        return AIAgentUtil.multimodalImageGeneration( imageAgentMessage);
     }
 
     /**
@@ -63,133 +62,123 @@ public class AIAgent {
     }
     /**
      * 调用音频合成模型，生成音频
-     * @param url
      * @param audioAgentMessage
      * @return
      */
-    public AudioEvent genAudio(String url, AudioAgentMessage audioAgentMessage){
-        return AIAgentUtil.multimodalAudioGeneration(url,audioAgentMessage);
+    public AudioEvent genAudio(  AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.multimodalAudioGeneration( audioAgentMessage);
     }
 
     /**
      * 调用音频合成模型，生成音频
-     * @param url
      * @param audioAgentMessage
      * @return
      */
-    public Flux<ServerEvent> streamAudioGen(String url, AudioAgentMessage audioAgentMessage){
-        return AIAgentUtil.streamAudioGenerationEvent(null,url,audioAgentMessage);
+    public Flux<ServerEvent> streamAudioGen(AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.streamAudioGenerationEvent(null,audioAgentMessage);
     }
 
     /**
      * 调用音频合成模型，生成音频
      * @param maasName
-     * @param url
      * @param audioAgentMessage
      * @return
      */
-    public Flux<ServerEvent> streamAudioGen(String maasName, String url, AudioAgentMessage audioAgentMessage){
-        return AIAgentUtil.streamAudioGenerationEvent(maasName,url,audioAgentMessage);
+    public Flux<ServerEvent> streamAudioGen(String maasName,  AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.streamAudioGenerationEvent(maasName,audioAgentMessage);
     }
     /**
      * 调用音频合成模型，生成音频
      * @param maasName
-     * @param url
      * @param audioAgentMessage
      * @return
      */
-    public AudioEvent genAudio(String maasName, String url, AudioAgentMessage audioAgentMessage){
-        return AIAgentUtil.multimodalAudioGeneration(maasName,url,audioAgentMessage);
+    public AudioEvent genAudio(String maasName,   AudioAgentMessage audioAgentMessage){
+        return AIAgentUtil.multimodalAudioGeneration(maasName, audioAgentMessage);
     }
 
     /**
      * 实现流式音频识别处理
      * @param maasName
-     * @param url
      * @param audioSTTAgentMessage
      * @return
      */
-    public Flux<ServerEvent> streamAudioParser(String maasName, String url, AudioSTTAgentMessage audioSTTAgentMessage){
-        return AIAgentUtil.streamChatCompletionEvent(maasName,url,audioSTTAgentMessage);
+    public Flux<ServerEvent> streamAudioParser(String maasName,  AudioSTTAgentMessage audioSTTAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent(maasName, audioSTTAgentMessage);
     }
 
     /**
      * 实现流式图片识别处理
      * @param maasName
-     * @param url
      * @param imageVLAgentMessage
      * @return
      */
-    public Flux<ServerEvent> streamImageParser(String maasName, String url, ImageVLAgentMessage imageVLAgentMessage){
-        return AIAgentUtil.streamChatCompletionEvent(maasName,url,imageVLAgentMessage);
+    public Flux<ServerEvent> streamImageParser(String maasName,   ImageVLAgentMessage imageVLAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent(maasName, imageVLAgentMessage);
     }
     /**
      * 实现流式图片识别处理
-     * @param url
      * @param imageVLAgentMessage
      * @return
      */
-    public Flux<ServerEvent> streamImageParser( String url, ImageVLAgentMessage imageVLAgentMessage){
-        return AIAgentUtil.streamChatCompletionEvent(url,imageVLAgentMessage);
+    public Flux<ServerEvent> streamImageParser(   ImageVLAgentMessage imageVLAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent( imageVLAgentMessage);
     }
     /**
      * 实现流式智能问答功能,在指定的数据源上执行
      */
-    public Flux<ServerEvent> streamChat(String maasName, String url, ChatAgentMessage chatAgentMessage){
-        return AIAgentUtil.streamChatCompletionEvent(maasName,url,chatAgentMessage);
+    public Flux<ServerEvent> streamChat(String maasName,   ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent(maasName, chatAgentMessage);
     }
 
     /**
      * 实现流式智能问答功能,在指定的数据源上执行
      */
-    public Flux<ServerEvent> streamChat(String url, ChatAgentMessage chatAgentMessage){
-        return AIAgentUtil.streamChatCompletionEvent(url,chatAgentMessage);
+    public Flux<ServerEvent> streamChat( ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent( chatAgentMessage);
     }
 
     /**
      * 实现同步图片识别处理
-     * @param url
      * @param imageVLAgentMessage
      * @return
      */
-    public ServerEvent imageParser(String url, ImageVLAgentMessage imageVLAgentMessage){
-        return AIAgentUtil.imageParser(url,imageVLAgentMessage);
+    public ServerEvent imageParser(  ImageVLAgentMessage imageVLAgentMessage){
+        return AIAgentUtil.imageParser( imageVLAgentMessage);
     }
 
     /**
      * 实现同步图片识别处理
      * @param maasName
-     * @param url
      * @param imageVLAgentMessage
      * @return
      */
-    public ServerEvent imageParser(String maasName, String url, ImageVLAgentMessage imageVLAgentMessage){
-        return AIAgentUtil.imageParser(maasName,url,imageVLAgentMessage);
+    public ServerEvent imageParser(String maasName,  ImageVLAgentMessage imageVLAgentMessage){
+        return AIAgentUtil.imageParser(maasName, imageVLAgentMessage);
     }
 
 
     /**
      * 实现同步音频识别处理
      * @param maasName
-     * @param url
      * @param audioSTTAgentMessage
      * @return
      */
-    public ServerEvent audioParser(String maasName, String url, AudioSTTAgentMessage audioSTTAgentMessage){
-        return AIAgentUtil.audioParser(maasName,url,audioSTTAgentMessage);
+    public ServerEvent audioParser(String maasName, AudioSTTAgentMessage audioSTTAgentMessage){
+        return AIAgentUtil.audioParser(maasName,audioSTTAgentMessage);
     }
     /**
      * 实现同步智能问答,在指定的数据源上执行
      */
-    public ServerEvent chatCompletionEvent(String maasName, String url, ChatAgentMessage chatAgentMessage){
-        return AIAgentUtil.chatCompletionEvent(maasName,url,chatAgentMessage);
+    public ServerEvent chatCompletionEvent(String maasName,  ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.chatCompletionEvent(maasName,chatAgentMessage);
     }
 
     /**
      * 实现同步智能问答,在指定的数据源上执行
      */
-    public ServerEvent chatCompletionEvent( String url, ChatAgentMessage chatAgentMessage){
-        return AIAgentUtil.chatCompletionEvent(url,chatAgentMessage);
+    public ServerEvent chatCompletionEvent(  ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.chatCompletionEvent(chatAgentMessage);
     }
 
 

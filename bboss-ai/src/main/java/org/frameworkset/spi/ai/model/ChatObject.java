@@ -35,6 +35,16 @@ public class ChatObject {
     private StreamDataBuilder streamDataBuilder;
     private Map<String, File> files;
 
+
+    private String completionsUrl;
+    public String getCompletionsUrl() {
+        return completionsUrl;
+    }
+
+    public void setCompletionsUrl(String completionsUrl) {
+        this.completionsUrl = completionsUrl;
+    }
+
     public String getDoneData(AgentAdapter agentAdapter) {
         return streamDataBuilder.getDoneData(agentAdapter);
     }

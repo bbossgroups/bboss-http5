@@ -88,6 +88,7 @@ public abstract class AgentAdapter {
     
     public Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
 
+        
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model",imageAgentMessage.getModel());
 
@@ -263,10 +264,12 @@ public abstract class AgentAdapter {
     }
     public abstract ImageEvent buildGenImageResponse(ClientConfiguration config, ImageAgentMessage imageAgentMessage,Map imageData);
    
+    public abstract String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage);
     public Object buildGenImageRequestParameter(ClientConfiguration clientConfiguration, Object imageAgentMessage){
         if(imageAgentMessage instanceof ImageAgentMessage){
             ImageAgentMessage temp = (ImageAgentMessage)imageAgentMessage;
             imageAgentMessage = buildGenImageRequestMap(temp);
+            temp.setGenImageCompletionsUrl(this.getGenImageCompletionsUrl(temp));
             if(temp.getGenFileStoreDir() == null)
                 temp.setGenFileStoreDir(clientConfiguration.getExtendConfig("genFileStoreDir"));
             if(temp.getEndpoint() == null)
@@ -306,7 +309,9 @@ public abstract class AgentAdapter {
  
     }
     protected abstract Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
-
+    protected abstract String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage);
+    public abstract String getAudioSTTCompletionsUrl(AudioSTTAgentMessage audioSTTAgentMessage);
+    public abstract String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage);
     public Map<String, Object> _buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage,ClientConfiguration clientConfiguration){
 
         if(audioAgentMessage.getGenFileStoreDir() == null)
@@ -317,6 +322,7 @@ public abstract class AgentAdapter {
             audioAgentMessage.setStoreAudioType(clientConfiguration.getExtendConfig("storeAudioType"));
         }
         Map params = buildGenAudioRequestMap(audioAgentMessage);
+        audioAgentMessage.setGenAudioCompletionsUrl(getGenAudioCompletionsUrl(audioAgentMessage));
         if(audioAgentMessage.getStream() != null){
             params.put("stream", audioAgentMessage.getStream());
         }
@@ -348,9 +354,10 @@ public abstract class AgentAdapter {
         if(audioAgentMessage instanceof AudioAgentMessage){
             AudioAgentMessage temp = (AudioAgentMessage)audioAgentMessage;
             audioAgentMessage = this._buildGenAudioRequestMap(temp,clientConfiguration);
-          
+             
            
         }
+        
         return audioAgentMessage;
     }
 
@@ -440,4 +447,6 @@ public abstract class AgentAdapter {
     public VideoGenResult buildVideoGenResult(ClientConfiguration clientConfiguration,VideoStoreAgentMessage videoStoreAgentMessage,Map taskInfo) {
         return null;
     }
+
+    public abstract String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) ;
 }

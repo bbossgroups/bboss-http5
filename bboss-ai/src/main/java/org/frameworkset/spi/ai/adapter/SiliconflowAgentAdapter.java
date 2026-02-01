@@ -17,15 +17,21 @@ package org.frameworkset.spi.ai.adapter;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.model.AgentMessage;
+import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
 
 import java.util.Map;
 
 /**
- * 阿里百炼通义系列模型智能体适配器
+ * 硅基流动模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */
 public class SiliconflowAgentAdapter extends QwenAgentAdapter{
+    @Override
+    public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
+        return "/chat/completions";
+    }
+
     @Override
     protected void filterParameters(AgentMessage agentMessage, Map<String, Object> requestMap, Map<String, Object> parameters) {
         if(SimpleStringUtil.isEmpty( parameters)){

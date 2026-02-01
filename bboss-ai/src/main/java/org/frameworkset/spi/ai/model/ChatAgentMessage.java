@@ -30,6 +30,7 @@ import java.util.Map;
  */
 public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
  
+    private String chatCompletionsUrl;
     /** 使用静态变量存储会话记忆（实际项目中建议使用缓存或数据库）*/
     private List<Map<String, Object>> sessionMemory;
 
@@ -52,6 +53,7 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
         StreamDataBuilder streamDataBuilder = null;
         
         parameters = agentAdapter.buildOpenAIRequestMap(this);
+        this.setChatCompletionsUrl(agentAdapter.getChatCompletionsUrl(this));
         stream = (Boolean)parameters.get("stream");
         aiChatRequestType = agentAdapter.getAIChatRequestType();
         agentMessage = parameters;
@@ -90,9 +92,18 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
         chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);
+        chatObject.setCompletionsUrl(this.getChatCompletionsUrl());
         chatObject.setAiChatRequestType(aiChatRequestType);
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
     }
 
+    public String getChatCompletionsUrl() {
+        return chatCompletionsUrl;
+    }
+
+    public ChatAgentMessage setChatCompletionsUrl(String chatCompletionsUrl) {
+        this.chatCompletionsUrl = chatCompletionsUrl;
+        return this;
+    }
 }

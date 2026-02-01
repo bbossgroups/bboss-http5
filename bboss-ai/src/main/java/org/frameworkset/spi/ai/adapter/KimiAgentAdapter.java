@@ -15,11 +15,21 @@ package org.frameworkset.spi.ai.adapter;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.ai.model.ChatAgentMessage;
+import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
+
 /**
  * Kimi模型智能体适配器
  * @author biaoping.yin
  * @Date 2026/1/4
  */
 public class KimiAgentAdapter extends QwenAgentAdapter{
- 
+    @Override
+    public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
+        return "/v1/chat/completions";
+    }
+    @Override
+    public String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) {
+        return "/v1/chat/completions";
+    }
 }

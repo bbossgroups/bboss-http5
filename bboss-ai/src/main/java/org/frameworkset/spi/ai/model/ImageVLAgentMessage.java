@@ -31,6 +31,8 @@ import java.util.Map;
  */
 public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage>{
     private List<String> imageUrls;
+    private String imageVLCompletionsUrl;
+    
 
     @Override
     public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter) {
@@ -43,6 +45,7 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
         StreamDataBuilder streamDataBuilder = null;
 
         parameters = agentAdapter.buildImageVLRequestMap(this);
+        setImageVLCompletionsUrl(agentAdapter.getImageVLCompletionsUrl(this));
         stream = (Boolean)parameters.get("stream");
         aiChatRequestType = agentAdapter.getAIImageParsertRequestType();
         agentMessage = parameters;
@@ -78,9 +81,19 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
         chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);
+        chatObject.setCompletionsUrl(this.getImageVLCompletionsUrl());
         chatObject.setAiChatRequestType(aiChatRequestType);
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
+    }
+
+    public String getImageVLCompletionsUrl() {
+        return imageVLCompletionsUrl;
+    }
+
+    public ImageVLAgentMessage setImageVLCompletionsUrl(String imageVLCompletionsUrl) {
+        this.imageVLCompletionsUrl = imageVLCompletionsUrl;
+        return this;
     }
 
     public ImageVLAgentMessage setImageUrls(List<String> imageUrls) {

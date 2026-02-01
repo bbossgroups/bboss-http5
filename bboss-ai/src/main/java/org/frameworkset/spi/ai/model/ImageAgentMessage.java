@@ -29,6 +29,20 @@ public class ImageAgentMessage extends StoreAgentMessage<ImageAgentMessage>{
    
     private String storeImageType ;
     private List<String> imageUrls;
+
+    public String getGenImageCompletionsUrl() {
+        return genImageCompletionsUrl;
+    }
+
+    public ImageAgentMessage setGenImageCompletionsUrl(String genImageCompletionsUrl) {
+        this.genImageCompletionsUrl = genImageCompletionsUrl;
+        return this;
+    }
+
+    /**
+     * maas平台图片生成接口地址
+     */
+    private String genImageCompletionsUrl;
     public ImageAgentMessage setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
         return this;

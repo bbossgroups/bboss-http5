@@ -17,10 +17,7 @@ package org.frameworkset.spi.ai.adapter;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.material.JiutianGenFileDownload;
-import org.frameworkset.spi.ai.model.AIConstants;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.model.StreamData;
+import org.frameworkset.spi.ai.model.*;
 import org.frameworkset.spi.ai.util.AIResponseUtil;
 import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
@@ -38,6 +35,19 @@ import java.util.Map;
 public class JiutianAgentAdapter extends QwenAgentAdapter{
     private Logger logger = org.slf4j.LoggerFactory.getLogger(JiutianAgentAdapter.class);
     private static String downImageUrl = "/largemodel/moma/api/v1/fs/getFile";
+    @Override
+    public String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) {
+        return "/largemodel/moma/api/v3/chat/completions";
+    }
+    @Override
+    public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
+        return "/largemodel/moma/api/v3/image/text";
+    }
+
+    @Override
+    public String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage) {
+        return "/largemodel/moma/api/v3/images/generations";
+    }
 
     @Override
     protected AgentAdapter initAgentAdapter(){
