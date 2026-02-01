@@ -40,7 +40,7 @@ public class QwenAgentAdapter extends AgentAdapter{
     public String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage) {
         return "/api/v1/services/aigc/multimodal-generation/generation";
     }
-
+    @Override
     public String getVideoTaskResultUrl(VideoStoreAgentMessage videoStoreAgentMessage){
         return "/api/v1/tasks/"+videoStoreAgentMessage.getTaskId();
     }
@@ -122,7 +122,7 @@ public class QwenAgentAdapter extends AgentAdapter{
         result.setRequestId((String) taskInfo.get("request_id"));
         return result;
     }
-    protected String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage){
+    public String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage){
         if(videoAgentMessage.getFirstFrameUrl() != null) {
             return "/api/v1/services/aigc/image2video/video-synthesis";
         }
@@ -224,7 +224,7 @@ public class QwenAgentAdapter extends AgentAdapter{
         return AIResponseUtil.parseQianwenAudioGenStreamContentFromData(data);
     }
     @Override
-    protected String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage){
+    public String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage){
         return "/api/v1/services/aigc/multimodal-generation/generation";
     }
 

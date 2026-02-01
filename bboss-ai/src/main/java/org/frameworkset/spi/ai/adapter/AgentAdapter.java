@@ -36,11 +36,11 @@ import java.util.*;
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public abstract class AgentAdapter {
+public abstract class AgentAdapter implements CompletionsUrlInterface{
     private org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AgentAdapter.class);
     protected GenFileDownload genFileDownload;
- 
- 
+
+     
     protected AgentAdapter initAgentAdapter(){
         genFileDownload = new GenMaterialFileDownload();
         return this;
@@ -264,7 +264,7 @@ public abstract class AgentAdapter {
     }
     public abstract ImageEvent buildGenImageResponse(ClientConfiguration config, ImageAgentMessage imageAgentMessage,Map imageData);
    
-    public abstract String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage);
+  
     public Object buildGenImageRequestParameter(ClientConfiguration clientConfiguration, Object imageAgentMessage){
         if(imageAgentMessage instanceof ImageAgentMessage){
             ImageAgentMessage temp = (ImageAgentMessage)imageAgentMessage;
@@ -309,9 +309,7 @@ public abstract class AgentAdapter {
  
     }
     protected abstract Map<String, Object> buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage);
-    protected abstract String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage);
-    public abstract String getAudioSTTCompletionsUrl(AudioSTTAgentMessage audioSTTAgentMessage);
-    public abstract String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage);
+  
     public Map<String, Object> _buildGenAudioRequestMap(AudioAgentMessage audioAgentMessage,ClientConfiguration clientConfiguration){
 
         if(audioAgentMessage.getGenFileStoreDir() == null)
@@ -436,7 +434,7 @@ public abstract class AgentAdapter {
         return requestMap;
     }
     protected abstract Object buildGenVideoRequestMap(VideoAgentMessage videoAgentMessage,ClientConfiguration clientConfiguration);
-    protected abstract String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage);
+  
     public Object buildVideoRequestParameter(ClientConfiguration clientConfiguration, VideoAgentMessage videoAgentMessage) {
         videoAgentMessage.setSubmitVideoTaskUrl(getSubmitVideoTaskUrl(  videoAgentMessage));
         return this.buildGenVideoRequestMap(videoAgentMessage,clientConfiguration);
@@ -448,5 +446,4 @@ public abstract class AgentAdapter {
         return null;
     }
 
-    public abstract String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) ;
 }

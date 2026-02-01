@@ -16,14 +16,11 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.spi.ai.model.ImageAgentMessage;
-import org.frameworkset.spi.ai.model.ImageEvent;
-import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
+import org.frameworkset.spi.ai.model.*;
+import org.frameworkset.spi.ai.util.MessageBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 字节模型智能体适配器
@@ -31,6 +28,16 @@ import java.util.Map;
  * @Date 2026/1/4
  */
 public class DoubaoAgentAdapter  extends QwenAgentAdapter{
+
+    @Override
+    public String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage) {
+        return "/api/v3/contents/generations/tasks";
+    }
+
+    @Override
+    public String getVideoTaskResultUrl(VideoStoreAgentMessage videoStoreAgentMessage) {
+        return "/api/v3/contents/generations/tasks/"+videoStoreAgentMessage.getTaskId();
+    }
 
     @Override
     public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
@@ -151,4 +158,92 @@ public class DoubaoAgentAdapter  extends QwenAgentAdapter{
         }
     }
 
+    @Override
+    protected Object buildGenVideoRequestMap(VideoAgentMessage videoAgentMessage, ClientConfiguration clientConfiguration) {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model",videoAgentMessage.getModel());
+
+        MessageBuilder.buildGenVideoMessage(requestMap,videoAgentMessage);
+        
+        Map<String,Object> parameters = videoAgentMessage.getParameters();
+        if(parameters != null){
+            requestMap.putAll(parameters);
+        }
+
+         
+        return requestMap;
+    }
+
+    @Override
+    public VideoTask buildVideoResponseTask(ClientConfiguration clientConfiguration, VideoAgentMessage videoAgentMessage, Map taskInfo) {
+       
+        VideoTask result = new VideoTask();
+        if(taskInfo != null) {
+            result.setTaskId((String) taskInfo.get("id"));
+
+        }
+        else {
+            result.setCode((String) taskInfo.get("code"));
+            result.setMessage((String) taskInfo.get("message"));
+        }
+       
+        return result;
+    }
+
+    /**
+     * {
+     *   "id": "cgt-2025******-****",
+     *   "model": "doubao-seedance-1-5-pro-251215",
+     *   "status": "succeeded",
+     *   "content": {
+     *     "video_url": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/xxx"
+     *   },
+     *   "usage": {
+     *     "completion_tokens": 108900,
+     *     "total_tokens": 108900
+     *   },
+     *   "created_at": 1743414619,
+     *   "updated_at": 1743414673,
+     *   "seed": 10,
+     *   "resolution": "720p",
+     *   "ratio": "16:9",
+     *   "duration": 5,
+     *   "framespersecond": 24,
+     *   "service_tier":"default",
+     *   "execution_expires_after":172800,
+     *   "generate_audio":true,
+     *   "draft":false
+     * }
+     * @param clientConfiguration
+     * @param videoStoreAgentMessage
+     * @param taskInfo
+     * @return
+     */
+    @Override
+    public VideoGenResult buildVideoGenResult(ClientConfiguration clientConfiguration, VideoStoreAgentMessage videoStoreAgentMessage, Map taskInfo) {
+        VideoGenResult result = new VideoGenResult();
+       
+        if(taskInfo != null) {
+            
+            result.setTaskId((String) taskInfo.get("id"));
+            result.setTaskStatus((String) taskInfo.get("status"));
+            Map<String, Object> content = (Map<String, Object>) taskInfo.get("content");
+            if(content != null){
+                result.setVideoGenUrl((String) content.get("video_url"));
+                if(result.getVideoGenUrl() != null && result.getVideoGenUrl().length() > 0) {
+                    result.setVideoUrl(genFileDownload.downloadVideo(clientConfiguration, videoStoreAgentMessage, null, result.getVideoGenUrl()));
+                }
+            }
+            
+            result.setSubmitTime(String.valueOf( taskInfo.get("created_at")));
+            result.setScheduledTime(result.getSubmitTime());
+            
+             
+            result.setCode((String) taskInfo.get("code"));
+            result.setMessage((String) taskInfo.get("message"));
+        }
+       
+ 
+        return result;
+    }
 }

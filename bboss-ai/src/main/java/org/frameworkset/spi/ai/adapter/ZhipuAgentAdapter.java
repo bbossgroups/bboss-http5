@@ -82,7 +82,7 @@ public class ZhipuAgentAdapter extends DoubaoAgentAdapter{
         return "/api/paas/v4/audio/transcriptions";
     }
     @Override
-    protected String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage){
+    public String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage){
         return "/api/paas/v4/audio/speech";
     }
 

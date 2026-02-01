@@ -16,6 +16,7 @@ package org.frameworkset.spi.ai.util;
  */
 
 import org.frameworkset.spi.ai.model.ImageAgentMessage;
+import org.frameworkset.spi.ai.model.VideoAgentMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +75,46 @@ public class MessageBuilder {
         userMessage.put("content", contents);
         return userMessage;
     }
-    
+    public static void buildGenVideoMessage(Map<String, Object> requestMap, VideoAgentMessage videoAgentMessage){
+        
+
+        List contents = new ArrayList<>();
+        Map contentData = new LinkedHashMap();
+        contentData.put("text", videoAgentMessage.getPrompt());
+        contentData.put("type", "text");
+        contents.add(contentData);
+
+        if(videoAgentMessage.getImgUrl() != null){
+            contentData = new LinkedHashMap();
+            Map imageData = new LinkedHashMap();
+            imageData.put("url", videoAgentMessage.getImgUrl());
+            contentData.put("image_url", imageData);
+            contentData.put("type", "image_url");
+            contents.add(contentData);
+            
+        }
+        if(videoAgentMessage.getFirstFrameUrl() != null){
+            contentData = new LinkedHashMap();
+            Map firstFrameData = new LinkedHashMap();
+            firstFrameData.put("url", videoAgentMessage.getFirstFrameUrl());
+            contentData.put("image_url", firstFrameData);
+            contentData.put("type", "image_url");
+            contentData.put("role", "first_frame");
+            contents.add(contentData);
+            
+        }
+
+        if(videoAgentMessage.getLastFrameUrl() != null){
+            contentData = new LinkedHashMap();
+            Map lastFrameData = new LinkedHashMap();
+            lastFrameData.put("url", videoAgentMessage.getLastFrameUrl());
+            contentData.put("image_url", lastFrameData);
+            contentData.put("type", "image_url");
+            contentData.put("role", "last_frame");
+            contents.add(contentData);
+        }
+        requestMap.put("content", contents);
+    }
     public static Map<String,Object> buildGenImageMessage(String message){
         Map<String, Object> userMessage = new LinkedHashMap<>();
         userMessage.put("role",ROLE_USER);
