@@ -31,6 +31,32 @@ public class AIConstants {
     public static final String AI_MODEL_TYPE_SILICONFLOW = "siliconflow";
     public static final String AI_MODEL_TYPE_JIUTIAN = "jiutian";
     public static final String AI_MODEL_TYPE_ZHIPU = "zhipu";
+    
+    public enum ModelType{
+        QWEN(AI_MODEL_TYPE_QWEN,"通义千问"),
+        DOUBAO(AI_MODEL_TYPE_DOUBAO,"字节火山引擎"),
+        DEEPSEEK(AI_MODEL_TYPE_DEEPSEEK,"深度思索"),
+        KIMI(AI_MODEL_TYPE_KIMI,"月之暗面"),
+        NONE(AI_MODEL_TYPE_NONE,"通用"),
+        BAIDU(AI_MODEL_TYPE_BAIDU,"百度"),
+        OPENAI(AI_MODEL_TYPE_OPENAI,"OpenAI"),
+        SILICONFLOW(AI_MODEL_TYPE_SILICONFLOW,"硅基流程"),
+        JIUTIAN(AI_MODEL_TYPE_JIUTIAN,"九天平台")        ,
+        ZHIPU(AI_MODEL_TYPE_ZHIPU,"智谱");
+        private String type;
+        private String name;
+        ModelType(String type,String name){
+            this.type = type;
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+        public String getType() {
+            return type;
+        }
+    }
 
     
     
