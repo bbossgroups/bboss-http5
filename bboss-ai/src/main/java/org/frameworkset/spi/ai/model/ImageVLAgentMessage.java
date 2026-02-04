@@ -47,7 +47,7 @@ public class ImageVLAgentMessage extends SessionAgentMessage<ImageVLAgentMessage
         parameters = agentAdapter.buildImageVLRequestMap(this);
         setImageVLCompletionsUrl(agentAdapter.getImageVLCompletionsUrl(this));
         stream = (Boolean)parameters.get("stream");
-        aiChatRequestType = agentAdapter.getAIImageParsertRequestType();
+        aiChatRequestType = agentAdapter.getAIImageParserRequestType();
         agentMessage = parameters;
         streamDataBuilder = new StreamDataBuilder() {
             @Override

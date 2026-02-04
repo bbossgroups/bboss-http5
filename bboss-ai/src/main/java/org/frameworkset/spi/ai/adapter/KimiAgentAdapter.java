@@ -17,6 +17,7 @@ package org.frameworkset.spi.ai.adapter;
 
 import org.frameworkset.spi.ai.model.ChatAgentMessage;
 import org.frameworkset.spi.ai.model.ImageVLAgentMessage;
+import org.frameworkset.spi.ai.model.VideoVLAgentMessage;
 
 /**
  * Kimi模型智能体适配器
@@ -30,6 +31,11 @@ public class KimiAgentAdapter extends QwenAgentAdapter{
     }
     @Override
     public String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) {
+        return "/v1/chat/completions";
+    }
+
+
+    public String getVideoVLCompletionsUrl(VideoVLAgentMessage videoVLAgentMessage) {
         return "/v1/chat/completions";
     }
 }

@@ -16,26 +16,26 @@ package org.frameworkset.spi.ai.model;
  */
 
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
-import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
+ * 图片识别报文体
  * @author biaoping.yin
  * @Date 2026/1/4
  */
-public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
- 
-    private String chatCompletionsUrl;
- 
+public class VideoVLAgentMessage extends SessionAgentMessage<VideoVLAgentMessage>{
+    private List<String> videoUrls;
+    private String videoVLCompletionsUrl;
+    
 
- 
-
-    public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter){
+    @Override
+    public ChatObject buildChatObject(ClientConfiguration clientConfiguration, AgentAdapter agentAdapter) {
         ChatObject chatObject = new ChatObject();
         SSEHeaderSetFunction sseHeaderSetFunction = null;
         Map parameters = null;
@@ -43,28 +43,28 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
         String aiChatRequestType = null;
         Object agentMessage = null;
         StreamDataBuilder streamDataBuilder = null;
-        
-        parameters = agentAdapter.buildOpenAIRequestMap(this);
-        this.setChatCompletionsUrl(agentAdapter.getChatCompletionsUrl(this));
+
+        parameters = agentAdapter.buildVideoVLRequestMap(this);
+        setVideoVLCompletionsUrl(agentAdapter.getVideoVLCompletionsUrl(this));
         stream = (Boolean)parameters.get("stream");
-        aiChatRequestType = agentAdapter.getAIChatRequestType();
+        aiChatRequestType = agentAdapter.getAIVideoParserRequestType();
         agentMessage = parameters;
         streamDataBuilder = new StreamDataBuilder() {
             @Override
             public StreamData build(AgentAdapter agentAdapter, String line) {
-                return agentAdapter.parseStreamContentFromData(line);
+                return agentAdapter.parseVideoParserStreamContentFromData(line);
             }
+
 
             @Override
             public boolean isDone(AgentAdapter agentAdapter,String data) {
-                return agentAdapter.isDone(data);
+                return agentAdapter.isVideoParserDone(data);
             }
 
             @Override
             public String getDoneData(AgentAdapter agentAdapter) {
-                return agentAdapter.getDoneData();
+                return agentAdapter.getVideoParserDoneData();
             }
-
 
             @Override
             public void handleServerEvent(AgentAdapter agentAdapter,ServerEvent serverEvent){
@@ -75,27 +75,43 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
                 return chatObject;
             }
         };
-    
-
-
         if(stream == null){
             stream = false;
         }
         chatObject.setSseHeaderSetFunction(sseHeaderSetFunction);
         chatObject.setMessage(agentMessage);
         chatObject.setStream(stream);
-        chatObject.setCompletionsUrl(this.getChatCompletionsUrl());
+        chatObject.setCompletionsUrl(this.getVideoVLCompletionsUrl());
         chatObject.setAiChatRequestType(aiChatRequestType);
         chatObject.setStreamDataBuilder(streamDataBuilder);
         return chatObject;
     }
 
-    public String getChatCompletionsUrl() {
-        return chatCompletionsUrl;
+ 
+
+    public VideoVLAgentMessage setVideoUrls(List<String> videoUrls) {
+        this.videoUrls = videoUrls;
+        return this;
     }
 
-    public ChatAgentMessage setChatCompletionsUrl(String chatCompletionsUrl) {
-        this.chatCompletionsUrl = chatCompletionsUrl;
+    public VideoVLAgentMessage addVideoUrl(String videoUrl) {
+        if(videoUrls == null){
+            videoUrls = new ArrayList<>();
+        }
+        videoUrls.add(videoUrl);
+        return this;
+    }
+
+    public List<String> getVideoUrls() {
+        return videoUrls;
+    }
+
+    public String getVideoVLCompletionsUrl() {
+        return videoVLCompletionsUrl;
+    }
+
+    public VideoVLAgentMessage setVideoVLCompletionsUrl(String videoVLCompletionsUrl) {
+        this.videoVLCompletionsUrl = videoVLCompletionsUrl;
         return this;
     }
 }

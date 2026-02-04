@@ -106,7 +106,6 @@ public class AIAgent {
     public Flux<ServerEvent> streamAudioParser(String maasName,  AudioSTTAgentMessage audioSTTAgentMessage){
         return AIAgentUtil.streamChatCompletionEvent(maasName, audioSTTAgentMessage);
     }
-
     /**
      * 实现流式图片识别处理
      * @param maasName
@@ -115,6 +114,24 @@ public class AIAgent {
      */
     public Flux<ServerEvent> streamImageParser(String maasName,   ImageVLAgentMessage imageVLAgentMessage){
         return AIAgentUtil.streamChatCompletionEvent(maasName, imageVLAgentMessage);
+    }
+    /**
+     * 实现流式图片识别处理
+     * @param videoVLAgentMessage
+     * @return
+     */
+    public Flux<ServerEvent> streamVideoParser(   VideoVLAgentMessage videoVLAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent( videoVLAgentMessage);
+    }
+    
+    /**
+     * 实现流式视频识别处理
+     * @param maasName
+     * @param videoVLAgentMessage
+     * @return
+     */
+    public Flux<ServerEvent> streamVideoParser(String maasName,   VideoVLAgentMessage videoVLAgentMessage){
+        return AIAgentUtil.streamChatCompletionEvent(maasName, videoVLAgentMessage);
     }
     /**
      * 实现流式图片识别处理
@@ -156,8 +173,6 @@ public class AIAgent {
     public ServerEvent imageParser(String maasName,  ImageVLAgentMessage imageVLAgentMessage){
         return AIAgentUtil.imageParser(maasName, imageVLAgentMessage);
     }
-
-
     /**
      * 实现同步音频识别处理
      * @param maasName
@@ -166,6 +181,23 @@ public class AIAgent {
      */
     public ServerEvent audioParser(String maasName, AudioSTTAgentMessage audioSTTAgentMessage){
         return AIAgentUtil.audioParser(maasName,audioSTTAgentMessage);
+    }
+    /**
+     * 实现同步音频识别处理
+     * @param videoVLAgentMessage
+     * @return
+     */
+    public ServerEvent videoParser( VideoVLAgentMessage videoVLAgentMessage){
+        return AIAgentUtil.videoParser(null,videoVLAgentMessage);
+    }
+    /**
+     * 实现同步音频识别处理
+     * @param maasName
+     * @param videoVLAgentMessage
+     * @return
+     */
+    public ServerEvent videoParser(String maasName, VideoVLAgentMessage videoVLAgentMessage){
+        return AIAgentUtil.videoParser(maasName,videoVLAgentMessage);
     }
     /**
      * 实现同步智能问答,在指定的数据源上执行

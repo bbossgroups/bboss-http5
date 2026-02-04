@@ -339,7 +339,16 @@ public class AIAgentUtil {
 
 
     }
+    
+    /**
+     * 同步调用模型服务，返回问答内容
+     */
+    public static ServerEvent videoParser(String poolName,VideoVLAgentMessage message) {
+        return chatCompletionEvent(poolName,message);
 
+
+
+    }
     /**
      * 同步调用模型服务，返回问答内容
      */

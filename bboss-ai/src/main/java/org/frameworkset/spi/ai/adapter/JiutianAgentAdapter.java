@@ -176,7 +176,7 @@ public class JiutianAgentAdapter extends QwenAgentAdapter{
 //
 //        return requestMap;
 //    }
-    public String getAIImageParsertRequestType(){
+    public String getAIImageParserRequestType(){
         return AIConstants.AI_CHAT_REQUEST_POST_FORM;
 
     }

@@ -35,6 +35,7 @@ public class MessageBuilder {
     
     public static final String TYPE_TEXT = "text";
     public static final String TYPE_IMAGE = "image_url";
+    public static final String TYPE_VIDEO = "video_url";
     public static Map<String,Object> buildSystemMessage(String message){
 
 
@@ -151,7 +152,39 @@ public class MessageBuilder {
         userMessage.put("content", contents);
         return userMessage;
     }
-    
+    /**
+     * 构建图片识别消息，传入识别提示词和图片url清单，构建模型请求参数报文
+     * @param message 提示
+     * @param videoUrls 图片url
+     * @return
+     */
+    public static Map<String,Object> buildInputVideosMessage( String message,String... videoUrls){
+
+        List contents = new ArrayList<>();
+        Map contentData = null;
+
+        if(videoUrls != null && videoUrls.length > 0) {
+            for (String videoUrl : videoUrls) {
+                contentData = new LinkedHashMap();
+                contentData.put("type", TYPE_VIDEO);
+                String _videoUrl = videoUrl;
+                contentData.put("video_url", new HashMap<String, String>() {{
+
+                    put("url", _videoUrl);
+                }});
+                contents.add(contentData);
+            }
+        }
+
+        contentData = new LinkedHashMap();
+        contentData.put("type", TYPE_TEXT);
+        contentData.put("text", message);;
+        contents.add(contentData);
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", ROLE_USER);
+        userMessage.put("content", contents);
+        return userMessage;
+    }
 
     /**
      * 构建图片识别消息，传入识别提示词和图片url清单，构建模型请求参数报文

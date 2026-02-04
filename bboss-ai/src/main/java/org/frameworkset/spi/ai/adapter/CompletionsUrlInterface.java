@@ -24,7 +24,8 @@ import org.frameworkset.spi.ai.model.*;
 public interface CompletionsUrlInterface {
     String getGenAudioCompletionsUrl(AudioAgentMessage audioAgentMessage);
     String getAudioSTTCompletionsUrl(AudioSTTAgentMessage audioSTTAgentMessage);
-    String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage);
+    String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage);  
+    String getVideoVLCompletionsUrl(VideoVLAgentMessage videoVLAgentMessage);
     String getGenImageCompletionsUrl(ImageAgentMessage imageAgentMessage);
     String getSubmitVideoTaskUrl(VideoAgentMessage videoAgentMessage);
     String getChatCompletionsUrl(ChatAgentMessage chatAgentMessage) ;

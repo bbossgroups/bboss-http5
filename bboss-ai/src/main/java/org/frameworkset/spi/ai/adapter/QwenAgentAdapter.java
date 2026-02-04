@@ -30,7 +30,9 @@ import java.util.*;
  * @Date 2026/1/4
  */
 public class QwenAgentAdapter extends AgentAdapter{
-
+    public String getVideoVLCompletionsUrl(VideoVLAgentMessage videoVLAgentMessage) {
+        return "/v1/chat/completions";
+    }
     @Override
     public String getImageVLCompletionsUrl(ImageVLAgentMessage imageVLAgentMessage) {
         return "/compatible-mode/v1/chat/completions";

@@ -32,6 +32,12 @@ public class AgentMessage<T extends AgentMessage> {
      */
     private String prompt;
 
+
+    /**
+     * 默认角色提示词工程
+     */
+    private String systemPrompt;
+
     public String getNegativePrompt() {
         return negativePrompt;
     }
@@ -67,7 +73,14 @@ public class AgentMessage<T extends AgentMessage> {
     public String getPrompt() {
         return prompt;
     }
-    
+    public String getSystemPrompt() {
+        return systemPrompt;
+    }
+
+    public void setSystemPrompt(String systemPrompt) {
+        this.systemPrompt = systemPrompt;
+    }
+
     public T addHeader(String key,String value){
         if(headers == null){
             headers = new java.util.LinkedHashMap<>();

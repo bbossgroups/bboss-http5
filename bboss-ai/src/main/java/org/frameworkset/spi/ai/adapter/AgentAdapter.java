@@ -85,34 +85,92 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
         return messages;
     }
     
+
+    public Map buildVideoVLRequestMap(VideoVLAgentMessage videoVLAgentMessage) {
+
+
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model",videoVLAgentMessage.getModel());
+        List<String > videoUrls = videoVLAgentMessage.getVideoUrls();
+
+        Map<String, Object> userMessage = null;
+        Map<String, Object> systemMessage = null;
+        if(videoUrls != null && videoUrls.size() > 0) {
+            userMessage = buildInputVideosMessage(videoVLAgentMessage.getPrompt(), videoUrls.toArray(new String[]{}));
+        }
+        else{
+            userMessage = buildInputVideosMessage(videoVLAgentMessage.getPrompt(), (String[])null);
+        }
+        // 构建消息历史列表，包含之前的会话记忆
+
+        List<Map<String, Object>> sessionMemory = videoVLAgentMessage.getSessionMemory();
+        List<Map<String, Object>> messages = null;
+        if(sessionMemory != null){
+            if(sessionMemory.size() == 0){
+                if(videoVLAgentMessage.getSystemPrompt() != null){
+                    systemMessage = MessageBuilder.buildSystemMessage(videoVLAgentMessage.getSystemPrompt());
+                    videoVLAgentMessage.addSessionMessage(systemMessage);
+                }
+            }
+            videoVLAgentMessage.addSessionMessage(userMessage);
+            messages = new ArrayList<>(sessionMemory);
+        }
+        else{
+            messages = new ArrayList<>();
+            if(videoVLAgentMessage.getSystemPrompt() != null) {
+                systemMessage = MessageBuilder.buildSystemMessage(videoVLAgentMessage.getSystemPrompt());
+                messages.add(systemMessage);
+            }
+            messages.add(userMessage);
+        }
+
+
+        requestMap.put("messages", handleImageParserMessages(messages));
+        Map parameters = videoVLAgentMessage.getParameters();
+
+        filterParameters(videoVLAgentMessage,requestMap,parameters);
+
+        return requestMap;
+    }
     
     public Map buildImageVLRequestMap(ImageVLAgentMessage imageAgentMessage) {
 
         
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model",imageAgentMessage.getModel());
-
-        // 构建消息历史列表，包含之前的会话记忆
-
-        List<Map<String, Object>> sessionMemory = imageAgentMessage.getSessionMemory();
-        List<Map<String, Object>> messages = null;
-        if(sessionMemory != null && sessionMemory.size() > 0){
-            messages = new ArrayList<>(sessionMemory);
-        }
-        else{
-            messages = new ArrayList<>();
-        }
         List<String > imageUrls = imageAgentMessage.getImageUrls();
 
         Map<String, Object> userMessage = null;
+        Map<String, Object> systemMessage = null;
         if(imageUrls != null && imageUrls.size() > 0) {
             userMessage = buildInputImagesMessage(imageAgentMessage.getPrompt(), imageUrls.toArray(new String[]{}));
         }
         else{
             userMessage = buildInputImagesMessage(imageAgentMessage.getPrompt(), (String[])null);
         }
-        messages.add(userMessage);
-        imageAgentMessage.addSessionMessage(userMessage);
+        // 构建消息历史列表，包含之前的会话记忆
+
+        List<Map<String, Object>> sessionMemory = imageAgentMessage.getSessionMemory();
+        List<Map<String, Object>> messages = null;
+        if(sessionMemory != null){
+            if(sessionMemory.size() == 0){
+                if(imageAgentMessage.getSystemPrompt() != null){
+                    systemMessage = MessageBuilder.buildSystemMessage(imageAgentMessage.getSystemPrompt());
+                    imageAgentMessage.addSessionMessage(systemMessage);
+                }
+            }
+            imageAgentMessage.addSessionMessage(userMessage);
+            messages = new ArrayList<>(sessionMemory);
+        }
+        else{
+            messages = new ArrayList<>();
+            if(imageAgentMessage.getSystemPrompt() != null) {
+                systemMessage = MessageBuilder.buildSystemMessage(imageAgentMessage.getSystemPrompt());
+                messages.add(systemMessage);
+            }
+            messages.add(userMessage);
+        }
+         
 
         requestMap.put("messages", handleImageParserMessages(messages));
         Map parameters = imageAgentMessage.getParameters();
@@ -129,7 +187,14 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
     public String getDoneData(){
         return "data:[DONE]";
     }
+    public boolean isVideoParserDone(String data){
+        return isDone(  data);
 
+    }
+
+    public String getVideoParserDoneData(){
+        return getDoneData();
+    }
 
     public boolean isImageParserDone(String data){
         return isDone(  data);
@@ -174,6 +239,10 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
         return AIResponseUtil.parseStreamContentFromData(data);
     }
 
+    public StreamData parseVideoParserStreamContentFromData(String data){
+        return AIResponseUtil.parseStreamContentFromData(data);
+    }
+
     /**
      * 语音识别数据解析
      * @param data
@@ -189,9 +258,18 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
      * 获取图片识别模型智能问答请求参数类型
      * @return
      */
-    public String getAIImageParsertRequestType(){
+    public String getAIImageParserRequestType(){
         return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
         
+    }
+
+    /**
+     * 获取图片识别模型智能问答请求参数类型
+     * @return
+     */
+    public String getAIVideoParserRequestType(){
+        return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
+
     }
 
     /**
@@ -211,6 +289,9 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
         return AIConstants.AI_CHAT_REQUEST_BODY_JSON;
 
     }
+    protected Map<String, Object> buildInputVideosMessage(String message,String... videoUrls) {
+        return MessageBuilder.buildInputVideosMessage(message,videoUrls);
+    }
     
     protected Map<String, Object> buildInputImagesMessage(String message,String... imageUrls) {
         return MessageBuilder.buildInputImagesMessage(message,imageUrls);
@@ -223,21 +304,39 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
     public Map buildOpenAIRequestMap(ChatAgentMessage chatAgentMessage){
         String message = chatAgentMessage.getPrompt();
         Map<String, Object> userMessage = MessageBuilder.buildUserMessage( message);
+        Map<String,Object> systemMessage = null;
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", chatAgentMessage.getModel());
 
         List<Map<String, Object>> messages = null;
         List<Map<String, Object>> sessionMemory = chatAgentMessage.getSessionMemory();
         if(sessionMemory != null){
-            // 构建消息历史列表，包含之前的会话记忆
-            messages = new ArrayList<>(sessionMemory);
+            // 构建消息历史列表，包含之前的会话记忆           
+
+            if(sessionMemory.size() == 0){
+                if(chatAgentMessage.getSystemPrompt() != null){
+                    systemMessage = MessageBuilder.buildSystemMessage(chatAgentMessage.getSystemPrompt());
+                    chatAgentMessage.addSessionMessage(systemMessage);
+                }
+            }
             // 添加当前用户消息
-            sessionMemory.add(userMessage);
+            chatAgentMessage.addSessionMessage(userMessage);
+            messages = new ArrayList<>(sessionMemory);
+            
+            
         }
         else{
             messages = new ArrayList<>();
+            if(chatAgentMessage.getSystemPrompt() != null){
+                if(systemMessage == null){
+                    systemMessage = MessageBuilder.buildSystemMessage(chatAgentMessage.getSystemPrompt());
+                }
+                messages.add(systemMessage);
+            }
+            messages.add(userMessage);
         }
-        messages.add(userMessage);
+        
+        
 
         requestMap.put("messages", messages);
         Map parameters = chatAgentMessage.getParameters();
@@ -446,4 +545,5 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
         return null;
     }
 
+  
 }
