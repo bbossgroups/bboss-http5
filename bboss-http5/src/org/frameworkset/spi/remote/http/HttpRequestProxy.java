@@ -9,6 +9,7 @@ import org.apache.hc.client5.http.classic.methods.*;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.FileBody;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.entity.mime.StringBody;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
@@ -1002,70 +1003,8 @@ public class HttpRequestProxy {
         // System.out.println("post_url==> "+url);
         // String cookie = getCookie(appContext);
         // String userAgent = getUserAgent(appContext);
-        HttpEntity httpEntity = null;
-        List<NameValuePair> paramPair = null;
-        if (httpOption.files != null) {
-            MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-            // post表单参数处理
-//            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
-
-//            int i = 0;
-            boolean hasdata = HttpParamsHandler.paramsHandle( multipartEntityBuilder,httpOption);
-
-//            if (httpOption.params != null) {
-//                Iterator<Entry> it = httpOption.params.entrySet().iterator();
-//                while (it.hasNext()) {
-//                    Entry entry = it.next();
-//                    if(entry.getValue() == null)
-//                        continue;
-//                    if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
-//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                    }
-//                    else{
-//
-//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                    }
-//                    hasdata = true;
-//                }
-//            }
-            if (httpOption.files != null) {
-                Iterator<Entry<String, File>> it = httpOption.files.entrySet().iterator();
-                while (it.hasNext()) {
-                    Entry<String, File> entry = it.next();
-
-//						parts[i++] = new FilePart(entry.getKey(), entry.getValue());
-                    File f = new File(String.valueOf(entry.getValue()));
-                    if (f.exists()) {
-                        FileBody file = new FileBody(f);
-                        multipartEntityBuilder.addPart(entry.getKey(), file);
-                        hasdata = true;
-                    }
-
-                    // System.out.println("post_key_file==> "+file);
-                }
-            }
-            if (hasdata)
-                httpEntity = multipartEntityBuilder.build();
-        } else if (httpOption.params != null ) {
-            paramPair = HttpParamsHandler.paramsPaires(  httpOption) ;
-//            paramPair = new ArrayList<NameValuePair>();
-//            Iterator<Entry> it = httpOption.params.entrySet().iterator();
-//            NameValuePair paramPair_ = null;
-//            for (int i = 0; it.hasNext(); i++) {
-//                Entry entry = it.next();
-//                if(entry.getValue() == null)
-//                    continue;
-//                if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
-//                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
-//                }
-//                else{
-//                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()));
-//                }
-//                paramPair.add(paramPair_);
-//            }
-        }
-        final HttpEntity _httpEntity = httpEntity;
-        final List<NameValuePair> _paramPair = paramPair;
+        
+         
         return _handleRequest( clientConfiguration,  url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
@@ -1074,15 +1013,11 @@ public class HttpRequestProxy {
                         try {
                             httpPost = HttpRequestUtil.getHttpPost(config, url, httpOption.cookie, httpOption.userAgent, httpOption.headers);
 
-
-                            if (_httpEntity != null) {
-                                httpPost.setEntity(_httpEntity);
-                            } else if (_paramPair != null && _paramPair.size() > 0) {
-                                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(_paramPair, StandardCharsets.UTF_8);
-
-                                httpPost.setEntity(entity);
-
+                            HttpEntity httpEntity = HttpParamsHandler.buildHttpPostEntity(httpOption);
+                            if(httpEntity != null) {
+                                httpPost.setEntity(httpEntity);
                             }
+                            
 
                             return httpClient.execute(httpPost, responseHandler);
                         }
@@ -2091,6 +2026,11 @@ public class HttpRequestProxy {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
     }
+
+    public static <T> T sendJsonBody(String poolname, String url,Object requestBody,Map<String,Object> params,Map<String,String> headers,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody(   poolname, object2json(requestBody),   url,  params,   headers,ContentType.APPLICATION_JSON,  resultType);
+    }
     public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Map headers,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForList(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
@@ -2263,6 +2203,19 @@ public class HttpRequestProxy {
             }
         }
     }
+    public static <T> T sendBody(final ClientConfiguration config,  String requestBody, String url,Map<String,Object> params,
+                                 final Map headers, ContentType contentType,
+                                 final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        InvokeContext invokeContext = new InvokeContext();
+        invokeContext.setHeaders(headers);
+        invokeContext.setParams( params);
+        invokeContext.setRequestContentType(contentType);
+        return sendBody( config,   requestBody,  url,
+                invokeContext,         responseHandler);
+
+
+    }
+    
     public static <T> T sendBody(final ClientConfiguration config,  String requestBody, String url,
                                  final Map headers, ContentType contentType,
                                  final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
@@ -2273,6 +2226,16 @@ public class HttpRequestProxy {
                  invokeContext,         responseHandler);
        
      
+    }
+    public static <T> T sendBody(final String poolname,  String requestBody, String url,Map<String,Object> params,
+                                 final Map headers, ContentType contentType,
+                                 final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+        return sendBody(config,    requestBody,   url,params,
+                headers,   contentType,
+                responseHandler);
+
+
     }
 
     public static <T> T sendBody(final String poolname,  String requestBody, String url,
@@ -2296,11 +2259,18 @@ public class HttpRequestProxy {
     public static <T> T sendBody(final ClientConfiguration config,  String requestBody, String url,
                                  InvokeContext invokeContext,
                                  final HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
-        final HttpEntity httpEntity = new StringEntity(
-                requestBody,
-                invokeContext.getRequestContentType());
-        injectBody(responseHandler, requestBody);
+//        final StringEntity httpEntity = new StringEntity(
+//                requestBody,
+//                invokeContext.getRequestContentType());
         
+        injectBody(responseHandler, requestBody);
+        //post请求参数
+        Map<String, Object> params = invokeContext.getParams();
+        if(params != null && params.size() > 0) {
+            url = HttpParamsHandler.appendMapParams(url, params);
+        }
+        HttpEntity httpEntity = HttpParamsHandler.buildHttpPostEntity(invokeContext,requestBody);
+      
         return _handleRequest( config, url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
@@ -2308,7 +2278,8 @@ public class HttpRequestProxy {
                         HttpPost httpPost = null;
                         try {
                             httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", invokeContext.getHeaders());
-                            httpPost.setEntity(httpEntity);
+                            httpPost.setEntity(httpEntity);                            
+
                             if(responseHandler instanceof BaseURLResponseHandler){
                                 ((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPost);
                             }
@@ -2788,6 +2759,21 @@ public class HttpRequestProxy {
     }
     public static <T> T sendBody(ClientConfiguration clientConfiguration,String requestBody, String url, Map headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  clientConfiguration,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<T>() {
+
+            @Override
+            public T handleResponse(final ClassicHttpResponse response)
+                    throws IOException, ParseException {
+                return ResponseUtil.handleResponse( url, response, resultType);
+            }
+
+        });
+
+    }
+    
+    
+
+    public static <T> T sendBody(String poolname,String requestBody, String url,Map<String,Object> params, Map headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, params, headers,  contentType, new BaseURLResponseHandler<T>() {
 
             @Override
             public T handleResponse(final ClassicHttpResponse response)

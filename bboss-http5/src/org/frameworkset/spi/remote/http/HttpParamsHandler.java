@@ -16,18 +16,28 @@ package org.frameworkset.spi.remote.http;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.entity.mime.FileBody;
+import org.apache.hc.client5.http.entity.mime.StringBody;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
+import org.frameworkset.spi.remote.http.proxy.InvokeContext;
 import org.frameworkset.util.ClassUtil;
 import org.frameworkset.util.annotations.DateFormateMeta;
 import org.frameworkset.util.annotations.wraper.RequestParamWraper;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
@@ -261,6 +271,92 @@ public class HttpParamsHandler {
         return ret.toString();
 
     }
+
+    public static HttpEntity buildHttpPostEntity(InvokeContext invokeContext,String requestBody) throws HttpProxyRequestException {
+        HttpEntity httpEntity = null;
+//        Map<String, Object> params = invokeContext.getParams();
+//
+//        //                             处理 params 参数并构建混合请求体
+//        if (params != null && !params.isEmpty()) {
+//            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+//
+//            // 添加原始 JSON 请求体
+//            builder.addPart("jsonBody", new StringBody(requestBody, invokeContext.getRequestContentType()));
+//
+//            // 添加 params 参数
+//            for (Map.Entry<String, Object> entry : params.entrySet()) {
+//                if (entry.getValue() != null) {
+//                    builder.addTextBody(entry.getKey(), entry.getValue().toString(), ContentType.TEXT_PLAIN.withCharset(StandardCharsets.UTF_8));
+//                }
+//            }
+//
+//            // 设置混合请求体
+//            httpEntity = builder.build();
+//        } else {
+            // 仅发送原始 JSON 请求体
+            httpEntity = new StringEntity(
+                    requestBody,
+                    invokeContext.getRequestContentType());
+//        }
+        
+        return httpEntity;
+    }
+    
+    public static HttpEntity buildHttpPostEntity(HttpRequestProxy.HttpOption httpOption) throws HttpProxyRequestException {
+        HttpEntity httpEntity = null;
+        List<NameValuePair> paramPair = null;
+        if (httpOption.files != null) {
+            MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+            // post表单参数处理
+//            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
+
+//            int i = 0;
+            boolean hasdata = HttpParamsHandler.paramsHandle( multipartEntityBuilder,httpOption);
+
+//            if (httpOption.params != null) {
+//                Iterator<Entry> it = httpOption.params.entrySet().iterator();
+//                while (it.hasNext()) {
+//                    Entry entry = it.next();
+//                    if(entry.getValue() == null)
+//                        continue;
+//                    if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
+//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+//                    }
+//                    else{
+//
+//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+//                    }
+//                    hasdata = true;
+//                }
+//            }
+            if (httpOption.files != null) {
+                Iterator<Map.Entry<String, File>> it = httpOption.files.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String, File> entry = it.next();
+
+//						parts[i++] = new FilePart(entry.getKey(), entry.getValue());
+                    File f = new File(String.valueOf(entry.getValue()));
+                    if (f.exists()) {
+                        FileBody file = new FileBody(f);
+                        multipartEntityBuilder.addPart(entry.getKey(), file);
+                        hasdata = true;
+                    }
+
+                    // System.out.println("post_key_file==> "+file);
+                }
+            }
+            if (hasdata)
+                httpEntity = multipartEntityBuilder.build();
+        } else if (httpOption.params != null ) {
+            paramPair = HttpParamsHandler.paramsPaires(  httpOption) ;
+            if(paramPair != null && paramPair.size() > 0) {
+                httpEntity = new UrlEncodedFormEntity(paramPair, StandardCharsets.UTF_8);
+            }
+
+        }
+       return httpEntity;
+    }
+    
 
     public static boolean paramsHandle(MultipartEntityBuilder multipartEntityBuilder, HttpRequestProxy.HttpOption httpOption) throws HttpProxyRequestException {
         Object params = httpOption.params;

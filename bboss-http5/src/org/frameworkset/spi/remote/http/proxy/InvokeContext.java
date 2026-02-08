@@ -35,6 +35,16 @@ public class InvokeContext {
     private ContentType requestContentType;
     private java.nio.charset.Charset responseCharset;
     private Map headers;
+
+    public Map<String, Object> getParams() {
+        return params;
+    }
+
+    public void setParams(Map<String, Object> params) {
+        this.params = params;
+    }
+
+    private Map<String,Object> params;
     
     public Map<String, Object> getContext() {
         return context;

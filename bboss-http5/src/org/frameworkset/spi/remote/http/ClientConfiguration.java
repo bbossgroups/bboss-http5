@@ -42,6 +42,7 @@ import org.frameworkset.spi.remote.http.kerberos.serverrealm.ServerRealmRequestK
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
+import org.frameworkset.spi.remote.http.ssl.CustomTlsConfigResolver;
 import org.frameworkset.spi.remote.http.ssl.SSLHelper;
 import org.frameworkset.util.ClassUtil;
 import org.frameworkset.util.ResourceStartResult;
@@ -280,6 +281,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private String customHttpRequestRetryHandler;
 	private int timeToLive = 3600000;
 
+
+
+    /**
+     * https握手时间
+     */
+    private int handshakeTimeout;
+
 	/**
 	 * Using the keystore- and truststore file
 	 */
@@ -324,7 +332,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	public ClientConfiguration() {
 		// TODO Auto-generated constructor stub
 	}
+    public int getHandshakeTimeout() {
+        return handshakeTimeout;
+    }
 
+    public void setHandshakeTimeout(int handshakeTimeout) {
+        this.handshakeTimeout = handshakeTimeout;
+    }
 	public String getBeanName(){
 		return this.beanName;
 	}
@@ -1675,17 +1689,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			}
 
 		};
+        
+        Timeout soTimeout = Timeout.ofMilliseconds(timeoutSocket);
 
-
-//            public PoolingHttpClientConnectionManager(
-//        final Registry<ConnectionSocketFactory> socketFactoryRegistry,
-//        final HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory,
-//        final SchemePortResolver schemePortResolver,
-//        final DnsResolver dnsResolver,
-//        final long timeToLive, final TimeUnit timeUnit)
-
-        PoolingHttpClientConnectionManager connManager =  PoolingHttpClientConnectionManagerBuilder.create().setDnsResolver(dnsResolver)
+        Timeout handshakeTimeout_ = null;
+        if(handshakeTimeout > 0 ){ //如果有设置handshakeTimeout，直接使用handshakeTimeout
+            handshakeTimeout_ = Timeout.ofMilliseconds(handshakeTimeout);
+        }
+        else{//如果没有专门设置handshakeTimeout，直接使用timeoutSocket参数
+            handshakeTimeout_ = soTimeout;
+        }
+        PoolingHttpClientConnectionManager connManager =  PoolingHttpClientConnectionManagerBuilder.create().
+                setDnsResolver(dnsResolver)
                 .setSSLSocketFactory(SSLConnectionSocketFactory)
+                .setTlsConfigResolver(new CustomTlsConfigResolver(handshakeTimeout_))//设置handshakeTimeout
                 .setConnectionTimeToLive(TimeValue.ofMilliseconds(this.timeToLive))
                 .build();
 
@@ -1695,7 +1712,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		// Create socket configuration
 		SocketConfig socketConfig = SocketConfig.custom()
 				.setTcpNoDelay(true)
-				.setSoTimeout(Timeout.ofMilliseconds(timeoutSocket))
+				.setSoTimeout(soTimeout)
 				.setSoKeepAlive(this.soKeepAlive)
 				.setSoReuseAddress(this.soReuseAddress)
 				.build();
