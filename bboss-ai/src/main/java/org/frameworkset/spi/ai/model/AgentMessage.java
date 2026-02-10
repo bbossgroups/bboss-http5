@@ -32,6 +32,10 @@ public class AgentMessage<T extends AgentMessage> {
      */
     private String prompt;
 
+    /**
+     * 工具清单，标准工具规范格式
+     */
+    private Object tools;
 
     /**
      * 默认角色提示词工程
@@ -53,6 +57,10 @@ public class AgentMessage<T extends AgentMessage> {
     private String negativePrompt ;
     private String model ;
     private Map parameters;
+
+
+
+    private Integer maxTokens; 
     private Boolean stream;
     private Double temperature;
     private Map headers = null;
@@ -70,6 +78,15 @@ public class AgentMessage<T extends AgentMessage> {
      */
 //    private String modelType;
 
+    public Object getTools() {
+        return tools;
+    }
+
+    public T setTools(Object tools) {
+        this.tools = tools;
+        return (T)this;
+    }
+
     public String getPrompt() {
         return prompt;
     }
@@ -77,8 +94,9 @@ public class AgentMessage<T extends AgentMessage> {
         return systemPrompt;
     }
 
-    public void setSystemPrompt(String systemPrompt) {
+    public T setSystemPrompt(String systemPrompt) {
         this.systemPrompt = systemPrompt;
+        return (T)this;
     }
 
     public T addHeader(String key,String value){
@@ -188,6 +206,14 @@ public class AgentMessage<T extends AgentMessage> {
 
     public T setTemperature(Double temperature) {
         this.temperature = temperature;
+        return (T)this;
+    }
+    public Integer getMaxTokens() {
+        return maxTokens;
+    }
+
+    public T setMaxTokens(Integer maxTokens) {
+        this.maxTokens = maxTokens;
         return (T)this;
     }
 }

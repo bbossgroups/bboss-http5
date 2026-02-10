@@ -52,7 +52,7 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
         streamDataBuilder = new StreamDataBuilder() {
             @Override
             public StreamData build(AgentAdapter agentAdapter, String line) {
-                return agentAdapter.parseStreamContentFromData(line);
+                return agentAdapter.parseStreamContentFromData(this,line);
             }
 
             @Override

@@ -36,6 +36,7 @@ import org.frameworkset.util.concurrent.NoSynBooleanWrapper;
 import reactor.core.publisher.FluxSink;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -340,13 +341,14 @@ public class AIResponseUtil {
         }
         return null;
     }
+
     /**
      * 语音识别：data:{"output":{"choices":[{"message":{"annotations":[{"type":"audio_info","language":"zh","emotion":"neutral"}],"content":[{"text":"欢迎与"}],"role":"assistant"},"finish_reason":"null"}]},"usage":{"output_tokens_details":{"text_tokens":6},"input_tokens_details":{"text_tokens":16},"seconds":1},"request_id":"e84128d5-4bae-4e7e-91ab-6fb33504d2e3"}
      * LLM和图像识别：data: {"id":"ccf32be6-ad2f-4658-963a-fc3c22346e6b","object":"chat.completion.chunk","created":1761725211,"model":"deepseek-reasoner","system_fingerprint":"fp_ffc7281d48_prod0820_fp8_kvcache","choices":[{"index":0,"delta":{"content":null,"reasoning_content":"在"},"logprobs":null,"finish_reason":null}]}
      * @param data
      * @return
      */
-    public static StreamData parseStreamContentFromData(String data) {
+    public static StreamData parseStreamContentFromData(StreamDataBuilder streamDataBuilder,String data) {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("choices");
@@ -357,35 +359,52 @@ public class AIResponseUtil {
                     if (choices.size() > 0) {
                         Map choice = choices.get(0);
                         String finishReason = (String) choice.get("finish_reason");
-                        Map delta = (Map) choice.get("delta");
-                        if (delta != null) {
-//                            String content = (String)delta.get("content");
-//                            return content;
-                            String reasoning_content = (String)delta.get("reasoning_content");
-                            String content = (String) delta.get("content");
-                            if(SimpleStringUtil.isNotEmpty(reasoning_content)){
-                                return new StreamData(ServerEvent.REASONING_CONTENT,reasoning_content,finishReason);
-                            }
-                            else{
-                                return new StreamData(ServerEvent.CONTENT,content,finishReason);
-                            }
+                       if(!streamDataBuilder.isToolCall(finishReason)) {
+                           Map delta = (Map) choice.get("delta");
+                           if (delta != null) {
+ 
+                               String reasoning_content = (String) delta.get("reasoning_content");
+                               String content = (String) delta.get("content");
+                               if (SimpleStringUtil.isNotEmpty(reasoning_content)) {
+                                   return new StreamData(ServerEvent.REASONING_CONTENT, reasoning_content, finishReason);
+                               } else {
+                                   return new StreamData(ServerEvent.CONTENT, content, finishReason);
+                               }
 
-                        }
-                        else{
-                            Map message = (Map) choice.get("message");
-                            if(message != null) {
-                                String reasoning_content = (String)message.get("reasoning_content");
-                                String content = (String) message.get("content");
-                                if(SimpleStringUtil.isNotEmpty(reasoning_content)){
-                                    return new StreamData(ServerEvent.REASONING_CONTENT,reasoning_content,finishReason);
-                                }
-                                else{
-                                    return new StreamData(ServerEvent.CONTENT,content,finishReason);
-                                }
-                            }
-                            if(logger.isDebugEnabled())
-                                logger.debug("choices list delta null: {}",data);
-                        }
+                           } else {
+                               Map message = (Map) choice.get("message");
+                               if (message != null) {
+                                   String reasoning_content = (String) message.get("reasoning_content");
+                                   String content = (String) message.get("content");
+                                   if (SimpleStringUtil.isNotEmpty(reasoning_content)) {
+                                       return new StreamData(ServerEvent.REASONING_CONTENT, reasoning_content, finishReason);
+                                   } else {
+                                       return new StreamData(ServerEvent.CONTENT, content, finishReason);
+                                   }
+                               }
+                               if (logger.isDebugEnabled())
+                                   logger.debug("choices message null: {}", data);
+                           }
+                       }
+                       else{
+                           Map message = (Map) choice.get("message");
+                           if(message != null){
+                               List<FunctionTool> functionTools = streamDataBuilder.functionTools( message);
+                               if(functionTools != null && functionTools.size() > 0) {
+                                   return new StreamData(functionTools,finishReason)
+                                           .setContent((String)message.get("content"))
+                                           .setRole((String) message.get("role"));
+                               }
+                               else{
+                                   if(logger.isDebugEnabled())
+                                        logger.debug("choice message tool_calls null: {}",data);
+                               }
+                           }
+                           else {
+                               if (logger.isDebugEnabled())
+                                   logger.debug("choice message null: {}", data);
+                           }
+                       }
                     }
                     else {
                         if(logger.isDebugEnabled())
@@ -433,7 +452,7 @@ public class AIResponseUtil {
      * @param data
      * @return
      */
-    public static StreamData parseJiutianImageParserStreamContentFromData(String data) {
+    public static StreamData parseJiutianImageParserStreamContentFromData(StreamDataBuilder streamDataBuilder,String data) {
         try {
             Map map = SimpleStringUtil.json2Object(data,Map.class);
             Object choices_ = map.get("parts");
@@ -671,7 +690,10 @@ public class AIResponseUtil {
                 serverEvent.setFinishReason(content.getFinishReason());
                 serverEvent.setData(content.getData());
                 serverEvent.setType(ServerEvent.DATA);
+                serverEvent.setFunctionTools(content.getFunctions());
                 serverEvent.setContentType(content.getType());
+                serverEvent.setRole(content.getRole());
+                serverEvent.setContent(content.getContent());
 
 
             }
@@ -738,6 +760,7 @@ public class AIResponseUtil {
                         firstEventTag.set(false);
                         serverEvent.setFirst(true);
                     }
+                    serverEvent.setFunctionTools(content.getFunctions());
                     serverEvent.setFinishReason(content.getFinishReason());
                     if(!content.isDone()) {
                         serverEvent.setData(content.getData());
@@ -749,7 +772,9 @@ public class AIResponseUtil {
                     
                     serverEvent.setContentType(content.getType());
                     serverEvent.setDone(content.isDone());
-                    
+
+                    serverEvent.setRole(content.getRole());
+                    serverEvent.setContent(content.getContent());
                     sink.next(serverEvent);
                     return content.isDone();
                 }
@@ -759,11 +784,15 @@ public class AIResponseUtil {
                         firstEventTag.set(false);
                         serverEvent.setFirst(true);
                     }
+                    serverEvent.setFunctionTools(content.getFunctions());
                     serverEvent.setGenUrl(content.getUrl());
                     serverEvent.setFinishReason(content.getFinishReason());
                     serverEvent.setType(ServerEvent.DATA);
                     serverEvent.setContentType(content.getType());
                     serverEvent.setDone(content.isDone());
+
+                    serverEvent.setRole(content.getRole());
+                    serverEvent.setContent(content.getContent());
                     streamDataBuilder.handleServerEvent(agentAdapter,serverEvent);
                     sink.next(serverEvent);
                     return content.isDone();

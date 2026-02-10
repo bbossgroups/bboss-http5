@@ -156,6 +156,38 @@ public class AIAgent {
     }
 
     /**
+     * 实现同步智能问答,在指定的数据源上执行
+     * @deprecated 请使用chat方法
+     */
+    @Deprecated
+    public ServerEvent chatCompletionEvent(String maasName,  ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.chatCompletionEvent(maasName,chatAgentMessage);
+    }
+
+    /**
+     * 实现同步智能问答,在指定的数据源上执行
+     */
+    public ServerEvent chat(String maasName,  ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.chatCompletionEvent(maasName,chatAgentMessage);
+    }
+
+    /**
+     * 实现同步智能问答,在指定的数据源上执行
+     * @deprecated 请使用chat方法
+     */
+    @Deprecated
+    public ServerEvent chatCompletionEvent(  ChatAgentMessage chatAgentMessage){
+        return chat(chatAgentMessage);
+    }
+
+    /**
+     * 实现同步智能问答,在指定的数据源上执行
+     */
+    public ServerEvent chat(  ChatAgentMessage chatAgentMessage){
+        return AIAgentUtil.chatCompletionEvent(chatAgentMessage);
+    }
+
+    /**
      * 实现同步图片识别处理
      * @param imageVLAgentMessage
      * @return
@@ -199,19 +231,7 @@ public class AIAgent {
     public ServerEvent videoParser(String maasName, VideoVLAgentMessage videoVLAgentMessage){
         return AIAgentUtil.videoParser(maasName,videoVLAgentMessage);
     }
-    /**
-     * 实现同步智能问答,在指定的数据源上执行
-     */
-    public ServerEvent chatCompletionEvent(String maasName,  ChatAgentMessage chatAgentMessage){
-        return AIAgentUtil.chatCompletionEvent(maasName,chatAgentMessage);
-    }
-
-    /**
-     * 实现同步智能问答,在指定的数据源上执行
-     */
-    public ServerEvent chatCompletionEvent(  ChatAgentMessage chatAgentMessage){
-        return AIAgentUtil.chatCompletionEvent(chatAgentMessage);
-    }
+    
 
 
 

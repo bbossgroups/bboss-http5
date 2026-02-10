@@ -49,19 +49,29 @@ public class SiliconflowAgentAdapter extends QwenAgentAdapter{
             if( agentMessage.getTemperature() != null){
                 requestMap.put("temperature", agentMessage.getTemperature());
             }
+
+            if( agentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", agentMessage.getMaxTokens());
+            }
             
         }
         else {
+           
+            parameters.remove("enable_thinking");
+            parameters.remove("thinking_budget");
+            requestMap.putAll( parameters);
             if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
                 requestMap.put("stream", agentMessage.getStream());
             }
             if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
                 requestMap.put("temperature", agentMessage.getTemperature());
             }
-            parameters.remove("enable_thinking");
-            parameters.remove("thinking_budget");
-            requestMap.putAll( parameters);
+            if(!parameters.containsKey("max_tokens") && agentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", agentMessage.getMaxTokens());
+            }
         }
+
+        buildTools(  agentMessage, requestMap);
     }
   
 

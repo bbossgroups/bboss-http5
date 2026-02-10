@@ -52,7 +52,7 @@ public class VideoVLAgentMessage extends SessionAgentMessage<VideoVLAgentMessage
         streamDataBuilder = new StreamDataBuilder() {
             @Override
             public StreamData build(AgentAdapter agentAdapter, String line) {
-                return agentAdapter.parseVideoParserStreamContentFromData(line);
+                return agentAdapter.parseVideoParserStreamContentFromData(this,line);
             }
 
 

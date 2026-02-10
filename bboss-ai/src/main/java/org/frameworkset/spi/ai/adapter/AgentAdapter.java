@@ -57,6 +57,17 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
      */
     protected abstract Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage);
 
+    protected void buildTools(AgentMessage agentMessage,Map<String, Object> requestMap){
+        if(agentMessage.getTools() != null){
+            Object tools = agentMessage.getTools();
+            if(tools instanceof List){
+                requestMap.put("tools", tools);
+            }
+            else if(tools instanceof String){
+                requestMap.put("tools", SimpleStringUtil.json2ListObject((String)tools,Map.class));
+            }
+        }
+    }
     protected void filterParameters(AgentMessage agentMessage,Map<String, Object> requestMap, Map<String, Object> parameters) {
         if(SimpleStringUtil.isEmpty( parameters)){
             if( agentMessage.getStream() != null){
@@ -66,10 +77,12 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
             if( agentMessage.getTemperature() != null){
                 requestMap.put("temperature", agentMessage.getTemperature());
             }
-            // enable_thinking 参数开启思考过程，thinking_budget 参数设置最大推理过程 Token 数
-
+            if(agentMessage.getMaxTokens() != null)
+                requestMap.put("max_tokens", agentMessage.getMaxTokens());
+            
         }
         else {
+            requestMap.putAll( parameters);
             //设置默认参数
             if(!parameters.containsKey("stream") && agentMessage.getStream() != null){
                 requestMap.put("stream", agentMessage.getStream());
@@ -78,8 +91,12 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
             if(!parameters.containsKey("temperature") && agentMessage.getTemperature() != null){
                 requestMap.put("temperature", agentMessage.getTemperature());
             }
-            requestMap.putAll( parameters);
+            if(!parameters.containsKey("max_tokens") && agentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", agentMessage.getMaxTokens());
+            }
+            
         }
+        buildTools(  agentMessage, requestMap);
     }
     protected Object handleImageParserMessages(List<Map<String, Object>> messages){
         return messages;
@@ -225,8 +242,8 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
      * @param data
      * @return
      */
-    public StreamData parseStreamContentFromData(String data){
-        return AIResponseUtil.parseStreamContentFromData(data);
+    public StreamData parseStreamContentFromData(StreamDataBuilder streamDataBuilder,String data){
+        return AIResponseUtil.parseStreamContentFromData(streamDataBuilder,data);
     }
 
     /**
@@ -235,12 +252,12 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
      * @param data
      * @return
      */
-    public StreamData parseImageParserStreamContentFromData(String data){
-        return AIResponseUtil.parseStreamContentFromData(data);
+    public StreamData parseImageParserStreamContentFromData(StreamDataBuilder streamDataBuilder,String data){
+        return AIResponseUtil.parseStreamContentFromData(streamDataBuilder,data);
     }
 
-    public StreamData parseVideoParserStreamContentFromData(String data){
-        return AIResponseUtil.parseStreamContentFromData(data);
+    public StreamData parseVideoParserStreamContentFromData(StreamDataBuilder streamDataBuilder,String data){
+        return AIResponseUtil.parseStreamContentFromData(streamDataBuilder,data);
     }
 
     /**
@@ -341,13 +358,18 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
         requestMap.put("messages", messages);
         Map parameters = chatAgentMessage.getParameters();
         if(SimpleStringUtil.isNotEmpty( parameters)){
+
+            requestMap.putAll(parameters);
             if(!parameters.containsKey("stream") && chatAgentMessage.getStream() != null){
                 requestMap.put("stream", chatAgentMessage.getStream());
             }
             if(!parameters.containsKey("temperature") && chatAgentMessage.getTemperature() != null){
                 requestMap.put("temperature", chatAgentMessage.getTemperature());
             }
-            requestMap.putAll(parameters);
+
+            if(!parameters.containsKey("max_tokens") && chatAgentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", chatAgentMessage.getMaxTokens());
+            }
         }
         else {
             //设置默认参数
@@ -358,7 +380,12 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
             if( chatAgentMessage.getTemperature() != null){
                 requestMap.put("temperature", chatAgentMessage.getTemperature());
             }
+            if( chatAgentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", chatAgentMessage.getMaxTokens());
+            }
         }
+
+        buildTools(chatAgentMessage, requestMap);
         return requestMap;
     }
     public abstract ImageEvent buildGenImageResponse(ClientConfiguration config, ImageAgentMessage imageAgentMessage,Map imageData);

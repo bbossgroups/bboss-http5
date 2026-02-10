@@ -18,6 +18,7 @@ package org.frameworkset.spi.reactor;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
 import org.frameworkset.spi.ai.model.ChatObject;
+import org.frameworkset.spi.ai.util.StreamDataBuilder;
 
 import java.util.Map;
 
@@ -68,7 +69,9 @@ public abstract class BaseStreamDataHandler<T> implements StreamDataHandler<T> {
         
     }
 
-    
+    public StreamDataBuilder getStreamDataBuilder() {
+        return this.chatObject.getStreamDataBuilder();
+    }
 
     public String getDoneData() {
         return chatObject.getDoneData(this.agentAdapter);

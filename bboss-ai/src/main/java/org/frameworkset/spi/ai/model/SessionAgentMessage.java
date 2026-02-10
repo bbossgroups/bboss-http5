@@ -17,7 +17,6 @@ package org.frameworkset.spi.ai.model;
 
 import org.frameworkset.spi.ai.util.MessageBuilder;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,19 +61,33 @@ public class SessionAgentMessage<T extends SessionAgentMessage> extends AgentMes
         }
         return (T)this;
     }
-
-    public T addSessionMessage(String message){
+    public T addAssistantSessionMessage(String message){
         if(sessionMemory == null){
             return (T)this;
         }
         Map<String, Object> assistantMessage = MessageBuilder.buildAssistantMessage(message);
-        sessionMemory.add(assistantMessage);
+        return addSessionMessage(assistantMessage);
+    }
 
-        // 维护记忆窗口大小为sessionSize
-    
-        if(sessionMemory.size() > sessionSize){
-            sessionMemory.remove(0);
+    public T addAssistantSessionMessage(String message,List<FunctionTool> toolCalls){
+        if(sessionMemory == null){
+            return (T)this;
         }
-        return (T)this;
+        Map<String, Object> assistantMessage = MessageBuilder.buildAssistantMessage(message);
+        assistantMessage.put("tool_calls",toolCalls);
+        return addSessionMessage(assistantMessage);
+    }
+
+    
+    @Deprecated
+    /**
+     * 添加会话消息
+     * @param message
+     * @return
+     * @deprecated 请使用addAssistantSessionMessage方法
+     */
+    public T addSessionMessage(String message){
+         
+        return addAssistantSessionMessage(  message);
     }
 }

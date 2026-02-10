@@ -16,6 +16,8 @@ package org.frameworkset.spi.ai.model;
  */
 
 
+import java.util.List;
+
 /**
  * @author biaoping.yin
  * @Date 2025/10/29
@@ -24,9 +26,18 @@ public class StreamData {
 
     private int type = ServerEvent.CONTENT;
     private String data;
+    List<FunctionTool> functions;
     private  String finishReason;
     private boolean done;
     private String url;
+    /**
+     * 工具返回数据：角色
+     */
+    private String role;
+    /**
+     * 工具返回数据：内容
+     */
+    private String content;
     
     public StreamData(){
     }
@@ -42,6 +53,12 @@ public class StreamData {
         this.finishReason = finishReason;
     }
 
+    public StreamData(  List<FunctionTool> functions,   String finishReason){
+        this.type = ServerEvent.TOOL_CALLS;
+        this.functions = functions;
+        this.finishReason = finishReason;
+    }
+
     public StreamData(int type, String data, String url, String finishReason,boolean done){
         this.type = type;
         this.data = data;
@@ -54,6 +71,24 @@ public class StreamData {
         this.data = data;
         this.finishReason = finishReason;
         this.done = done;
+    }
+
+    public StreamData setRole(String role) {
+        this.role = role;
+        return this;
+    }
+
+    public StreamData setContent(String content) {
+        this.content = content;
+        return this;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getRole() {
+        return role;
     }
 
     public boolean isDone() {
@@ -88,4 +123,8 @@ public class StreamData {
     public String getUrl() {
 		return url;
 	}
+
+    public List<FunctionTool> getFunctions() {
+        return functions;
+    }
 }
