@@ -53,18 +53,22 @@ public class HealthCheck implements Runnable{
 	class HCRunable extends Thread {
 		HttpAddress address;
 		boolean stop = false;
+        private Object lock = new Object();
 		public HCRunable(HttpAddress address){
 			super("Http pool["+poolName+"] server["+address.toString()+"] health check");
 			address.setHealthCheck(this);
 			this.address = address;
 			this.setDaemon(true);
 		}
-		public synchronized void stopRun(){
-			if(stop )
-				return;
-			this.stop = true;
-			this.interrupt();
-
+		public void stopRun(){
+            synchronized(lock){
+                if(stop )
+                    return;
+                this.stop = true;           
+			
+			   
+            }
+            this.interrupt();
 			try {
 				this.join();
 			} catch (InterruptedException e) {

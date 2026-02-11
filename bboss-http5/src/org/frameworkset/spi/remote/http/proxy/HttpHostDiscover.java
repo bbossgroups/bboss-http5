@@ -18,17 +18,21 @@ public abstract class HttpHostDiscover extends Thread{
 	private static Logger logger = LoggerFactory.getLogger(HttpHostDiscover.class);
 	private long discoverInterval  = 10000l;
 	private HttpServiceHosts httpServiceHosts;
+    private Object  lock = new Object();
 	public HttpHostDiscover( ){
 		super("Http HostDiscover Thread");
 
 		this.setDaemon(true);
 	}
 	boolean stop = false;
-	public  synchronized void stopCheck(){
-		if(stop)
-			return;
-		this.stop = true;
-		this.interrupt();
+	public   void stopCheck(){
+        synchronized(lock) {
+            if (stop)
+                return;
+            this.stop = true;
+            
+        }
+        this.interrupt();
         try {
             this.join();
         } catch (InterruptedException e) {
@@ -39,7 +43,7 @@ public abstract class HttpHostDiscover extends Thread{
 	 * 主动定时服务发现和被动服务发现api
 	 * @param _hosts
 	 */
-	public synchronized void handleDiscoverHosts(List<HttpHost> _hosts){
+	public  void handleDiscoverHosts(List<HttpHost> _hosts){
 		handleDiscoverHosts( _hosts,(String)null);
 	}
 
@@ -48,57 +52,60 @@ public abstract class HttpHostDiscover extends Thread{
 	 * 路由组发生变化时，切换路由组
 	 * @param newCurrentRounte
 	 */
-	public synchronized void changeRouting(String newCurrentRounte){
-		httpServiceHosts.routingGroup(false,newCurrentRounte);
+	public  void changeRouting(String newCurrentRounte){
+        synchronized(lock) {
+            httpServiceHosts.routingGroup(false, newCurrentRounte);
+        }
 	}
 	/**
 	 * 主动定时服务发现和被动服务发现api
 	 * @param _hosts
 	 */
-	public synchronized void handleDiscoverHosts(List<HttpHost> _hosts,String newCurrentRounte){
-		List<HttpHost> hosts = null;
-		if(_hosts != null && _hosts.size() > 0)
-			hosts = new ArrayList<HttpHost>(_hosts);
-		else{
-			hosts = new ArrayList<HttpHost>();
-		}
-		List<HttpAddress> newAddress = new ArrayList<HttpAddress>();
-		//恢复移除节点
-		boolean changed = httpServiceHosts.recoverRemovedNodes(hosts);
-		HttpHost httpHost = null;
-		String health = httpServiceHosts.getHttpServiceHostsConfig().getHealth();
-		//识别新增节点
-		for(int i = 0; hosts !=null && i < hosts.size();i ++){
-			httpHost = hosts.get(i);
-			HttpAddress address = new HttpAddress(httpHost.getOrigineAddress(),
-					httpHost.getHostAddress(),
-					httpHost.getRouting(),health);
+	public void handleDiscoverHosts(List<HttpHost> _hosts,String newCurrentRounte){
+        synchronized(lock) {
+            List<HttpHost> hosts = null;
+            if (_hosts != null && _hosts.size() > 0)
+                hosts = new ArrayList<HttpHost>(_hosts);
+            else {
+                hosts = new ArrayList<HttpHost>();
+            }
+            List<HttpAddress> newAddress = new ArrayList<HttpAddress>();
+            //恢复移除节点
+            boolean changed = httpServiceHosts.recoverRemovedNodes(hosts);
+            HttpHost httpHost = null;
+            String health = httpServiceHosts.getHttpServiceHostsConfig().getHealth();
+            //识别新增节点
+            for (int i = 0; hosts != null && i < hosts.size(); i++) {
+                httpHost = hosts.get(i);
+                HttpAddress address = new HttpAddress(httpHost.getOrigineAddress(),
+                        httpHost.getHostAddress(),
+                        httpHost.getRouting(), health);
 //			if(address.getRouting() == null || address.getRouting().equals(""))
 //				address.setRouting(httpHost.getRouting());
-			address.setAttributes(httpHost.getAttributes());
-			if(!httpServiceHosts.containAddress(address)){
-				newAddress.add(address);
-			}
-		}
-		//处理新增节点
-		if(newAddress.size() > 0) {
-			if(!changed )
-				changed = true;
-			if (logger.isInfoEnabled()) {
-				logger.info(new StringBuilder().append("Discovery new Http pool[")
-						.append(httpServiceHosts.getClientConfiguration().getBeanName()).append("] servers ").append(newAddress).append(".").toString());
-			}
-			httpServiceHosts.addAddresses(newAddress);
-		}
-		//处理删除节点
-		httpServiceHosts.handleRemoved( hosts);
-		//如果数据有变化，则根据routing规则对地址进行重新分组
-		if(changed) {
-			httpServiceHosts.routingGroup(true,newCurrentRounte);
-		}
-		else if(newCurrentRounte != null){
-			httpServiceHosts.routingGroup(false,newCurrentRounte);
-		}
+                address.setAttributes(httpHost.getAttributes());
+                if (!httpServiceHosts.containAddress(address)) {
+                    newAddress.add(address);
+                }
+            }
+            //处理新增节点
+            if (newAddress.size() > 0) {
+                if (!changed)
+                    changed = true;
+                if (logger.isInfoEnabled()) {
+                    logger.info(new StringBuilder().append("Discovery new Http pool[")
+                            .append(httpServiceHosts.getClientConfiguration().getBeanName()).append("] servers ").append(newAddress).append(".").toString());
+                }
+                httpServiceHosts.addAddresses(newAddress);
+            }
+            //处理删除节点
+            httpServiceHosts.handleRemoved(hosts);
+            //如果数据有变化，则根据routing规则对地址进行重新分组
+            if (changed) {
+                httpServiceHosts.routingGroup(true, newCurrentRounte);
+            } else if (newCurrentRounte != null) {
+                httpServiceHosts.routingGroup(false, newCurrentRounte);
+            }
+        }
 	}
 	protected abstract List<HttpHost> discover(HttpServiceHostsConfig httpServiceHostsConfig, ClientConfiguration configuration, GetProperties context);
 	@Override
