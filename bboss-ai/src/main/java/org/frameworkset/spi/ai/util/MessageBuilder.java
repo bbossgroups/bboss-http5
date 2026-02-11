@@ -212,7 +212,7 @@ public class MessageBuilder {
 
         contentData = new LinkedHashMap();
         contentData.put("type", TYPE_TEXT);
-        contentData.put("text", message);;
+        contentData.put("text", message);
         contents.add(contentData);
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", ROLE_USER);
@@ -233,12 +233,14 @@ public class MessageBuilder {
         contentData.put("type", TYPE_TEXT);
         contentData.put("text", message);;
         contents.add(contentData);
-        for (String imageUrl:imageUrls) {
-            contentData = new LinkedHashMap();
-            contentData.put("type", TYPE_IMAGE);
-            String _imageUrl = imageUrl;
-            contentData.put("image_url", _imageUrl);
-            contents.add(contentData);
+        if(imageUrls != null && imageUrls.length > 0) {
+            for (String imageUrl : imageUrls) {
+                contentData = new LinkedHashMap();
+                contentData.put("type", TYPE_IMAGE);
+                String _imageUrl = imageUrl;
+                contentData.put("image_url", _imageUrl);
+                contents.add(contentData);
+            }
         }
 
         

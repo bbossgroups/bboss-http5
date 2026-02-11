@@ -622,16 +622,21 @@ public class AIResponseUtil {
             processStreamResponse(response, sink,streamDataHandler);
         } else {
             HttpEntity entity = response.getEntity();
+            String data = SimpleStringUtil.object2jsonPretty(streamDataHandler.getChatObject().getMessage());
             if (entity != null ) {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
                 throw new ReactorCallException(new StringBuilder().append("Request url:")
-                        .append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
+                        .append(url).append(",error,").append("status=")
+                        .append(status).append(":")
+                        .append(EntityUtils.toString(entity))
+                        .append(",\r\n use message:").append( data).toString());
 //                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
             }
             else {
-                throw new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString());
+                throw new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status)
+                        .append(",\r\n use message:").append( data).toString());
 //                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
             }
         }
