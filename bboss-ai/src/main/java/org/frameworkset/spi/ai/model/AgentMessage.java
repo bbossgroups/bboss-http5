@@ -17,6 +17,7 @@ package org.frameworkset.spi.ai.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.tools.MCPToolsRegist;
 import org.frameworkset.spi.ai.tools.ToolKit;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
@@ -44,6 +45,8 @@ public class AgentMessage<T extends AgentMessage> {
     @JsonIgnore
     private Map<String,FunctionCall> toolCalls;
 
+    @JsonIgnore
+    private MCPToolsRegist mcpToolsRegist;
     /**
      * 默认角色提示词工程
      */
@@ -97,7 +100,10 @@ public class AgentMessage<T extends AgentMessage> {
     }
 
     public T registTools(List<FunctionToolDefine> tools) {
-        this.tools = tools;
+        if(this.tools == null){
+            this.tools = new ArrayList<>();
+        }
+        this.tools.addAll( tools);
         return (T)this;
     }
 
@@ -184,8 +190,9 @@ public class AgentMessage<T extends AgentMessage> {
         return parameters;
     }
 
-    public void setParameters(Map parameters) {
+    public T setParameters(Map parameters) {
         this.parameters = parameters;
+        return (T)this;
     }
 
     public T addParameter(String key,Object value){
@@ -261,6 +268,24 @@ public class AgentMessage<T extends AgentMessage> {
         if(init)
             return;
         init = true;
+        
+        if(this.mcpToolsRegist != null ){
+            List<FunctionToolDefine> functionToolDefines = this.mcpToolsRegist.registTools();
+            if(functionToolDefines != null && functionToolDefines.size() > 0){
+                FunctionCall functionCall = null;
+                for(FunctionToolDefine functionToolDefine:functionToolDefines){
+                    functionCall = functionToolDefine.getFunctionCall();
+                    if(functionCall == null){
+                        functionCall = mcpToolsRegist.getFunctionCall(functionToolDefine.getFunction().getName());
+                        if(functionCall != null){
+                            functionToolDefine.setFunctionCall(functionCall);
+                        }
+                    }
+                }
+                this.registTools(functionToolDefines);
+            }
+        }
+
         if(this.toolCalls != null && toolCalls.size() > 0){
             for(Map.Entry<String,FunctionCall> entry:toolCalls.entrySet()){
                 FunctionCall functionCall = entry.getValue();
@@ -273,7 +298,7 @@ public class AgentMessage<T extends AgentMessage> {
                         }
                     }
                 }
-               
+
             }
         }
         if(tools !=  null && tools.size() > 0) {
@@ -297,5 +322,10 @@ public class AgentMessage<T extends AgentMessage> {
         if(toolCalls == null)
             return null;
         return toolCalls.get(toolName);
+    }
+
+    public T setMcpToolsRegist(MCPToolsRegist mcpToolsRegist) {
+        this.mcpToolsRegist = mcpToolsRegist;
+        return (T)this;
     }
 }

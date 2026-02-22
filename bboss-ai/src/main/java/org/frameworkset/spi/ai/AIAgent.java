@@ -104,6 +104,8 @@ public class AIAgent {
      * @return
      */
     public Flux<ServerEvent> streamAudioParser(String maasName,  AudioSTTAgentMessage audioSTTAgentMessage){
+
+        audioSTTAgentMessage.init();
         if(audioSTTAgentMessage.getTools() != null && audioSTTAgentMessage.getTools().size() > 0){
             return AIAgentUtil.streamChatCompletionEventWithTool(maasName,audioSTTAgentMessage);
         }
@@ -116,6 +118,8 @@ public class AIAgent {
      * @return
      */
     public Flux<ServerEvent> streamImageParser(String maasName,   ImageVLAgentMessage imageVLAgentMessage){
+
+        imageVLAgentMessage.init();
         if(imageVLAgentMessage.getTools() != null && imageVLAgentMessage.getTools().size() > 0){
             return AIAgentUtil.streamChatCompletionEventWithTool(maasName,imageVLAgentMessage);
         }
@@ -137,6 +141,8 @@ public class AIAgent {
      * @return
      */
     public Flux<ServerEvent> streamVideoParser(String maasName,   VideoVLAgentMessage videoVLAgentMessage){
+
+        videoVLAgentMessage.init();
         if(videoVLAgentMessage.getTools() != null && videoVLAgentMessage.getTools().size() > 0) {
             return AIAgentUtil.streamChatCompletionEventWithTool(maasName, videoVLAgentMessage);
         }
@@ -155,6 +161,7 @@ public class AIAgent {
      * 实现流式智能问答功能,在指定的数据源上执行
      */
     public Flux<ServerEvent> streamChat(String maasName,   ChatAgentMessage chatAgentMessage){
+        chatAgentMessage.init();
         if(chatAgentMessage.getTools() != null && chatAgentMessage.getTools().size() > 0) {
             return AIAgentUtil.streamChatCompletionEventWithTool(maasName, chatAgentMessage);
         }
