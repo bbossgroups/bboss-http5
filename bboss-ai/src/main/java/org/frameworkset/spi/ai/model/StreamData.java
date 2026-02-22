@@ -17,6 +17,7 @@ package org.frameworkset.spi.ai.model;
 
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author biaoping.yin
@@ -26,7 +27,17 @@ public class StreamData {
 
     private int type = ServerEvent.CONTENT;
     private String data;
-    List<FunctionTool> functions;
+    /**
+     * 解析后工具调用数据：工具调用列表
+     */
+    private List<FunctionTool> functions;
+
+
+
+    /**
+     * 原始工具调用数据：工具调用列表
+     */
+    private List<Map> toolCalls;
     private  String finishReason;
     private boolean done;
     private String url;
@@ -38,6 +49,10 @@ public class StreamData {
      * 工具返回数据：内容
      */
     private String content;
+
+
+
+    private String reasoningContent;
     
     public StreamData(){
     }
@@ -53,10 +68,11 @@ public class StreamData {
         this.finishReason = finishReason;
     }
 
-    public StreamData(  List<FunctionTool> functions,   String finishReason){
+    public StreamData(List<FunctionTool> functions, List<Map> toolCalls, String finishReason){
         this.type = ServerEvent.TOOL_CALLS;
         this.functions = functions;
         this.finishReason = finishReason;
+        this.toolCalls = toolCalls;
     }
 
     public StreamData(int type, String data, String url, String finishReason,boolean done){
@@ -101,13 +117,22 @@ public class StreamData {
     public String getData() {
 		return data;
 	}
-    public void setData(String data) {
+    public StreamData setData(String data) {
 		this.data = data;
+        return this;
 	}
-    public void setType(int type) {
+    public StreamData setType(int type) {
 		this.type = type;
+        return this;
 	}
-    
+    public String getReasoningContent() {
+        return reasoningContent;
+    }
+
+    public StreamData setReasoningContent(String reasoningContent) {
+        this.reasoningContent = reasoningContent;
+        return this;
+    }
     public boolean isEmpty(){
         return data == null || data.length() == 0;
     }
@@ -116,8 +141,9 @@ public class StreamData {
 		return finishReason;
 	}
 
-    public void setFinishReason(String finishReason) {
+    public StreamData setFinishReason(String finishReason) {
         this.finishReason = finishReason;
+        return this;
     }
     
     public String getUrl() {
@@ -126,5 +152,14 @@ public class StreamData {
 
     public List<FunctionTool> getFunctions() {
         return functions;
+    }
+
+    public List<Map> getToolCalls() {
+        return toolCalls;
+    }
+
+    public StreamData setToolCalls(List<Map> toolCalls) {
+        this.toolCalls = toolCalls;
+        return this;
     }
 }

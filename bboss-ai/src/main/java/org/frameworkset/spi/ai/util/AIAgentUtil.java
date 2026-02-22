@@ -15,6 +15,7 @@ package org.frameworkset.spi.ai.util;
  * limitations under the License.
  */
 
+import com.frameworkset.util.JsonUtil;
 import com.frameworkset.util.SimpleStringUtil;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ParseException;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -370,13 +372,13 @@ public class AIAgentUtil {
     /**
      * 同步调用模型服务，返回问答内容
      */
-    public static ServerEvent chatCompletionEvent(String poolName,Object message) {
+    public static ServerEvent chatCompletionEvent(String poolName,Object chatMessage) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
-        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,message);
-        ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(config,message);
-        message = chatObject.getMessage();
+        AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,chatMessage);
+        ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(config,chatMessage);
+        Object message = chatObject.getMessage();
         String data = null;
-
+        ServerEvent serverEvent = null;
         BaseURLResponseHandler<ServerEvent> responseHandler = new BaseURLResponseHandler<ServerEvent>() {
             @Override
             public ServerEvent handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
@@ -392,20 +394,45 @@ public class AIAgentUtil {
                     data = SimpleStringUtil.object2json(message);
                 }
             }
-            return HttpRequestProxy.sendJsonBody(config, data, chatObject.getCompletionsUrl(), (Map)null, responseHandler);
+            serverEvent = HttpRequestProxy.sendJsonBody(config, data, chatObject.getCompletionsUrl(), (Map)null, responseHandler);
         }
         else if (chatObject.getAIChatRequestType().equals(AIConstants.AI_CHAT_REQUEST_POST_FORM)){
 
             Map<String,File> files = chatObject.getFiles();
             if(files == null) {
-                return HttpRequestProxy.httpPost(config, chatObject.getCompletionsUrl(), message, (Map) null, responseHandler);
+                serverEvent =  HttpRequestProxy.httpPost(config, chatObject.getCompletionsUrl(), message, (Map) null, responseHandler);
             }
             else{
-                return HttpRequestProxy.httpPost(config, chatObject.getCompletionsUrl(), message, files, (Map) null,responseHandler);
+                serverEvent = HttpRequestProxy.httpPost(config, chatObject.getCompletionsUrl(), message, files, (Map) null,responseHandler);
             }
         }
         else {
             throw new ReactorCallException("Unsupported request type: "+chatObject.getAIChatRequestType());
+        }
+        if(serverEvent == null) {
+            throw new ReactorCallException("ServerEvent is null");
+        }
+        List<FunctionTool> functionTools = serverEvent.getFunctionTools();
+        if(functionTools != null && functionTools.size() > 0){
+            ChatAgentMessage _chatMessage = (ChatAgentMessage) chatMessage;
+            _chatMessage.addAssistantSessionMessage(serverEvent );
+            ToolAgentMessage toolAgentMessage = new ToolAgentMessage(_chatMessage,functionTools);
+            return chatCompletionEvent(  poolName,toolAgentMessage);
+            /**
+            FunctionTool tool = functionTools.get(0);
+            String toolId = tool.getId();
+            String functionName = tool.getFunctionName();
+            FunctionCall functionCall = chatMessage.getFunctionCall(functionName);
+            try {
+                Object result = functionCall.call(tool);
+                Map<String,Object> toolMessage =MessageBuilder.buildToolMessage(JsonUtil.object2json(result),toolId);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+             */
+        }
+        else {
+            return serverEvent;
         }
 
 

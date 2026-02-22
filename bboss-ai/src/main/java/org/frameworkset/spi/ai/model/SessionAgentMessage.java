@@ -69,12 +69,12 @@ public class SessionAgentMessage<T extends SessionAgentMessage> extends AgentMes
         return addSessionMessage(assistantMessage);
     }
 
-    public T addAssistantSessionMessage(String message,List<FunctionTool> toolCalls){
+    public T addAssistantSessionMessage(ServerEvent serverEvent){
         if(sessionMemory == null){
             return (T)this;
         }
-        Map<String, Object> assistantMessage = MessageBuilder.buildAssistantMessage(message);
-        assistantMessage.put("tool_calls",toolCalls);
+        Map<String, Object> assistantMessage = MessageBuilder.buildAssistantMessage(serverEvent);
+
         return addSessionMessage(assistantMessage);
     }
 

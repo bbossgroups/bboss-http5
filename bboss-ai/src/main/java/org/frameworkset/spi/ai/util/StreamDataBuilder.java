@@ -44,13 +44,13 @@ public interface StreamDataBuilder {
         return false;
     }
     
-    default List<FunctionTool> functionTools(Map message){
-        List<FunctionTool> functionTools = null;
+    default StreamData functionTools(Map message,String finishReason){
+        
         if(message != null) {
             //tool_calls -> {ArrayList@5174}  size = 1
             List<Map> tool_calls  = (List)message.get("tool_calls");
             if(tool_calls != null && tool_calls.size() > 0) {
-                functionTools = new ArrayList<>();
+                List<FunctionTool> functionTools = new ArrayList<>();
                 for (Map tool_call : tool_calls) {
                     FunctionTool functionTool = new FunctionTool();
                     functionTool.setId((String)tool_call.get("id"));
@@ -65,10 +65,12 @@ public interface StreamDataBuilder {
                     functionTools.add(functionTool);
                 }
                 
+                return new StreamData(functionTools,tool_calls,finishReason);
+                
             }
            
 
         }
-        return functionTools;
+        return null;
     }
 }

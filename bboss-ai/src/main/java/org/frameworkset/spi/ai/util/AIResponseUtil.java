@@ -389,11 +389,20 @@ public class AIResponseUtil {
                        else{
                            Map message = (Map) choice.get("message");
                            if(message != null){
-                               List<FunctionTool> functionTools = streamDataBuilder.functionTools( message);
-                               if(functionTools != null && functionTools.size() > 0) {
-                                   return new StreamData(functionTools,finishReason)
-                                           .setContent((String)message.get("content"))
-                                           .setRole((String) message.get("role"));
+                               StreamData streamData = streamDataBuilder.functionTools( message,finishReason);
+                               if(streamData != null) {
+                                   String reasoning_content = (String) message.get("reasoning_content");
+                                   if(reasoning_content == null) {
+                                       return streamData
+                                               .setContent((String) message.get("content"))
+                                               .setRole((String) message.get("role"));
+                                   }
+                                   else{
+                                       return streamData 
+                                               .setContent((String) message.get("content"))
+                                               .setReasoningContent(reasoning_content)
+                                               .setRole((String) message.get("role"));
+                                   }
                                }
                                else{
                                    if(logger.isDebugEnabled())
@@ -696,9 +705,11 @@ public class AIResponseUtil {
                 serverEvent.setData(content.getData());
                 serverEvent.setType(ServerEvent.DATA);
                 serverEvent.setFunctionTools(content.getFunctions());
+                serverEvent.setToolCalls(content.getToolCalls());
                 serverEvent.setContentType(content.getType());
                 serverEvent.setRole(content.getRole());
                 serverEvent.setContent(content.getContent());
+                serverEvent.setReasoningContent(content.getReasoningContent());
 
 
             }
@@ -766,6 +777,7 @@ public class AIResponseUtil {
                         serverEvent.setFirst(true);
                     }
                     serverEvent.setFunctionTools(content.getFunctions());
+                    serverEvent.setToolCalls(content.getToolCalls());
                     serverEvent.setFinishReason(content.getFinishReason());
                     if(!content.isDone()) {
                         serverEvent.setData(content.getData());
@@ -780,6 +792,7 @@ public class AIResponseUtil {
 
                     serverEvent.setRole(content.getRole());
                     serverEvent.setContent(content.getContent());
+                    serverEvent.setReasoningContent(content.getReasoningContent());
                     sink.next(serverEvent);
                     return content.isDone();
                 }
@@ -790,6 +803,7 @@ public class AIResponseUtil {
                         serverEvent.setFirst(true);
                     }
                     serverEvent.setFunctionTools(content.getFunctions());
+                    serverEvent.setToolCalls(content.getToolCalls());
                     serverEvent.setGenUrl(content.getUrl());
                     serverEvent.setFinishReason(content.getFinishReason());
                     serverEvent.setType(ServerEvent.DATA);
@@ -798,6 +812,7 @@ public class AIResponseUtil {
 
                     serverEvent.setRole(content.getRole());
                     serverEvent.setContent(content.getContent());
+                    serverEvent.setReasoningContent(content.getReasoningContent());
                     streamDataBuilder.handleServerEvent(agentAdapter,serverEvent);
                     sink.next(serverEvent);
                     return content.isDone();

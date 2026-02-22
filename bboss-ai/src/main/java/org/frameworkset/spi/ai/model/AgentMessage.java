@@ -15,10 +15,14 @@ package org.frameworkset.spi.ai.model;
  * limitations under the License.
  */
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
+import org.frameworkset.spi.ai.tools.ToolKit;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,7 +39,10 @@ public class AgentMessage<T extends AgentMessage> {
     /**
      * 工具清单，标准工具规范格式
      */
-    private Object tools;
+    private List<FunctionToolDefine> tools;
+
+    @JsonIgnore
+    private Map<String,FunctionCall> toolCalls;
 
     /**
      * 默认角色提示词工程
@@ -50,6 +57,8 @@ public class AgentMessage<T extends AgentMessage> {
         this.negativePrompt = negativePrompt;
         return (T)this;
     }
+    
+    
 
     /**
      * 反向提示词工程
@@ -78,14 +87,45 @@ public class AgentMessage<T extends AgentMessage> {
      */
 //    private String modelType;
 
-    public Object getTools() {
+    public List<FunctionToolDefine> getTools() {
         return tools;
     }
 
-    public T setTools(Object tools) {
+    public T setTools(List<FunctionToolDefine> tools) {
         this.tools = tools;
         return (T)this;
     }
+
+    public T registTools(List<FunctionToolDefine> tools) {
+        this.tools = tools;
+        return (T)this;
+    }
+
+
+    public T registTool(FunctionToolDefine functionToolDefine) {
+        if(this.tools == null){
+            tools = new ArrayList<>();
+        }
+        tools.add(functionToolDefine);
+        return (T)this;
+    }
+    
+    public T registToolCalls(Map<String,FunctionCall> toolCalls) {
+        if(this.toolCalls == null){
+            toolCalls = new LinkedHashMap<>();
+        }
+        this.toolCalls.putAll(toolCalls);
+        return (T)this;
+    }
+    public T registToolCall(String toolName,FunctionCall functionCall) {
+        if(this.toolCalls == null){
+            toolCalls = new LinkedHashMap<>();
+        }
+        this.toolCalls.put(toolName, functionCall);
+        return (T)this;
+    }
+    
+    
 
     public String getPrompt() {
         return prompt;
@@ -215,5 +255,47 @@ public class AgentMessage<T extends AgentMessage> {
     public T setMaxTokens(Integer maxTokens) {
         this.maxTokens = maxTokens;
         return (T)this;
+    }
+    private boolean init = false;
+    public void init(){
+        if(init)
+            return;
+        init = true;
+        if(this.toolCalls != null && toolCalls.size() > 0){
+            for(Map.Entry<String,FunctionCall> entry:toolCalls.entrySet()){
+                FunctionCall functionCall = entry.getValue();
+                String toolName  = entry.getKey();
+                if(tools !=  null && tools.size() > 0) {
+                    for (FunctionToolDefine functionToolDefine : tools) {
+                        if (functionToolDefine.getFunction().getName().equals(toolName)) {
+                            functionToolDefine.setFunctionCall(functionCall);
+                            break;
+                        }
+                    }
+                }
+               
+            }
+        }
+        if(tools !=  null && tools.size() > 0) {
+
+            for (FunctionToolDefine functionToolDefine : tools) {
+                FunctionCall functionCall = functionToolDefine.getFunctionCall();
+                if (functionCall != null) {
+                    String toolName = functionToolDefine.getFunction().getName();
+                    if (toolCalls == null) {
+                        toolCalls = new LinkedHashMap<>();
+                    }
+                    if (!toolCalls.containsKey(toolName))
+                        toolCalls.put(toolName, functionCall);
+                }
+
+            }
+        }
+    }
+    
+    public FunctionCall getFunctionCall(String toolName){
+        if(toolCalls == null)
+            return null;
+        return toolCalls.get(toolName);
     }
 }

@@ -16,12 +16,10 @@ package org.frameworkset.spi.ai.model;
  */
 
 import org.frameworkset.spi.ai.adapter.AgentAdapter;
-import org.frameworkset.spi.ai.material.GenFileDownload;
 import org.frameworkset.spi.ai.util.StreamDataBuilder;
 import org.frameworkset.spi.reactor.SSEHeaderSetFunction;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,7 +29,10 @@ import java.util.Map;
 public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
  
     private String chatCompletionsUrl;
- 
+    protected Map buildOpenAIRequestMap(AgentAdapter agentAdapter){
+        Map parameters = agentAdapter.buildOpenAIRequestMap(this);
+        return parameters;
+    }
 
  
 
@@ -44,7 +45,7 @@ public class ChatAgentMessage   extends SessionAgentMessage<ChatAgentMessage>{
         Object agentMessage = null;
         StreamDataBuilder streamDataBuilder = null;
         
-        parameters = agentAdapter.buildOpenAIRequestMap(this);
+        parameters = buildOpenAIRequestMap(agentAdapter);
         this.setChatCompletionsUrl(agentAdapter.getChatCompletionsUrl(this));
         stream = (Boolean)parameters.get("stream");
         aiChatRequestType = agentAdapter.getAIChatRequestType();

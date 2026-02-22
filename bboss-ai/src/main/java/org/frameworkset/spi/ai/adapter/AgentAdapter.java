@@ -16,6 +16,7 @@ package org.frameworkset.spi.ai.adapter;
  */
 
 import com.frameworkset.util.FileUtil;
+import com.frameworkset.util.JsonUtil;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.ai.material.GenMaterialFileDownload;
 import org.frameworkset.spi.ai.model.*;
@@ -58,6 +59,7 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
     protected abstract Map buildGenImageRequestMap(ImageAgentMessage imageAgentMessage);
 
     protected void buildTools(AgentMessage agentMessage,Map<String, Object> requestMap){
+        agentMessage.init();
         if(agentMessage.getTools() != null){
             Object tools = agentMessage.getTools();
             if(tools instanceof List){
@@ -312,6 +314,94 @@ public abstract class AgentAdapter implements CompletionsUrlInterface{
     
     protected Map<String, Object> buildInputImagesMessage(String message,String... imageUrls) {
         return MessageBuilder.buildInputImagesMessage(message,imageUrls);
+    }
+
+    protected Map<String, Object> buildInputToolMessage(ToolAgentMessage toolAgentMessage) {
+        FunctionTool tool = toolAgentMessage.getFunctionTool();
+        String toolId = tool.getId();
+        String functionName = tool.getFunctionName();
+        FunctionCall functionCall = toolAgentMessage.getFunctionCall(functionName);
+        try {
+            if(functionCall == null){
+                throw new FunctionCallException("FunctionCall of "+ functionName +" is null.");
+            }
+            Object result = functionCall.call(tool);
+            if(result == null){
+                throw new FunctionCallException("FunctionCall of "+ functionName +" return null:"+JsonUtil.object2json(tool));
+            }
+            Map<String,Object> toolMessage = null;
+            if(result instanceof String)
+                toolMessage = MessageBuilder.buildToolMessage((String)result,toolId);
+            else{
+                toolMessage = MessageBuilder.buildToolMessage(JsonUtil.object2json(result),toolId);
+            }
+            return toolMessage;
+        } catch (Exception e) {
+            throw new FunctionCallException("Call tool function["+ functionName +"] failed:",e);
+        }
+    }
+    /**
+     * 构建智能问答请求参数
+     * @param toolAgentMessage
+     * @return
+     */
+    public Map buildOpenAIRequestMapWithTool(ToolAgentMessage toolAgentMessage){
+        Map<String, Object> userMessage = buildInputToolMessage(  toolAgentMessage);
+       
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", toolAgentMessage.getModel());
+
+        List<Map<String, Object>> messages = null;
+        List<Map<String, Object>> sessionMemory = toolAgentMessage.getSessionMemory();
+        if(sessionMemory != null){
+            // 构建消息历史列表，包含之前的会话记忆           
+
+            
+            // 添加当前用户消息
+            toolAgentMessage.addSessionMessage(userMessage);
+            messages = new ArrayList<>(sessionMemory);
+
+
+        }
+        else{
+            messages = new ArrayList<>();
+            
+            messages.add(userMessage);
+        }
+
+
+
+        requestMap.put("messages", messages);
+        Map parameters = toolAgentMessage.getParameters();
+        if(SimpleStringUtil.isNotEmpty( parameters)){
+
+            requestMap.putAll(parameters);
+            if(!parameters.containsKey("stream") && toolAgentMessage.getStream() != null){
+                requestMap.put("stream", toolAgentMessage.getStream());
+            }
+            if(!parameters.containsKey("temperature") && toolAgentMessage.getTemperature() != null){
+                requestMap.put("temperature", toolAgentMessage.getTemperature());
+            }
+
+            if(!parameters.containsKey("max_tokens") && toolAgentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", toolAgentMessage.getMaxTokens());
+            }
+        }
+        else {
+            //设置默认参数
+            if( toolAgentMessage.getStream() != null){
+                requestMap.put("stream", toolAgentMessage.getStream());
+            }
+
+            if( toolAgentMessage.getTemperature() != null){
+                requestMap.put("temperature", toolAgentMessage  .getTemperature());
+            }
+            if( toolAgentMessage.getMaxTokens() != null){
+                requestMap.put("max_tokens", toolAgentMessage.getMaxTokens());
+            }
+        }
+//        buildTools(toolAgentMessage, requestMap);
+        return requestMap;
     }
     /**
      * 构建智能问答请求参数
