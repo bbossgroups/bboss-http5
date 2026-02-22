@@ -26,7 +26,7 @@ import java.util.Map;
 public class StreamData {
 
     private int type = ServerEvent.CONTENT;
-    private String data;
+//    private String data;
     /**
      * 解析后工具调用数据：工具调用列表
      */
@@ -58,34 +58,39 @@ public class StreamData {
     }
     public StreamData(int type, String data, String url,String finishReason){
     	this.type = type;
-    	this.data = data;
+    	this.content = data;
         this.finishReason = finishReason;
+ 
         this.url = url;
     }
     public StreamData(int type, String data, String finishReason){
         this.type = type;
-        this.data = data;
+        this.content = data;
         this.finishReason = finishReason;
+     
     }
 
     public StreamData(List<FunctionTool> functions, List<Map> toolCalls, String finishReason){
         this.type = ServerEvent.TOOL_CALLS;
         this.functions = functions;
         this.finishReason = finishReason;
+ 
         this.toolCalls = toolCalls;
     }
 
     public StreamData(int type, String data, String url, String finishReason,boolean done){
         this.type = type;
-        this.data = data;
+        this.content = data;
         this.finishReason = finishReason;
+    
         this.done = done;
         this.url = url;
     }
     public StreamData(int type, String data, String finishReason,boolean done){
         this.type = type;
-        this.data = data;
+        this.content = data;
         this.finishReason = finishReason;
+      
         this.done = done;
     }
 
@@ -114,13 +119,7 @@ public class StreamData {
     public int getType() {
 		return type;
 	}
-    public String getData() {
-		return data;
-	}
-    public StreamData setData(String data) {
-		this.data = data;
-        return this;
-	}
+    
     public StreamData setType(int type) {
 		this.type = type;
         return this;
@@ -134,7 +133,7 @@ public class StreamData {
         return this;
     }
     public boolean isEmpty(){
-        return data == null || data.length() == 0;
+        return content == null || content.length() == 0;
     }
     
     public String getFinishReason() {

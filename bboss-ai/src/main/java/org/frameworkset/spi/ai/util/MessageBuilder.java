@@ -293,8 +293,8 @@ public class MessageBuilder {
 
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", role);
-        if(serverEvent.getContent() != null) {
-            userMessage.put("content", serverEvent.getContent());
+        if(serverEvent.getData() != null) {
+            userMessage.put("content", serverEvent.getData());
         }
         if(serverEvent.getReasoningContent() != null){
             userMessage.put("reasoning_content", serverEvent.getReasoningContent());

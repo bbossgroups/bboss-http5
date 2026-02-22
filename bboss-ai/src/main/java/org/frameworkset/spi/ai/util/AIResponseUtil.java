@@ -674,7 +674,7 @@ public class AIResponseUtil {
                 }
                 StreamData content = streamDataBuilder.build(agentAdapter,data);
                 if (content != null && !content.isEmpty()) {
-                    sink.next(content.getData());
+                    sink.next(content.getContent());
                 }
             }
         }
@@ -702,7 +702,7 @@ public class AIResponseUtil {
                 serverEvent = new ServerEvent();
 
                 serverEvent.setFinishReason(content.getFinishReason());
-                serverEvent.setData(content.getData());
+                
                 serverEvent.setType(ServerEvent.DATA);
                 serverEvent.setFunctionTools(content.getFunctions());
                 serverEvent.setToolCalls(content.getToolCalls());
@@ -780,7 +780,7 @@ public class AIResponseUtil {
                     serverEvent.setToolCalls(content.getToolCalls());
                     serverEvent.setFinishReason(content.getFinishReason());
                     if(!content.isDone()) {
-                        serverEvent.setData(content.getData());
+                        serverEvent.setData(content.getContent());
                     }
                    
                     String url = content.getUrl();

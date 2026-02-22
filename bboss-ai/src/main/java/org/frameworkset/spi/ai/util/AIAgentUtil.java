@@ -217,8 +217,10 @@ public class AIAgentUtil {
      * 创建流式调用的Flux,在指定的数据源上执行
      */
     public static Flux<ServerEvent> streamChatCompletionEvent(String poolName,Object chatMessage) {
+ 
         ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(clientConfiguration,chatMessage);
+         
         final ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(clientConfiguration,chatMessage);
         BaseStreamDataHandler<ServerEvent> streamDataHandler = new BaseStreamDataHandler<ServerEvent>() {
             @Override
@@ -239,6 +241,32 @@ public class AIAgentUtil {
         streamDataHandler.setAgentAdapter(agentAdapter);
         streamDataHandler.setChatObject(chatObject);
         return buildFlux(  clientConfiguration,    chatObject ,  streamDataHandler);
+
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public static Flux<ServerEvent> streamChatCompletionEventWithTool(String poolName,AgentMessage chatMessage) {
+         
+            
+        Boolean stream = chatMessage.getStream();
+        chatMessage.setStream(false);
+        ServerEvent serverEvent = AIAgentUtil.chatCompletionEvent(poolName,chatMessage,true);
+        chatMessage.setStream(stream);
+        List<FunctionTool> functionTools = serverEvent.getFunctionTools();
+        if(functionTools != null && functionTools.size() > 0){
+            ChatAgentMessage _chatMessage = (ChatAgentMessage) chatMessage;
+            _chatMessage.addAssistantSessionMessage(serverEvent );
+            ToolAgentMessage toolAgentMessage = new ToolAgentMessage(_chatMessage,functionTools);
+            return streamChatCompletionEvent(  poolName,toolAgentMessage);
+          
+        }
+        else {
+            return buildFlux(  serverEvent) ;
+        }
+
+       
 
     }
 
@@ -322,6 +350,24 @@ public class AIAgentUtil {
                     return Flux.empty();
                 });
     }
+
+    private static <T> Flux<T> buildFlux(ServerEvent serverEvent) {
+        return Flux.<T>create(sink -> {
+                     sink.next((T)serverEvent);
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic()) // 在弹性线程池中执行阻塞IO
+                .timeout(Duration.ofSeconds(60)) // 设置超时
+                .onErrorResume(throwable -> {
+//                    String error = SimpleStringUtil.exceptionToString(throwable);
+//                    System.err.println("流式处理错误: " + throwable.getMessage());
+//                    String error = SimpleStringUtil.exceptionToString(throwable);
+                    if(logger.isDebugEnabled()) {
+                        logger.debug(throwable.getMessage(), throwable);
+                    }
+                    // 修改此处，将错误信息作为Flux输出
+                    return Flux.empty();
+                });
+    }
     
     /**
      * 同步调用模型服务，返回问答内容
@@ -373,6 +419,12 @@ public class AIAgentUtil {
      * 同步调用模型服务，返回问答内容
      */
     public static ServerEvent chatCompletionEvent(String poolName,Object chatMessage) {
+        return chatCompletionEvent( poolName, chatMessage,false);
+
+
+    }
+
+    public static ServerEvent chatCompletionEvent(String poolName,Object chatMessage,boolean fromStreamChat) {
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolName);
         AgentAdapter agentAdapter = AgentAdapterFactory.getAgentAdapter(config,chatMessage);
         ChatObject chatObject = agentAdapter.buildOpenAIRequestParameter(config,chatMessage);
@@ -412,6 +464,8 @@ public class AIAgentUtil {
         if(serverEvent == null) {
             throw new ReactorCallException("ServerEvent is null");
         }
+        if(fromStreamChat)
+            return serverEvent;
         List<FunctionTool> functionTools = serverEvent.getFunctionTools();
         if(functionTools != null && functionTools.size() > 0){
             ChatAgentMessage _chatMessage = (ChatAgentMessage) chatMessage;
@@ -419,16 +473,16 @@ public class AIAgentUtil {
             ToolAgentMessage toolAgentMessage = new ToolAgentMessage(_chatMessage,functionTools);
             return chatCompletionEvent(  poolName,toolAgentMessage);
             /**
-            FunctionTool tool = functionTools.get(0);
-            String toolId = tool.getId();
-            String functionName = tool.getFunctionName();
-            FunctionCall functionCall = chatMessage.getFunctionCall(functionName);
-            try {
-                Object result = functionCall.call(tool);
-                Map<String,Object> toolMessage =MessageBuilder.buildToolMessage(JsonUtil.object2json(result),toolId);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+             FunctionTool tool = functionTools.get(0);
+             String toolId = tool.getId();
+             String functionName = tool.getFunctionName();
+             FunctionCall functionCall = chatMessage.getFunctionCall(functionName);
+             try {
+             Object result = functionCall.call(tool);
+             Map<String,Object> toolMessage =MessageBuilder.buildToolMessage(JsonUtil.object2json(result),toolId);
+             } catch (Exception e) {
+             throw new RuntimeException(e);
+             }
              */
         }
         else {
