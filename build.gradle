@@ -96,7 +96,8 @@ configure(subprojects) { subproject ->
 
 }
 
-configure([project(":bboss-ai"),
+configure([
+//        project(":bboss-ai"),
            project(":bboss-http5")]) { subproject ->
 
 	publishing {
