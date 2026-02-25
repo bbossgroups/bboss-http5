@@ -9,7 +9,6 @@ import org.apache.hc.client5.http.classic.methods.*;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.FileBody;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
-import org.apache.hc.client5.http.entity.mime.StringBody;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
@@ -21,7 +20,6 @@ import org.frameworkset.spi.remote.http.proxy.*;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
- 
 
 import java.io.File;
 import java.io.IOException;
@@ -31,8 +29,11 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 
