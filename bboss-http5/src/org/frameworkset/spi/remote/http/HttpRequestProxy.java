@@ -362,6 +362,10 @@ public class HttpRequestProxy {
     public static <T> T httpGet(String poolname, String url,Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpGetforString(poolname, url, (String) null, (String) null, headers,responseHandler);
     }
+	
+	public static <T> T httpGet(ClientConfiguration clientConfiguration, String url,Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+		return httpGetforString(clientConfiguration, url, (String) null, (String) null, headers,responseHandler);
+	}
 
     public static <T> T httpGet(String url,Map headers,HttpClientResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpGetforString("default", url, (String) null, (String) null, headers,responseHandler);
@@ -454,7 +458,9 @@ public class HttpRequestProxy {
                         HttpGet httpGet = null;
                         try {
                             httpGet = HttpRequestUtil.getHttpGet(config, url, cookie, userAgent, headers);
-
+							if(responseHandler != null && responseHandler instanceof BaseURLResponseHandler){
+								((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpGet);
+							}
                             return httpClient.execute(httpGet, responseHandler);
                         }
                         finally {
@@ -484,7 +490,9 @@ public class HttpRequestProxy {
                         HttpGet httpGet = null;
                         try {
                             httpGet = HttpRequestUtil.getHttpGet(config, url, cookie, userAgent, headers);
-
+							if(responseHandler != null && responseHandler instanceof BaseURLResponseHandler){
+								((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpGet);
+							}
                             return httpClient.execute(httpGet, responseHandler);
                         }
                         finally {
@@ -1018,8 +1026,10 @@ public class HttpRequestProxy {
                             if(httpEntity != null) {
                                 httpPost.setEntity(httpEntity);
                             }
-                            
-
+							
+							if(responseHandler != null && responseHandler instanceof BaseURLResponseHandler){
+								((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPost);
+							}
                             return httpClient.execute(httpPost, responseHandler);
                         }
                         finally {
@@ -1713,7 +1723,9 @@ public class HttpRequestProxy {
                                 httpPut.setEntity(entity);
 
                             }
-
+							if(responseHandler != null && responseHandler instanceof BaseURLResponseHandler){
+								((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPut);
+							}
                             return httpClient.execute(httpPut, responseHandler);
                         }
                         finally {
@@ -2279,11 +2291,11 @@ public class HttpRequestProxy {
                         HttpPost httpPost = null;
                         try {
                             httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", invokeContext.getHeaders());
-                            httpPost.setEntity(httpEntity);                            
-
-                            if(responseHandler instanceof BaseURLResponseHandler){
-                                ((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPost);
-                            }
+                            httpPost.setEntity(httpEntity);
+							
+							if(responseHandler != null && responseHandler instanceof BaseURLResponseHandler){
+								((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPost);
+							}
 
                             return httpClient.execute(httpPost, responseHandler);
                         }
@@ -2921,7 +2933,9 @@ public class HttpRequestProxy {
                         try {
                             httpPost = HttpRequestUtil.getHttpPut(config, url, "", "", headers);
                             httpPost.setEntity(httpEntity);
-
+							if(responseHandler != null && responseHandler instanceof BaseURLResponseHandler){
+								((BaseURLResponseHandler)responseHandler).setHttpUriRequestBase(httpPost);
+							}
                             return httpClient.execute(httpPost, responseHandler);
                         }
                         finally {
