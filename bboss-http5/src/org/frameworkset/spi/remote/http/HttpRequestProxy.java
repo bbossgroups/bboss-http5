@@ -1,6 +1,7 @@
 package org.frameworkset.spi.remote.http;
 
 import com.frameworkset.util.SimpleStringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
@@ -43,6 +44,21 @@ import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
  */
 public class HttpRequestProxy {
     private static final Logger logger = LoggerFactory.getLogger(HttpRequestProxy.class);
+
+    public static String extractApiKeyFromBearer(String authorizationHeader) {
+        if (StringUtils.isEmpty(authorizationHeader)) {
+            return null;
+        }
+
+        // 检查是否以 "Bearer " 开头
+        if (authorizationHeader.startsWith("Bearer ")) {
+            // 提取 Bearer 后面的 token 部分
+            return authorizationHeader.substring(7).trim(); // 7 是 "Bearer " 的长度
+        }
+
+        // 如果不是 Bearer 格式，直接返回原始值
+        return authorizationHeader.trim();
+    }
     public static ResourceStartResult startHttpPools(String configFile){
         return HttpRequestUtil.startHttpPools(configFile);
     }
