@@ -25,6 +25,7 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
@@ -219,6 +220,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
      * http接口org.apache.http.HttpRequestInterceptor清单，多个用逗号分隔
      */
     private Object httpRequestInterceptors;
+
+    /**
+     * http接口org.apache.http.HttpResponseInterceptor清单，多个用逗号分隔
+     */
+    private Object httpResponseInterceptors;
 	public String getAuthAccount() {
 		return authAccount;
 	}
@@ -1188,8 +1194,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 clientConfiguration.setHttpRequestInterceptors(httpRequestInterceptors);
             }
 
-            
-			clientConfiguration.setSupportedProtocols(supportedProtocols);
+            Object httpResponseInterceptors = ClientConfiguration._getObjectValue(name,"http.httpResponseInterceptors",context,null);
+            log.append(",http.httpResponseInterceptors=").append(httpResponseInterceptors);
+            if(httpResponseInterceptors != null){
+                clientConfiguration.setHttpResponseInterceptors(httpResponseInterceptors);
+            }
+
+
+
+            clientConfiguration.setSupportedProtocols(supportedProtocols);
 //			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
 //			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
 //			log.append(",http.evictExpiredConnections=").append(evictExpiredConnections);
@@ -1836,16 +1849,29 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
             _httpClientBuilderCallback.customizeHttpClient(builder,this);
 		}
         
-        if(SimpleStringUtil.isNotEmpty(this.getHttpRequestInterceptors())){
-            String[] tmp = ((String)this.getHttpRequestInterceptors()).split(",");
+        if(SimpleStringUtil.isNotEmpty(this.getHttpRequestInterceptors()) || SimpleStringUtil.isNotEmpty(this.getHttpResponseInterceptors())){
+			String httpRequestInterceptorsStr = (String)this.getHttpRequestInterceptors();
+            String[] httpRequestInterceptors = SimpleStringUtil.isNotEmpty(httpRequestInterceptorsStr)? httpRequestInterceptorsStr.trim().split(","):null;
+			String httpResponseInterceptorsStr = (String)this.getHttpResponseInterceptors();
+            String[] httpResponseInterceptors = SimpleStringUtil.isNotEmpty(httpResponseInterceptorsStr)? httpResponseInterceptorsStr.trim().split(","):null;
+
             HttpClientBuilderCallback httpClientBuilderCallback = new HttpClientBuilderCallback() {
                 @Override
                 public HttpClientBuilder customizeHttpClient(HttpClientBuilder builder, ClientConfiguration clientConfiguration) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-                    for(String i:tmp){
-                        HttpRequestInterceptor httpRequestInterceptor = (HttpRequestInterceptor) Class.forName(i).getDeclaredConstructor().newInstance();
-                        builder.addRequestInterceptorLast(httpRequestInterceptor);
+                   if(httpRequestInterceptors != null) {
+                       for (String i : httpRequestInterceptors) {
+                           HttpRequestInterceptor httpRequestInterceptor = (HttpRequestInterceptor) Class.forName(i.trim()).getDeclaredConstructor().newInstance();
+                           builder.addRequestInterceptorLast(httpRequestInterceptor);
 //                        builder.addInterceptorLast(httpRequestInterceptor);
-                    }
+                       }
+                   }
+                   if(httpResponseInterceptors != null) {
+                       for (String i : httpResponseInterceptors) {
+                           HttpResponseInterceptor httpResponseInterceptor = (HttpResponseInterceptor) Class.forName(i.trim()).getDeclaredConstructor().newInstance();
+                           builder.addResponseInterceptorLast(httpResponseInterceptor);
+//                        builder.addInterceptorLast(httpRequestInterceptor);
+                       }
+                   }
                     return builder;
                 }
             };
@@ -2162,4 +2188,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         this.modelType = modelType;
     }
 
+    public Object getHttpResponseInterceptors() {
+        return httpResponseInterceptors;
+    }
+
+    public void setHttpResponseInterceptors(Object httpResponseInterceptors) {
+        this.httpResponseInterceptors = httpResponseInterceptors;
+    }
 }
