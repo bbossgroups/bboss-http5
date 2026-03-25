@@ -1050,12 +1050,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
             }
 
             log.append(",http.apiKeyId=").append(apiKeyId);
-
+            String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
+            clientConfiguration.setHosts(hosts);
+            log.append(",http.hosts=").append(hosts);
             String modelType = ClientConfiguration._getStringValue(name, "http.modelType", context, null);
             if(modelType == null || modelType.equals("")){
             
                 if(getModelTypeByUrl != null){
-                    modelType = (String)getModelTypeByUrl.invoke(null,clientConfiguration.hosts);                  
+                    modelType = (String)getModelTypeByUrl.invoke(null,hosts);                  
                 }
                 
             }
@@ -1273,10 +1275,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					}
 
 				}
-				String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
-				log.append(",http.hosts=").append(hosts);
+	
 				httpServiceHosts.setHosts(hosts);
-                clientConfiguration.hosts = hosts;
+               
 				String failAllContinue_ = ClientConfiguration._getStringValue(name, "http.failAllContinue", context, "true");
 				log.append(",http.failAllContinue=").append(failAllContinue_);
 				if (failAllContinue_ != null) {
