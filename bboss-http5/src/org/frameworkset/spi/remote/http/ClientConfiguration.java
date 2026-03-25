@@ -54,6 +54,7 @@ import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -134,8 +135,29 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     private String authAccount;
     private String authPassword;
     private String apiKeyId;
+    private String hosts;
+    
 
+    private static  Method getModelTypeByUrl;
+    static {
+        String clazz = "org.frameworkset.spi.ai.model.AIConstants";
+        try {
+            Class<?> modelClazz = Class.forName(clazz);
+            getModelTypeByUrl = modelClazz.getDeclaredMethod("getModelTypeByUrl",String.class);
+        } catch (NoSuchMethodException e) {
+             
+        } catch (ClassNotFoundException e) {
+             
+        }
+    }
 
+    public String getHosts() {
+        return hosts;
+    }
+
+    public void setHosts(String hosts) {
+        this.hosts = hosts;
+    }
 
     /**
      * 设置AI模型类型
@@ -1030,10 +1052,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
             log.append(",http.apiKeyId=").append(apiKeyId);
 
             String modelType = ClientConfiguration._getStringValue(name, "http.modelType", context, null);
-            if(modelType != null && !modelType.equals("")){
+            if(modelType == null || modelType.equals("")){
+            
+                if(getModelTypeByUrl != null){
+                    modelType = (String)getModelTypeByUrl.invoke(null,clientConfiguration.hosts);                  
+                }
+                
+            }
+            if(modelType != null && !modelType.equals("")) {
                 clientConfiguration.setModelType(modelType);
             }
-
             log.append(",http.modelType=").append(modelType);
 
             
@@ -1248,6 +1276,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
 				log.append(",http.hosts=").append(hosts);
 				httpServiceHosts.setHosts(hosts);
+                clientConfiguration.hosts = hosts;
 				String failAllContinue_ = ClientConfiguration._getStringValue(name, "http.failAllContinue", context, "true");
 				log.append(",http.failAllContinue=").append(failAllContinue_);
 				if (failAllContinue_ != null) {
