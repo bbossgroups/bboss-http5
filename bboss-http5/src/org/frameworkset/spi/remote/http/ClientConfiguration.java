@@ -139,15 +139,30 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     
 
     private static  Method getModelTypeByUrl;
+    private static  Method registerAgentAdapter;//(String modelType, String agentAdapterClass)
     static {
         String clazz = "org.frameworkset.spi.ai.model.AIConstants";
         try {
             Class<?> modelClazz = Class.forName(clazz);
             getModelTypeByUrl = modelClazz.getDeclaredMethod("getModelTypeByUrl",String.class);
         } catch (NoSuchMethodException e) {
-             
-        } catch (ClassNotFoundException e) {
-             
+
+        } catch (Exception e) {
+
+        }catch (Throwable e) {
+
+        }
+
+        clazz = "org.frameworkset.spi.ai.adapter.AgentAdapterFactory";
+        try {
+            Class<?> modelClazz = Class.forName(clazz);
+            registerAgentAdapter = modelClazz.getDeclaredMethod("registerAgentAdapter",String.class,String.class);
+        } catch (NoSuchMethodException e) {
+
+        } catch (Exception e) {
+
+        }catch (Throwable e) {
+
         }
     }
 
@@ -163,6 +178,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
      * 设置AI模型类型
      */
     private String modelType;
+
+
+    /**
+     * maas平台适配器
+     */
+    private String agentAdapter;
 
 
     private String apiKeySecret;
@@ -1054,18 +1075,44 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
             clientConfiguration.setHosts(hosts);
             log.append(",http.hosts=").append(hosts);
             String modelType = ClientConfiguration._getStringValue(name, "http.modelType", context, null);
-            if(modelType == null || modelType.equals("")){
             
+
+            String realModelType = modelType;
+            if(modelType == null || modelType.equals("")){
+                log.append(",http.modelType=").append(modelType);
                 if(getModelTypeByUrl != null){
-                    modelType = (String)getModelTypeByUrl.invoke(null,hosts);                  
+                    modelType = (String)getModelTypeByUrl.invoke(null,hosts);
+                    
+//                    log.append(",http.modelType=").append(modelType);
                 }
                 
+            }
+            else{
+                log.append(",http.modelType=").append(modelType);
             }
             if(modelType != null && !modelType.equals("")) {
                 clientConfiguration.setModelType(modelType);
             }
-            log.append(",http.modelType=").append(modelType);
+           
+            String agentAdapter = ClientConfiguration._getStringValue(name, "http.agentAdapter", context, null);
+            log.append(",http.agentAdapter=").append(agentAdapter);
 
+            if(agentAdapter != null && !agentAdapter.equals("")) {
+                clientConfiguration.setAgentAdapter(agentAdapter);
+                if(registerAgentAdapter != null){
+                    if(realModelType != null && !realModelType.equals("")) {
+                        registerAgentAdapter.invoke(null, realModelType, agentAdapter);
+                    }
+                    else{                     
+                        
+                         
+                        registerAgentAdapter.invoke(null, hosts, agentAdapter);//直接用自定义maas平台地址注册适配器
+                        //将hosts设置为模型类型
+                        clientConfiguration.setModelType(hosts);
+                        logger.info("Register agent adapter for MAAS:{} and modelType also set to:{}",hosts,hosts);
+                    }
+                }
+            }
             
             String apiKeySecret = ClientConfiguration._getStringValue(name, "http.apiKeySecret", context, null);
             if(apiKeySecret != null && !apiKeySecret.equals("")){
@@ -2224,5 +2271,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
     public void setHttpResponseInterceptors(Object httpResponseInterceptors) {
         this.httpResponseInterceptors = httpResponseInterceptors;
+    }
+
+
+    public String getAgentAdapter() {
+        return agentAdapter;
+    }
+
+    public void setAgentAdapter(String agentAdapter) {
+        this.agentAdapter = agentAdapter;
     }
 }
