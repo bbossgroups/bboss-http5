@@ -1,0 +1,34 @@
+	
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+            
+        }
+
+    }
+
+    test {
+        java {
+            srcDir 'test'
+
+        }
+        resources{
+
+            srcDir 'resources'
+
+        }
+    }
+   
+    
+}
+
+dependencies {
+
+    api project(':bboss-http5')
+    
+
+}
+
+ 

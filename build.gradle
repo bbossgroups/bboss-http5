@@ -97,8 +97,8 @@ configure(subprojects) { subproject ->
 }
 
 configure([
-//        project(":bboss-ai"),
-           project(":bboss-http5")]) { subproject ->
+        project(":bboss-feishu"),
+        project(":bboss-http5")]) { subproject ->
 
 	publishing {
 		publications {
