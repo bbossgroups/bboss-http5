@@ -115,7 +115,11 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                 }
             }
             else {
-                throw new IllegalArgumentException("feishuDataSource is empty!");
+                feishuDataSource = SimpleStringUtil.getUUID32();
+                addHttpConfig("http.poolNames", feishuDataSource)
+                        .addHttpConfig(feishuDataSource+ ".http.hosts", "https://open.feishu.cn")
+                        .addHttpConfig(feishuDataSource+ ".http.maxTotal", 100)
+                        .addHttpConfig(feishuDataSource+ ".http.defaultMaxPerRoute", 100);
             }
         }     
         
