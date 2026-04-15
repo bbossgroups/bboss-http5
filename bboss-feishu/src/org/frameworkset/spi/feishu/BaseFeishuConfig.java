@@ -119,7 +119,11 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                 addHttpConfig("http.poolNames", feishuDataSource)
                         .addHttpConfig(feishuDataSource+ ".http.hosts", "https://open.feishu.cn")
                         .addHttpConfig(feishuDataSource+ ".http.maxTotal", 100)
-                        .addHttpConfig(feishuDataSource+ ".http.defaultMaxPerRoute", 100);
+                        .addHttpConfig(feishuDataSource+ ".http.defaultMaxPerRoute", 100)            
+                        .addHttpConfig(feishuDataSource+ ".http.timeoutConnection", 15000)
+                        .addHttpConfig(feishuDataSource+ ".http.connectionRequestTimeout", 10000)
+//                    #socket通讯超时时间，如果在通讯过程中出现sockertimeout异常，可以适当调整timeoutSocket参数值，单位：毫秒
+                        .addHttpConfig(feishuDataSource+ ".http.timeoutSocket", 120000);
             }
         }     
         
