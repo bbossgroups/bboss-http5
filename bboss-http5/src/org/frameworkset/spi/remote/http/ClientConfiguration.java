@@ -19,11 +19,13 @@ import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
 import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpRequestInterceptor;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.io.SocketConfig;
@@ -136,7 +138,19 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     private String authPassword;
     private String apiKeyId;
     private String hosts;
-    
+
+    /**
+    http.proxyHost = 127.0.0.1
+    http.proxyPort = 7890
+    http.proxyProtocol = http
+    http.proxyUser = admin
+    http.proxyPassword = admin
+     */
+    private String proxyHost;
+    private int proxyPort;
+    private String proxyProtocol;
+    private String proxyUser;
+    private String proxyPassword;
 
     private static  Method getModelTypeByUrl;
     private static  Method registerAgentAdapter;//(String modelType, String agentAdapterClass)
@@ -1071,6 +1085,49 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
             }
 
             log.append(",http.apiKeyId=").append(apiKeyId);
+
+            /**
+             http.proxyHost = 127.0.0.1
+             http.proxyPort = 7890
+             http.proxyProtocol = http
+             http.proxyUser = admin
+             http.proxyPassword = admin
+             */
+            String proxyHost = ClientConfiguration._getStringValue(name, "http.proxyHost", context, null);
+            if(proxyHost != null && !proxyHost.equals("")){
+                clientConfiguration.setProxyHost(proxyHost);
+            }
+
+            log.append(",http.proxyHost=").append(proxyHost);
+
+            String proxyPort = ClientConfiguration._getStringValue(name, "http.proxyPort", context, null);
+            if(proxyPort != null && !proxyPort.equals("")){
+                clientConfiguration.setProxyPort(Integer.parseInt(proxyPort));
+            }
+
+            log.append(",http.proxyPort=").append(proxyPort);
+
+            String proxyProtocol = ClientConfiguration._getStringValue(name, "http.proxyProtocol", context, null);
+            if(proxyProtocol != null && !proxyProtocol.equals("")){
+                clientConfiguration.setProxyProtocol(proxyProtocol);
+            }
+
+            log.append(",http.proxyProtocol=").append(proxyProtocol);
+
+            String proxyUser = ClientConfiguration._getStringValue(name, "http.proxyUser", context, null);
+            if(proxyUser != null && !proxyUser.equals("")){
+                clientConfiguration.setProxyUser(proxyUser);
+            }
+
+            log.append(",http.proxyUser=").append(proxyUser);
+
+            String proxyPassword = ClientConfiguration._getStringValue(name, "http.proxyPassword", context, null);
+            if(proxyPassword != null && !proxyPassword.equals("")){
+                clientConfiguration.setProxyPassword(proxyPassword);
+            }
+
+            log.append(",http.proxyPassword=******");
+            
             String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
             clientConfiguration.setHosts(hosts);
             log.append(",http.hosts=").append(hosts);
@@ -1891,7 +1948,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		} 
 		buildRetryHandler(builder);
 		customizeHttpBuilder( builder );
-		httpclient = builder.build();
+        buildHttpProxy(  builder);
+        httpclient = builder.build();
 		if (this.beanName.equals("default")) {
 			defaultRequestConfig = requestConfig;
 		}
@@ -1911,6 +1969,38 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         if(requestKerberosUrlUtils != null){
             requestKerberosUrlUtils.afterStart();
         }
+    }
+    private void buildHttpProxy(HttpClientBuilder builder) {
+        if(SimpleStringUtil.isNotEmpty(this.getProxyHost()) && SimpleStringUtil.isNotEmpty(this.getProxyPort())){
+            logger.info("配置 HttpClient5 代理...");
+            String proxyProtocol = this.getProxyProtocol();
+            if(SimpleStringUtil.isEmpty(proxyProtocol)){
+                proxyProtocol = "http";
+            }
+            // 创建代理服务器地址
+            HttpHost proxy = new HttpHost(proxyProtocol, getProxyHost(), this.getProxyPort());
+            // 创建代理路由规划器
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+
+            if(SimpleStringUtil.isNotEmpty(this.getProxyUser()) && SimpleStringUtil.isNotEmpty(this.getProxyPassword())) {
+                // 设置代理认证
+                BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(
+                        new AuthScope(proxy),
+                        new UsernamePasswordCredentials(getProxyUser(), getProxyPassword().toCharArray())
+                );
+                builder.setDefaultCredentialsProvider(credentialsProvider);
+            }
+
+            // 设置路由规划器
+            builder.setRoutePlanner(routePlanner);
+        }
+       
+        
+
+        
+
+       
     }
 	private void customizeHttpBuilder(HttpClientBuilder builder ) throws Exception {
 		HttpClientBuilderCallback _httpClientBuilderCallback = null;
@@ -2280,5 +2370,45 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
     public void setAgentAdapter(String agentAdapter) {
         this.agentAdapter = agentAdapter;
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
+
+    public String getProxyProtocol() {
+        return proxyProtocol;
+    }
+
+    public void setProxyProtocol(String proxyProtocol) {
+        this.proxyProtocol = proxyProtocol;
+    }
+
+    public String getProxyUser() {
+        return proxyUser;
+    }
+
+    public void setProxyUser(String proxyUser) {
+        this.proxyUser = proxyUser;
+    }
+
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
+
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
     }
 }
