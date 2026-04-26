@@ -35,12 +35,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FeishuHelper {
     private static final Logger logger = LoggerFactory.getLogger(FeishuHelper.class);
 
-    private String appId;
-    private String appSecret;
-    private String feishuDatasource;
-    private BaseFeishuConfigInf baseFeishuConfig;
-    private FeishuTokenHolder feishuTokenHolder;
-    private ResourceStartResult resourceStartResult;
+    protected String appId;
+    protected String appSecret;
+    protected String feishuDatasource;
+    protected BaseFeishuConfigInf baseFeishuConfig;
+    protected FeishuTokenHolder feishuTokenHolder;
+    protected ResourceStartResult resourceStartResult;
 
     public FeishuHelper(BaseFeishuConfigInf baseFeishuConfig){
         this.feishuDatasource = baseFeishuConfig.getFeishuDataSource();
@@ -83,7 +83,7 @@ public class FeishuHelper {
         return listFieldsResult;
     }
     
-    private Map buildHeaders(String accessToken){
+    protected Map buildHeaders(String accessToken){
         if(accessToken == null) {
             accessToken = getTenantAccessToken();
         }
@@ -373,4 +373,61 @@ public class FeishuHelper {
         }
         return message_;
     }
+    
+    public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId,int pageSize,String userIdType){
+        StringBuilder searchUrl = new StringBuilder();
+        searchUrl.append("/open-apis/bitable/v1/apps/")
+                .append(feishuTableAppToken)
+                .append("/tables/")
+                .append(feishuTableId)
+                .append("/records/search?page_size=")
+                .append(pageSize)
+                .append("&user_id_type=")
+                .append(userIdType )  ;
+        return searchUrl.toString();
+    }
+
+    public static String buildListFieldsUrl(String feishuTableAppToken,String feishuTableId){
+        StringBuilder listFieldsUrl = new StringBuilder();
+//        "/open-apis/bitable/v1/apps/"+feishuTableAppToken+"/tables/"+feishuTableId+"/fields"
+        listFieldsUrl.append("/open-apis/bitable/v1/apps/")
+                .append(feishuTableAppToken)
+                .append("/tables/")
+                .append(feishuTableId)
+                .append("fields");
+        return listFieldsUrl.toString();
+    }
+    public static String buildBatchInsertUrl(String feishuTableAppToken,String feishuTableId){
+        StringBuilder batchInsertUrl = new StringBuilder();
+        batchInsertUrl.append("/open-apis/bitable/v1/apps/")
+                .append(feishuTableAppToken)
+                .append("/tables/")
+                .append(feishuTableId)
+                .append("/records/batch_create");
+        return batchInsertUrl.toString();
+    }
+    public static String buildBatchUpdateUrl(String feishuTableAppToken,String feishuTableId){
+        StringBuilder batchUpdateUrl = new StringBuilder();
+        batchUpdateUrl.append("/open-apis/bitable/v1/apps/")
+                .append(feishuTableAppToken)
+                .append("/tables/")
+                .append(feishuTableId)
+                .append("/records/batch_update");
+        return batchUpdateUrl.toString();
+    }
+    public static String buildBatchDeleteUrl(String feishuTableAppToken,String feishuTableId){
+        StringBuilder batchDeleteUrl = new StringBuilder();
+        batchDeleteUrl.append("/open-apis/bitable/v1/apps/")
+                .append(feishuTableAppToken)
+                .append("/tables/")
+                .append(feishuTableId)
+                .append("/records/batch_delete");
+        return batchDeleteUrl.toString();
+    }
+
+//    batchInsertUrl = "/open-apis/bitable/v1/apps/"+feishuTableAppToken+"/tables/"+feishuTableId+"/records/batch_create";
+//    batchUpdateUrl = "/open-apis/bitable/v1/apps/"+feishuTableAppToken+"/tables/"+feishuTableId+"/records/batch_update";
+//    batchDeleteUrl = "/open-apis/bitable/v1/apps/"+feishuTableAppToken+"/tables/"+feishuTableId+"/records/batch_delete";
+
+    
 }

@@ -83,7 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @Date:2016-11-20 11:50:36
  */
-public class ClientConfiguration implements InitializingBean, BeanNameAware {
+public class ClientConfiguration implements InitializingBean, BeanNameAware,HttpConfigInf {
 	public static final ContentType TEXT_PLAIN_UTF_8 = ContentType.create(
 			"text/plain", StandardCharsets.UTF_8);
 
@@ -2410,5 +2410,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
     public void setProxyPassword(String proxyPassword) {
         this.proxyPassword = proxyPassword;
+    }
+
+    @Override
+    public boolean isShowDsl() {
+        return true;
+    }
+
+    @Override
+    public String getDatasource() {
+        return this.getBeanName();
     }
 }
