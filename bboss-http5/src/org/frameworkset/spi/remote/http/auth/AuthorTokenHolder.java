@@ -38,7 +38,6 @@ public class AuthorTokenHolder {
     private ClientConfiguration clientConfiguration;
     
     private boolean refreshFailed;
-    private boolean firsted = true;
     private boolean stopped;
     
     public AuthorTokenHolder(ClientConfiguration clientConfiguration,AuthorTokenFunction refreshTokenFunction, long expireTime) {
@@ -58,7 +57,7 @@ public class AuthorTokenHolder {
                 if(stopped)
                     break;
                 try {
-                    refreshToken(false);
+                    refreshToken();
                 }
                 catch (Exception e){
                     logger.error("refreshToken error",e);
@@ -80,25 +79,67 @@ public class AuthorTokenHolder {
         return refreshTokenFunction.authorTokenPrefix();
     }
 
-
-    private void refreshToken(boolean fromGetToken){
+    private void refreshTokenFirst(){
         writeLock.lock();
         try {
-            if(firsted){
-                AuthorDisable.setAuthorDisable(true);
-                try {
-                    
-                    token = refreshTokenFunction.genAuthorToken(clientConfiguration);
-                }
-                finally {
-                    AuthorDisable.setAuthorDisable(null);
-                }
-                firsted = false;
+            if(token != null){
                 return;
             }
-            if(fromGetToken && !refreshFailed){
+             
+            AuthorDisable.setAuthorDisable(true);
+            try {
+
+                token = refreshTokenFunction.genAuthorToken(clientConfiguration);
+            }
+            finally {
+                AuthorDisable.setAuthorDisable(null);
+            }
+            
+            if (refreshFailed) {
+                refreshFailed = false;
+            }
+        }
+        catch (Exception e){
+            logger.error("refreshToken error",e);
+            refreshFailed = true;
+        }
+        finally {
+            writeLock.unlock();
+        }
+    }
+
+    private void refreshTokenFromRefereshFailed(){
+        writeLock.lock();
+        try {
+
+            if(!refreshFailed){
                 return;
             }
+            AuthorDisable.setAuthorDisable(true);
+            try {
+
+                token = refreshTokenFunction.genAuthorToken(clientConfiguration);
+            }
+            finally {
+                AuthorDisable.setAuthorDisable(null);
+            }
+            if (refreshFailed) {
+                refreshFailed = false;
+            }
+        }
+        catch (Exception e){
+            logger.error("refreshToken error",e);
+            refreshFailed = true;
+        }
+        finally {
+            writeLock.unlock();
+        }
+    }
+    private void refreshToken(){
+        writeLock.lock();
+        try {
+            
+             
             AuthorDisable.setAuthorDisable(true);
             try {
 
@@ -129,16 +170,15 @@ public class AuthorTokenHolder {
     }
     
     public String getToken() {
-        if(firsted){
-            refreshToken(true);
+        if(token == null){
+            refreshTokenFirst();
         }
+         
         // 如果刷新失败，则再次刷新，避免使用无效的token
         if(refreshFailed){
-            refreshToken(true);
+            refreshTokenFromRefereshFailed();
         }
-        if(token == null){            
-            refreshToken(true);
-        }
+      
         
         readLock.lock();
         try {
