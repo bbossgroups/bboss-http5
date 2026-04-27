@@ -344,7 +344,9 @@ public class FeishuHelper {
     }
 
 
-    
+    public Map sendRequest(   Map record, String url){
+        return sendRequest( null,  record,  url);
+    }
 
     /**
      * String url = "/open-apis/bitable/v1/apps/N0tMboDHOaSWAwsXh0ucIoARnnc/tables/tblCzBSEvUXKYMTI/records";
@@ -423,6 +425,18 @@ public class FeishuHelper {
                 .append(feishuTableId)
                 .append("/records/batch_delete");
         return batchDeleteUrl.toString();
+    }
+
+    public static String buildAddRecordsUrl(String feishuTableAppToken,String feishuTableId){
+        StringBuilder addRecordsUrl = new StringBuilder();
+        
+//        N0tMboDHOaSWAwsXh0ucIoARnnc/tables/tblCzBSEvUXKYMTI/records
+        addRecordsUrl.append("/open-apis/bitable/v1/apps/")
+                .append(feishuTableAppToken)
+                .append("/tables/")
+                .append(feishuTableId)
+                .append("/records");
+        return addRecordsUrl.toString();
     }
 
 //    batchInsertUrl = "/open-apis/bitable/v1/apps/"+feishuTableAppToken+"/tables/"+feishuTableId+"/records/batch_create";
