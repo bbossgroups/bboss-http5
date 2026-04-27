@@ -113,6 +113,18 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                 else{
                     this.feishuDataSource = name;
                 }
+                if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.authorTokenFunction")) {
+                    addHttpConfig(feishuDataSource + ".http.authorTokenFunction", "org.frameworkset.spi.feishu.FeishuAuthorTokenFunction");
+                }
+                if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.authorTokenExpiredTime")) {
+                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", 105 * 60 * 1000L);
+                }
+                if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.extendConfigs.appId")) {
+                    addHttpConfig(feishuDataSource + ".http.extendConfigs.appId", this.getFeishuAppId());
+                }
+                if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.extendConfigs.appSecret")) {
+                    addHttpConfig(feishuDataSource + ".http.extendConfigs.appSecret", this.getFeishAppSecret());
+                }
             }
             else {
                 feishuDataSource = SimpleStringUtil.getUUID32();
@@ -122,8 +134,14 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                         .addHttpConfig(feishuDataSource+ ".http.defaultMaxPerRoute", 100)            
                         .addHttpConfig(feishuDataSource+ ".http.timeoutConnection", 15000)
                         .addHttpConfig(feishuDataSource+ ".http.connectionRequestTimeout", 10000)
+                        .addHttpConfig(feishuDataSource+ ".http.authorTokenFunction","org.frameworkset.spi.feishu.FeishuAuthorTokenFunction")
+                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",105*60*1000L)
+                        .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appId",this.getFeishuAppId())
+                        .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appSecret", this.getFeishAppSecret())
+               
 //                    #socket通讯超时时间，如果在通讯过程中出现sockertimeout异常，可以适当调整timeoutSocket参数值，单位：毫秒
                         .addHttpConfig(feishuDataSource+ ".http.timeoutSocket", 120000);
+                         
             }
         }     
         

@@ -1,4 +1,4 @@
-package org.frameworkset.spi.feishu;
+package org.frameworkset.spi.remote.http.auth;
 /**
  * Copyright 2026 bboss
  * <p>
@@ -15,10 +15,18 @@ package org.frameworkset.spi.feishu;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.remote.http.ClientConfiguration;
+
 /**
  * @author biaoping.yin
- * @Date 2026/3/31
+ * @Date 2026/4/27
  */
-public interface RefreshTokenFunction {
-    String refreshToken();
+public interface AuthorTokenFunction {
+    String genAuthorToken(ClientConfiguration clientConfiguration);
+    default String authorHeaderKey(){
+        return "Authorization";
+    }
+    default String authorTokenPrefix(){
+        return "Bearer ";
+    }
 }

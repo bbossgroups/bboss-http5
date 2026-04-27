@@ -1,4 +1,4 @@
-package org.frameworkset.spi.feishu;
+package org.frameworkset.spi.remote.http.auth;
 /**
  * Copyright 2026 bboss
  * <p>
@@ -15,6 +15,7 @@ package org.frameworkset.spi.feishu;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,29 +26,32 @@ import java.util.concurrent.locks.ReadWriteLock;
  * @author biaoping.yin
  * @Date 2026/3/31
  */
-public class FeishuTokenHolder {
+public class AuthorTokenHolder {
     private String token;
     private long expireTime;
-    private RefreshTokenFunction refreshTokenFunction;
+    private AuthorTokenFunction refreshTokenFunction;
     private Thread refreshThread;
     private ReadWriteLock readWriteLock = new java.util.concurrent.locks.ReentrantReadWriteLock();
     private Lock readLock = readWriteLock.readLock();
     private Lock writeLock = readWriteLock.writeLock();
-    private Logger logger = LoggerFactory.getLogger(FeishuTokenHolder.class);
+    private Logger logger = LoggerFactory.getLogger(AuthorTokenHolder.class);
+    private ClientConfiguration clientConfiguration;
     
     private boolean refreshFailed;
+    private boolean firsted = true;
     private boolean stopped;
     
-    public FeishuTokenHolder(RefreshTokenFunction refreshTokenFunction,long expireTime) {
+    public AuthorTokenHolder(ClientConfiguration clientConfiguration,AuthorTokenFunction refreshTokenFunction, long expireTime) {
+        this.clientConfiguration = clientConfiguration;
         this.expireTime = expireTime;
         this.refreshTokenFunction = refreshTokenFunction;
-        refreshToken(false);
+//        refreshToken(false);
         refreshThread = new Thread(() -> {
             while (true) {
                 try {
                     if(stopped)
                         break;
-                    Thread.sleep(expireTime);
+                    Thread.sleep(AuthorTokenHolder.this.expireTime);
                 } catch (InterruptedException e) {
                     break;
                 }
@@ -65,14 +69,44 @@ public class FeishuTokenHolder {
         refreshThread.setDaemon(true);
         refreshThread.start();
     }
-    
+
+    public AuthorTokenFunction getRefreshTokenFunction() {
+        return refreshTokenFunction;
+    }
+    public String getAuthorHeaderKey(){
+        return refreshTokenFunction.authorHeaderKey();
+    }
+    public String getAuthorTokenPrefix(){
+        return refreshTokenFunction.authorTokenPrefix();
+    }
+
+
     private void refreshToken(boolean fromGetToken){
         writeLock.lock();
         try {
+            if(firsted){
+                AuthorDisable.setAuthorDisable(true);
+                try {
+                    
+                    token = refreshTokenFunction.genAuthorToken(clientConfiguration);
+                }
+                finally {
+                    AuthorDisable.setAuthorDisable(null);
+                }
+                firsted = false;
+                return;
+            }
             if(fromGetToken && !refreshFailed){
                 return;
             }
-            token = refreshTokenFunction.refreshToken();
+            AuthorDisable.setAuthorDisable(true);
+            try {
+
+                token = refreshTokenFunction.genAuthorToken(clientConfiguration);
+            }
+            finally {
+                AuthorDisable.setAuthorDisable(null);
+            }
             if (refreshFailed) {                
                 refreshFailed = false;
             }
@@ -95,10 +129,17 @@ public class FeishuTokenHolder {
     }
     
     public String getToken() {
+        if(firsted){
+            refreshToken(true);
+        }
         // 如果刷新失败，则再次刷新，避免使用无效的token
         if(refreshFailed){
             refreshToken(true);
         }
+        if(token == null){            
+            refreshToken(true);
+        }
+        
         readLock.lock();
         try {
             

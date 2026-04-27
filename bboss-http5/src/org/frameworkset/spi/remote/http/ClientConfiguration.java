@@ -39,6 +39,10 @@ import org.frameworkset.spi.*;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
+import org.frameworkset.spi.remote.http.auth.AuthorTokenBasicHeader;
+import org.frameworkset.spi.remote.http.auth.AuthorTokenFunction;
+import org.frameworkset.spi.remote.http.auth.AuthorTokenHolder;
+import org.frameworkset.spi.remote.http.auth.AuthorTokenHttpRequestInterceptor;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 import org.frameworkset.spi.remote.http.kerberos.*;
 import org.frameworkset.spi.remote.http.kerberos.serverrealm.ServerRealmRequestKerberosUrlUtils;
@@ -103,6 +107,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     
 
     public static final String http_apiKeyId = "http.apiKeyId";
+    public static final String http_authorTokenFunction = "http.authorTokenFunction";
+    
     public static final String http_modelType = "http.modelType";
     
     public static final String http_apiKeySecret = "http.apiKeySecret";
@@ -137,6 +143,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     private String authAccount;
     private String authPassword;
     private String apiKeyId;
+
+
+    private String authorTokenFunction;
+
+
+
+    private long authorTokenExpiredTime;
+    private AuthorTokenHolder authorTokenHolder;
     private String hosts;
 
     /**
@@ -1086,6 +1100,21 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 
             log.append(",http.apiKeyId=").append(apiKeyId);
 
+            String authorTokenFunction = ClientConfiguration._getStringValue(name, "http.authorTokenFunction", context, null);
+            if(authorTokenFunction != null && !authorTokenFunction.equals("")){
+                clientConfiguration.setAuthorTokenFunction(authorTokenFunction);
+            }
+
+            log.append(",http.authorTokenFunction=").append(authorTokenFunction);
+
+            
+            String authorTokenExpiredTime = ClientConfiguration._getStringValue(name, "http.authorTokenExpiredTime", context, null);
+            if(authorTokenExpiredTime != null && !authorTokenExpiredTime.trim().equals("")){
+                clientConfiguration.setAuthorTokenExpiredTime(Long.parseLong(authorTokenExpiredTime.trim()));
+            }
+
+            log.append(",http.authorTokenExpiredTime=").append(authorTokenExpiredTime);
+
             /**
              http.proxyHost = 127.0.0.1
              http.proxyPort = 7890
@@ -1511,6 +1540,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
         if(closed)
             return;
         closed = true;
+        if(this.authorTokenHolder != null){
+            this.authorTokenHolder.destroy();
+        }
         if(this.requestKerberosUrlUtils != null){
             requestKerberosUrlUtils.close();
         }
@@ -2100,9 +2132,32 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
                 headers.add(header);
                 builder.setDefaultHeaders(headers);
             }
+            else if(SimpleStringUtil.isNotEmpty(getAuthorTokenFunction())){
+                try {
+                    Class authorTokenFunctionClass = Class.forName(getAuthorTokenFunction());
+                    AuthorTokenFunction authorTokenFunction_ = (AuthorTokenFunction) authorTokenFunctionClass.newInstance();
+                    this.authorTokenHolder = new AuthorTokenHolder(this, authorTokenFunction_, this.getAuthorTokenExpiredTime());
+//                    BasicHeader header =  new AuthorTokenBasicHeader(this.authorTokenHolder );
+//                    List<Header> headers = new ArrayList<Header>();
+//                    headers.add(header);
+//                    builder.setDefaultHeaders(headers);
+                    builder.addRequestInterceptorFirst(new AuthorTokenHttpRequestInterceptor(this.authorTokenHolder));
+                } catch (ClassNotFoundException e) {
+                    throw new HttpRuntimeException(e);
+                } catch (InstantiationException e) {
+                    throw new HttpRuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new HttpRuntimeException(e);
+                }
+            }
         }
 	}
-	public static String getHeader(String encodedAuthCharset ,String user, String password) {
+
+    public AuthorTokenHolder getAuthorTokenHolder() {
+        return authorTokenHolder;
+    }
+
+    public static String getHeader(String encodedAuthCharset , String user, String password) {
 		String auth = user + ":" + password;
 		if(encodedAuthCharset != null && !encodedAuthCharset.equals("")) {
 			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName(encodedAuthCharset)));
@@ -2420,5 +2475,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     @Override
     public String getDatasource() {
         return this.getBeanName();
+    }
+
+    public String getAuthorTokenFunction() {
+        return authorTokenFunction;
+    }
+
+    public void setAuthorTokenFunction(String authorTokenFunction) {
+        this.authorTokenFunction = authorTokenFunction;
+    }
+    public long getAuthorTokenExpiredTime() {
+        return authorTokenExpiredTime;
+    }
+
+    public void setAuthorTokenExpiredTime(long authorTokenExpiredTime) {
+        this.authorTokenExpiredTime = authorTokenExpiredTime;
     }
 }
