@@ -22,10 +22,25 @@ import org.frameworkset.spi.remote.http.ClientConfiguration;
  * @Date 2026/4/27
  */
 public interface AuthorTokenFunction {
+    /**
+     * 获取最新令牌
+     * @param clientConfiguration
+     * @return
+     */
     String genAuthorToken(ClientConfiguration clientConfiguration);
+
+    /**
+     * 认证header参数名称，一般为Authorization，可以根据不同要求设置为其他值
+     * @return
+     */
     default String authorHeaderKey(){
         return "Authorization";
     }
+
+    /**
+     * 认证token前缀，一般为"Bearer "，如果不需要前缀则返回null即可
+     * @return
+     */
     default String authorTokenPrefix(){
         return "Bearer ";
     }
