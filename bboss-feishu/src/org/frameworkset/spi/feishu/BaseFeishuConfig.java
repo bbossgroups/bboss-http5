@@ -117,7 +117,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                     addHttpConfig(feishuDataSource + ".http.authorTokenFunction", "org.frameworkset.spi.feishu.FeishuAuthorTokenFunction");
                 }
                 if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.authorTokenExpiredTime")) {
-                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", 105 * 60 * 1000L);
+                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", accessTokenExpireTime);
                 }
                 if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.extendConfigs.appId")) {
                     addHttpConfig(feishuDataSource + ".http.extendConfigs.appId", this.getFeishuAppId());
@@ -135,7 +135,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                         .addHttpConfig(feishuDataSource+ ".http.timeoutConnection", 15000)
                         .addHttpConfig(feishuDataSource+ ".http.connectionRequestTimeout", 10000)
                         .addHttpConfig(feishuDataSource+ ".http.authorTokenFunction","org.frameworkset.spi.feishu.FeishuAuthorTokenFunction")
-                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",105*60*1000L)
+                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",accessTokenExpireTime)
                         .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appId",this.getFeishuAppId())
                         .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appSecret", this.getFeishAppSecret())
                
