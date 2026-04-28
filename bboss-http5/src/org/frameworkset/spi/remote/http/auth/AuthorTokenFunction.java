@@ -44,4 +44,12 @@ public interface AuthorTokenFunction {
     default String authorTokenPrefix(){
         return "Bearer ";
     }
+    
+    /**
+     * 是否直接从函数中获取令牌，如果为true，则不从缓存中获取令牌
+     * @return
+     */
+    default boolean directFromFunction(){
+        return false;
+    }
 }

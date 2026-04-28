@@ -39,10 +39,7 @@ import org.frameworkset.spi.*;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
-import org.frameworkset.spi.remote.http.auth.AuthorTokenBasicHeader;
-import org.frameworkset.spi.remote.http.auth.AuthorTokenFunction;
-import org.frameworkset.spi.remote.http.auth.AuthorTokenHolder;
-import org.frameworkset.spi.remote.http.auth.AuthorTokenHttpRequestInterceptor;
+import org.frameworkset.spi.remote.http.auth.*;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 import org.frameworkset.spi.remote.http.kerberos.*;
 import org.frameworkset.spi.remote.http.kerberos.serverrealm.ServerRealmRequestKerberosUrlUtils;
@@ -151,6 +148,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 
     private long authorTokenExpiredTime;
     private AuthorTokenHolder authorTokenHolder;
+    private AuthorTokenFunction authorTokenFunctionObject;
     private String hosts;
 
     /**
@@ -2081,7 +2079,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
         }
 		
 	}
-	private void initCredentialsProvider(HttpClientBuilder builder ){
+
+    public AuthorTokenFunction getAuthorTokenFunctionObject() {
+        return authorTokenFunctionObject;
+    }
+
+    private void initCredentialsProvider(HttpClientBuilder builder ){
 
 		if(this.getAuthAccount() != null) {
 			if(!this.isBackoffAuth()) {
@@ -2136,12 +2139,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
                 try {
                     Class authorTokenFunctionClass = Class.forName(getAuthorTokenFunction());
                     AuthorTokenFunction authorTokenFunction_ = (AuthorTokenFunction) authorTokenFunctionClass.newInstance();
-                    this.authorTokenHolder = new AuthorTokenHolder(this, authorTokenFunction_, this.getAuthorTokenExpiredTime());
-//                    BasicHeader header =  new AuthorTokenBasicHeader(this.authorTokenHolder );
-//                    List<Header> headers = new ArrayList<Header>();
-//                    headers.add(header);
-//                    builder.setDefaultHeaders(headers);
-                    builder.addRequestInterceptorFirst(new AuthorTokenHttpRequestInterceptor(this.authorTokenHolder));
+                    this.authorTokenFunctionObject = authorTokenFunction_;
+                    if(!authorTokenFunction_.directFromFunction()) {
+                        this.authorTokenHolder = new AuthorTokenHolder(this, authorTokenFunction_, this.getAuthorTokenExpiredTime());
+        
+                        builder.addRequestInterceptorFirst(new AuthorTokenHttpRequestInterceptor(this.authorTokenHolder));
+                    }
+                    else{
+                        builder.addRequestInterceptorFirst(new AuthorTokenFunctionHttpRequestInterceptor(this,authorTokenFunction_));
+                    }
                 } catch (ClassNotFoundException e) {
                     throw new HttpRuntimeException(e);
                 } catch (InstantiationException e) {

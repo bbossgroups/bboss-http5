@@ -28,20 +28,10 @@ import java.util.Map;
  * @Date 2026/4/27
  */
 public class FeishuAuthorTokenFunction implements AuthorTokenFunction {
-    private String feishuDatasource;
 
-    public ClientConfiguration getFeishuClientConfiguration(ClientConfiguration clientConfiguration) {
-        if(feishuDatasource != null){
-            return ClientConfiguration.getClientConfiguration(feishuDatasource);
-        }
-        return clientConfiguration;
-    }
-    public void setFeishuDatasource(String feishuDatasource) {
-        this.feishuDatasource = feishuDatasource;
-    }
+   
     @Override
     public String genAuthorToken(ClientConfiguration clientConfiguration) {
-            clientConfiguration = getFeishuClientConfiguration(clientConfiguration);
             String feishuDatasource = clientConfiguration.getDatasource() ;
             String appId = clientConfiguration.getExtendConfig("appId");
             String appSecret = clientConfiguration.getExtendConfig("appSecret");

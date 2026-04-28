@@ -66,6 +66,7 @@ public class AuthorTokenHolder {
             
         });
         refreshThread.setDaemon(true);
+        refreshThread.setName("AuthorTokenHolder-RefreshThread["+clientConfiguration.getDatasource()+"]");
         refreshThread.start();
     }
 
