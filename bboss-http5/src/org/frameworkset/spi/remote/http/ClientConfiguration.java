@@ -145,8 +145,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     private String authorTokenFunction;
 
 
-
-    private long authorTokenExpiredTime;
+    /**
+     * 默认25分钟
+     */
+    private long authorTokenExpiredTime = 1500000L;
     private AuthorTokenHolder authorTokenHolder;
     private AuthorTokenFunction authorTokenFunctionObject;
     private String hosts;

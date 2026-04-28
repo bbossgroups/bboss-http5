@@ -37,7 +37,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
     /**
      * access_token expire time:默认值2小时，刷新时间提前10分钟
      */
-    protected long accessTokenExpireTime = 2L * 50L * 60L * 1000L;
+    protected long accessTokenExpireTime = 25L * 60L * 1000L;
     public long getAccessTokenExpireTime() {
         return accessTokenExpireTime;
     }
@@ -117,7 +117,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                     addHttpConfig(feishuDataSource + ".http.authorTokenFunction", "org.frameworkset.spi.feishu.FeishuAuthorTokenFunction");
                 }
                 if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.authorTokenExpiredTime")) {
-                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", accessTokenExpireTime);
+                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", 1500000L);
                 }
                 if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.extendConfigs.appId")) {
                     addHttpConfig(feishuDataSource + ".http.extendConfigs.appId", this.getFeishuAppId());
@@ -135,7 +135,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                         .addHttpConfig(feishuDataSource+ ".http.timeoutConnection", 15000)
                         .addHttpConfig(feishuDataSource+ ".http.connectionRequestTimeout", 10000)
                         .addHttpConfig(feishuDataSource+ ".http.authorTokenFunction","org.frameworkset.spi.feishu.FeishuAuthorTokenFunction")
-                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",accessTokenExpireTime)
+                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",1500000L)
                         .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appId",this.getFeishuAppId())
                         .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appSecret", this.getFeishAppSecret())
                

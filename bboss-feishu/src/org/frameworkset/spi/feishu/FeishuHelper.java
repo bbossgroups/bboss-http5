@@ -372,8 +372,12 @@ public class FeishuHelper {
         }
         return message_;
     }
-    
-    public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId,int pageSize,String userIdType){
+
+    public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId ,int pageSize,String userIdType){
+   
+        return buildSearchUrl(  feishuTableAppToken,  feishuTableId,(String)null,  pageSize,  userIdType);
+    }
+    public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId,String pageToken,int pageSize,String userIdType){
         StringBuilder searchUrl = new StringBuilder();
         searchUrl.append("/open-apis/bitable/v1/apps/")
                 .append(feishuTableAppToken)
@@ -382,7 +386,10 @@ public class FeishuHelper {
                 .append("/records/search?page_size=")
                 .append(pageSize)
                 .append("&user_id_type=")
-                .append(userIdType )  ;
+                .append(userIdType );
+        if(pageToken != null)
+            searchUrl.append("&page_token=")
+                .append(pageToken ) ;
         return searchUrl.toString();
     }
 

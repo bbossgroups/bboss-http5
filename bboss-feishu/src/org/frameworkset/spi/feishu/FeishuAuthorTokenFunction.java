@@ -46,6 +46,12 @@ public class FeishuAuthorTokenFunction implements AuthorTokenFunction {
             int times = 10;
             do {
                 try {
+                    /**
+                     * tenant_access_token 的最大有效期是 2 小时。
+                     *
+                     * 剩余有效期小于 30 分钟时，调用本接口会返回一个新的 tenant_access_token，这会同时存在两个有效的 tenant_access_token。
+                     * 剩余有效期大于等于 30 分钟时，调用本接口会返回原有的 tenant_access_token。
+                     */
                     tenantAccessToken = HttpRequestProxy.sendJsonBody(feishuDatasource,params,url,Map.class);
                     break;
                 } catch (Exception e) {
