@@ -15,13 +15,15 @@ package org.frameworkset.spi.feishu;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.remote.http.HttpConfigInf;
+
 import java.util.Map;
 
 /**
  * @author biaoping.yin
  * @Date 2026/3/23
  */
-public interface BaseFeishuConfigInf<T extends BaseFeishuConfigInf>   {
+public interface BaseFeishuConfigInf<T extends BaseFeishuConfigInf> extends HttpConfigInf {
 
     long getAccessTokenExpireTime();
     T setAccessTokenExpireTime(long accessTokenExpireTime);

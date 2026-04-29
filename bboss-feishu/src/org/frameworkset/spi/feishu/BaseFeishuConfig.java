@@ -34,6 +34,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
 
     protected String feishuAppId;
     protected String feishAppSecret;
+    protected boolean showDsl;
     /**
      * access_token expire time:默认值2小时，刷新时间提前10分钟
      */
@@ -103,6 +104,10 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
 //        if(SimpleStringUtil.isEmpty(feishuTableId) ){
 //            throw new IllegalArgumentException("feishuTableId is empty!");
 //        }
+        long _accessTokenExpireTime = this.accessTokenExpireTime;
+        if(_accessTokenExpireTime > 1500000L){
+            _accessTokenExpireTime = 1500000L;
+        }
         if(SimpleStringUtil.isEmpty(feishuDataSource) ){
             if(this.httpConfigs != null){
                 String name = (String) httpConfigs.get("http.poolNames");
@@ -117,7 +122,21 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                     addHttpConfig(feishuDataSource + ".http.authorTokenFunction", "org.frameworkset.spi.feishu.FeishuAuthorTokenFunction");
                 }
                 if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.authorTokenExpiredTime")) {
-                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", 1500000L);
+                    addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", _accessTokenExpireTime);
+                }
+                else{
+                    Object accessTokenExpireTimeTemp =  this.httpConfigs.get(feishuDataSource+ ".http.authorTokenExpiredTime");
+                    if(accessTokenExpireTimeTemp instanceof Long){
+                        _accessTokenExpireTime = (Long)accessTokenExpireTimeTemp;
+
+                    }
+                    else{
+                        _accessTokenExpireTime = Long.parseLong(String.valueOf(accessTokenExpireTimeTemp));
+                    }
+                    if(_accessTokenExpireTime > 1500000L){
+                        _accessTokenExpireTime = 1500000L;
+                        addHttpConfig(feishuDataSource + ".http.authorTokenExpiredTime", _accessTokenExpireTime);
+                    }
                 }
                 if(!this.httpConfigs.containsKey(feishuDataSource+ ".http.extendConfigs.appId")) {
                     addHttpConfig(feishuDataSource + ".http.extendConfigs.appId", this.getFeishuAppId());
@@ -135,7 +154,7 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
                         .addHttpConfig(feishuDataSource+ ".http.timeoutConnection", 15000)
                         .addHttpConfig(feishuDataSource+ ".http.connectionRequestTimeout", 10000)
                         .addHttpConfig(feishuDataSource+ ".http.authorTokenFunction","org.frameworkset.spi.feishu.FeishuAuthorTokenFunction")
-                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",1500000L)
+                        .addHttpConfig(feishuDataSource+ ".http.authorTokenExpiredTime",_accessTokenExpireTime)
                         .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appId",this.getFeishuAppId())
                         .addHttpConfig(feishuDataSource+ ".http.extendConfigs.appSecret", this.getFeishAppSecret())
                
@@ -292,5 +311,20 @@ public class BaseFeishuConfig<T extends BaseFeishuConfig> implements BaseFeishuC
     public T setRecordIdFieldName(String recordIdFieldName) {
         this.recordIdFieldName = recordIdFieldName;
         return (T)this;
+    }
+
+    @Override
+    public boolean isShowDsl() {
+        return this.showDsl;
+    }
+
+    public T setShowDsl(boolean showDsl) {
+        this.showDsl = showDsl;
+        return (T)this;
+    }
+
+    @Override
+    public String getDatasource() {
+        return this.feishuDataSource;
     }
 }
