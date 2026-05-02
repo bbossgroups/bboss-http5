@@ -142,7 +142,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     private String apiKeyId;
 
 
+
+    private boolean showDsl;
+    
     private String authorTokenFunction;
+    
 
 
     /**
@@ -1099,7 +1103,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
             }
 
             log.append(",http.apiKeyId=").append(apiKeyId);
+            String showDsl = ClientConfiguration._getStringValue(name, "http.showDsl", context, null);
+            if(showDsl != null && !showDsl.equals("")){
+                clientConfiguration.setShowDsl(showDsl.equals("true"));
+            }
 
+            log.append(",http.showDsl=").append(showDsl);
+            
             String authorTokenFunction = ClientConfiguration._getStringValue(name, "http.authorTokenFunction", context, null);
             if(authorTokenFunction != null && !authorTokenFunction.equals("")){
                 clientConfiguration.setAuthorTokenFunction(authorTokenFunction);
@@ -2477,7 +2487,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 
     @Override
     public boolean isShowDsl() {
-        return true;
+        return showDsl;
     }
 
     @Override
@@ -2498,5 +2508,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 
     public void setAuthorTokenExpiredTime(long authorTokenExpiredTime) {
         this.authorTokenExpiredTime = authorTokenExpiredTime;
+    }
+    public void setShowDsl(boolean showDsl) {
+        this.showDsl = showDsl;
     }
 }

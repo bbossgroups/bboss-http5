@@ -27,6 +27,10 @@ public interface BaseFeishuConfigInf<T extends BaseFeishuConfigInf> extends Http
 
     long getAccessTokenExpireTime();
     T setAccessTokenExpireTime(long accessTokenExpireTime);
+
+    default String getQueryDslName(){
+        return null;
+    }
     default String getMcpTools(){
         return null;
     } 

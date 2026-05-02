@@ -2151,12 +2151,28 @@ public class HttpRequestProxy {
 
         return  sendBody( "default", object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,resultType);
     }
+    public static <D,T> D sendJsonBody(ClientConfiguration clientConfiguration,Object requestBody, String url,Class<D> containType,Class<T> resultType) throws HttpProxyRequestException {
 
+        return  sendBody( clientConfiguration.getDatasource(), object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containType,resultType);
+    }
+    public static String sendJsonBody(ClientConfiguration clientConfiguration,String requestBody, String url, InvokeContext invokeContext ) throws HttpProxyRequestException {
+        if(invokeContext != null && invokeContext.getRequestContentType() == null){
+            invokeContext.setRequestContentType(ContentType.APPLICATION_JSON);
+        }
+        return  sendBody( clientConfiguration.getDatasource(), requestBody,   url,  invokeContext);
+    }
     public static <T> T sendJsonBody(Object requestBody, String url,InvokeContext invokeContext,Class<T> resultType) throws HttpProxyRequestException {
         if(invokeContext != null && invokeContext.getRequestContentType() == null){
             invokeContext.setRequestContentType(ContentType.APPLICATION_JSON);
         }
         return  sendBody( "default", object2json(requestBody),   url,   invokeContext,resultType);
+    }
+
+    public static <T> T sendJsonBody(ClientConfiguration clientConfiguration,Object requestBody, String url,InvokeContext invokeContext,Class<T> resultType) throws HttpProxyRequestException {
+        if(invokeContext != null && invokeContext.getRequestContentType() == null){
+            invokeContext.setRequestContentType(ContentType.APPLICATION_JSON);
+        }
+        return  sendBody( clientConfiguration.getDatasource(), object2json(requestBody),   url,   invokeContext,resultType);
     }
 
 

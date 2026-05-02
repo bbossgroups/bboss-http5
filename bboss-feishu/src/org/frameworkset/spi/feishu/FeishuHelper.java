@@ -113,6 +113,13 @@ public class FeishuHelper {
         Map deleteResult = HttpRequestProxy.sendJsonBody(feishuDatasource,requestBody,deleteUrl,Map.class);
         return deleteResult;
     }
+
+    public Map deleteData(String tableAppToken,String tableId,Map requestBody){
+//        Map headers = buildHeaders(accessToken);
+        String deleteUrl = buildBatchDeleteUrl(tableAppToken,tableId);
+        Map deleteResult = HttpRequestProxy.sendJsonBody(feishuDatasource,requestBody,deleteUrl,Map.class);
+        return deleteResult;
+    }
     
     public String getRecordIdByField(String fieldName, Object value){
         StringBuilder requestBody = new StringBuilder();
@@ -374,10 +381,20 @@ public class FeishuHelper {
     }
 
     public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId ,int pageSize,String userIdType){
-   
+        if(userIdType == null){
+            userIdType = "open_id";
+        }
         return buildSearchUrl(  feishuTableAppToken,  feishuTableId,(String)null,  pageSize,  userIdType);
     }
+
+    public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId ,int pageSize){
+
+        return buildSearchUrl(  feishuTableAppToken,  feishuTableId,(String)null,  pageSize,  null);
+    }
     public static String buildSearchUrl(String feishuTableAppToken,String feishuTableId,String pageToken,int pageSize,String userIdType){
+        if(userIdType == null){
+            userIdType = "open_id";
+        }
         StringBuilder searchUrl = new StringBuilder();
         searchUrl.append("/open-apis/bitable/v1/apps/")
                 .append(feishuTableAppToken)
@@ -421,7 +438,15 @@ public class FeishuHelper {
                 .append("/records/batch_update");
         return batchUpdateUrl.toString();
     }
+
+    /**
+     * String deleteUrl = "/open-apis/bitable/v1/apps/"+tableToken+"/tables/"+tableId+"/records/batch_delete";
+     * @param feishuTableAppToken
+     * @param feishuTableId
+     * @return
+     */
     public static String buildBatchDeleteUrl(String feishuTableAppToken,String feishuTableId){
+        
         StringBuilder batchDeleteUrl = new StringBuilder();
         batchDeleteUrl.append("/open-apis/bitable/v1/apps/")
                 .append(feishuTableAppToken)
