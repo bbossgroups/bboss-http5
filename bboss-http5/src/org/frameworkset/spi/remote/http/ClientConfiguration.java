@@ -157,6 +157,22 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     private AuthorTokenFunction authorTokenFunctionObject;
     private String hosts;
 
+    public void setDslfileMappingDir(String dslfileMappingDir) {
+        this.dslfileMappingDir = dslfileMappingDir;
+    }
+
+    private static String dslfileMappingDir;
+
+    public static Long getDslfileRefreshInterval() {
+        return dslfileRefreshInterval;
+    }
+
+    public static void setDslfileRefreshInterval(long dslfileRefreshInterval) {
+        ClientConfiguration.dslfileRefreshInterval = dslfileRefreshInterval;
+    }
+
+    private static Long dslfileRefreshInterval = null;
+
     /**
     http.proxyHost = 127.0.0.1
     http.proxyPort = 7890
@@ -196,6 +212,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
         }catch (Throwable e) {
 
         }
+    }
+
+    public static String getDslfileMappingDir() {
+        return dslfileMappingDir;
     }
 
     public String getHosts() {
@@ -753,8 +773,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 		PropertiesContainer propertiesContainer = new PropertiesContainer();
 		propertiesContainer.addConfigPropertiesFromApollo(namespaces,configChangeListener);
 		propertiesContainer.afterLoaded(propertiesContainer);
-		//http.poolNames = scedule,elastisearch
-		String poolNames = propertiesContainer.getProperty("http.poolNames");
+        initDslfileMappingDir(  propertiesContainer);
+        initDslfileRefreshInterval(  propertiesContainer) ;
+		String poolNames = getHttpPoolNames(  propertiesContainer);
 		if(poolNames == null){
 			//load default http pool config
 			try {
@@ -824,6 +845,121 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group, long timeOut,Map<String,String> pros){
         return startHttpPoolsFromNacos(namespace,   serverAddr,   dataId,   group,   timeOut,  (String)null,  pros);
     }
+    /**
+     * http.dslfileRefreshInterval = 5000
+     * @param propertiesContainer
+     * @return
+     */
+    public static Long getDslfileRefreshInterval(PropertiesContainer propertiesContainer){
+        return propertiesContainer.getLongSystemEnvProperty("http.dslfileRefreshInterval");
+    }
+    /**
+     * http.dslfileRefreshInterval = 5000
+     * @param propertiesContainer
+     * @return
+     */
+    public static Long getDslfileRefreshInterval(GetProperties propertiesContainer){
+        Object dslfileRefreshInterval =  propertiesContainer.getExternalProperty("http.dslfileRefreshInterval");
+        if(dslfileRefreshInterval == null){
+            return null;
+        }
+        if(dslfileRefreshInterval instanceof Number){
+            return ((Number)dslfileRefreshInterval).longValue();
+        }
+        return Long.parseLong(dslfileRefreshInterval.toString());
+    }
+    /**
+     * http.dslfileRefreshInterval = 5000
+     * @param propertiesContainer
+     * @return
+     */
+    public static void initDslfileRefreshInterval(GetProperties propertiesContainer){
+        if(ClientConfiguration.dslfileRefreshInterval == null) {
+            Long dslfileRefreshInterval = getDslfileRefreshInterval(propertiesContainer);
+            if(dslfileRefreshInterval != null){
+                ClientConfiguration.dslfileRefreshInterval = dslfileRefreshInterval;
+            }
+        }
+    }
+    /**
+     * http.dslfileRefreshInterval = 5000
+     * @param propertiesContainer
+     * @return
+     */
+    public static void initDslfileRefreshInterval(PropertiesContainer propertiesContainer){
+        if(ClientConfiguration.dslfileMappingDir == null) {
+            Long dslfileRefreshInterval = getDslfileRefreshInterval(propertiesContainer);
+            if(dslfileRefreshInterval != null){
+                ClientConfiguration.dslfileRefreshInterval = dslfileRefreshInterval;
+            }
+        }
+    }
+
+    /**
+     * http.dslfileMappingDir = c:/ddddd
+     * @param propertiesContainer
+     * @return
+     */
+    public static String getDslfileMappingDir(PropertiesContainer propertiesContainer){
+        return propertiesContainer.getProperty("http.dslfileMappingDir");
+    }
+
+    /**
+     * http.dslfileMappingDir = c:/ddddd
+     * @param propertiesContainer
+     * @return
+     */
+    public static void initDslfileMappingDir(PropertiesContainer propertiesContainer){
+        if(ClientConfiguration.dslfileMappingDir == null) {
+            String dslfileMappingDir = getDslfileMappingDir(  propertiesContainer);
+            if(dslfileMappingDir != null){
+                ClientConfiguration.dslfileMappingDir = dslfileMappingDir;
+            }
+        }
+    }
+            
+    /**
+     * http.dslfileMappingDir = c:/ddddd
+     * @param propertiesContainer
+     * @return
+     */
+    public static String getDslfileMappingDir(GetProperties propertiesContainer){
+        return propertiesContainer.getExternalProperty("http.dslfileMappingDir");
+    }
+
+    /**
+     * http.dslfileMappingDir = c:/ddddd
+     * @param propertiesContainer
+     * @return
+     */
+    public static void initDslfileMappingDir(GetProperties propertiesContainer){
+        if(ClientConfiguration.dslfileMappingDir == null) {
+            String dslfileMappingDir = getDslfileMappingDir(  propertiesContainer);
+            if(dslfileMappingDir != null){
+                ClientConfiguration.dslfileMappingDir = dslfileMappingDir;
+            }
+        }
+    }
+    /**
+     * http.poolNames = scedule,elastisearch
+     * @param propertiesContainer
+     * @return
+     */
+    public static String getHttpPoolNames(PropertiesContainer propertiesContainer){
+        return propertiesContainer.getProperty("http.poolNames");
+    }
+    /**
+     * http.poolNames = scedule,elastisearch
+     * @param propertiesContainer
+     * @return
+     */
+    public static String getHttpPoolNames( GetProperties propertiesContainer){
+        return propertiesContainer.getExternalProperty("http.poolNames");
+    }
+
+
+
+   
     public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group,
                                                               long timeOut,String configChangeListener,Map<String,String> pros){
         ResourceStartResult resourceStartResult = new HttpResourceStartResult();
@@ -839,8 +975,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
         PropertiesContainer propertiesContainer = new PropertiesContainer();
         propertiesContainer.addConfigPropertiesFromNacos(  namespace,   serverAddr,   dataId,   group,   timeOut,  configChangeListener,  pros);
         propertiesContainer.afterLoaded(propertiesContainer);
-        //http.poolNames = scedule,elastisearch
-        String poolNames = propertiesContainer.getProperty("http.poolNames");
+
+        initDslfileMappingDir(  propertiesContainer);
+        initDslfileRefreshInterval(  propertiesContainer) ;
+        String poolNames = getHttpPoolNames(  propertiesContainer);
         if(poolNames == null){
             //load default http pool config
             try {
@@ -904,8 +1042,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 		}
 		PropertiesContainer propertiesContainer = new PropertiesContainer();
 		propertiesContainer.addConfigPropertiesFile(configFile);
-		//http.poolNames = scedule,elastisearch
-		String poolNames = propertiesContainer.getProperty("http.poolNames");
+
+        initDslfileMappingDir(  propertiesContainer);
+        initDslfileRefreshInterval(  propertiesContainer) ;
+		String poolNames = getHttpPoolNames(  propertiesContainer);
 		if(poolNames == null){
 			//load default http pool config
 			try {
@@ -962,8 +1102,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 			return resourceStartResult;
 		}
 		GetProperties propertiesContainer = new MapGetProperties(configs);
-		//http.poolNames = scedule,elastisearch
-		String poolNames = propertiesContainer.getExternalProperty("http.poolNames");
+		String poolNames = getHttpPoolNames(  propertiesContainer);
 		if(poolNames == null){
 			try {
 				makeDefualtClientConfiguration(resourceStartResult,null,"default", propertiesContainer);

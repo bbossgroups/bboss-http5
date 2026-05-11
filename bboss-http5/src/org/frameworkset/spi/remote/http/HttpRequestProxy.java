@@ -14,6 +14,7 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.frameworkset.spi.reactor.*;
 import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
@@ -21,6 +22,9 @@ import org.frameworkset.spi.remote.http.proxy.*;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,11 +34,8 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 
@@ -3050,7 +3051,176 @@ public class HttpRequestProxy {
         Object execute(ClientConfiguration config,HttpClient httpClient ,String url, int triesCount) throws Exception;
     }
 
-    
-    
+
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public static Flux<String> stream(String poolName, String url, Object chatMessage , String method) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+
+
+        return buildFlux(  clientConfiguration,  url, chatMessage  ,  method);
+
+    }
+
+    private static   Flux<String> buildFlux(ClientConfiguration clientConfiguration,String url,Object message ,String method ) {
+        return Flux.<String>create(sink -> {
+                    String data = null;
+                    CommonStreamDataHandler<String> streamDataHandler = new BaseCommonStreamDataHandler<String>() {
+                        /**
+                         * 处理异常，如果数据已经返回完毕，则返回true，指示关闭对话，否则返回false
+                         *
+                         * @param requestBody
+                         * @param throwable   异常
+                         * @param sink        数据行处理结果
+                         * @return
+                         */
+                        @Override
+                        public void handleException(Object requestBody, Throwable throwable, FluxSink<String> sink) {
+                        }
+                    };
+                    try {
+
+                        if (message != null) {
+                            if (message instanceof String) {
+                                data = (String) message;
+                            } else {
+                                data = SimpleStringUtil.object2json(message);
+                            }
+                        }
+
+                        final String _data = data;
+
+                        BaseURLResponseHandler responseHandler = new BaseURLResponseHandler<Void>() {
+                            @Override
+                            public Void handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                                streamDataHandler.setHttpUriRequestBase(httpUriRequestBase);
+                                ReactorReponseUtil.handleStreamResponse(url, response, sink,_data, streamDataHandler);
+                                return null;
+
+                            }
+                        };
+
+
+                        if(method.equals(HttpMethodName.HTTP_GET)) {
+                            HttpRequestProxy.httpGet(clientConfiguration, url, responseHandler);
+                        }
+                        else if(method.equals(HttpMethodName.HTTP_POST)) {
+                            HttpRequestProxy.sendJsonBody(clientConfiguration,  data, url,  responseHandler);
+                        }
+
+//                        HttpRequestProxy.sendJsonBody(clientConfiguration, (String)data, url, header, responseHandler);
+
+                    } catch (ReactorCallException e) {
+//                        logger.error("流式请求失败：poolName["+poolName +"],url["+url +"],data:" + data);
+                        streamDataHandler.handleException(data,e,sink );
+                        sink.error(e);
+//                        sink.error(e);
+                    } catch (Exception e) {
+                        streamDataHandler.handleException(data,e,sink );
+                        sink.error(e);
+//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
+                    }
+                    catch (Throwable e) {
+                        streamDataHandler.handleException(data,e,sink );
+                        sink.error(e);
+//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
+                    }
+                    finally {
+                        sink.complete();
+                    }
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic()) // 在弹性线程池中执行阻塞IO
+//                .timeout(Duration.ofSeconds(60)) // 设置超时
+                .onErrorResume(throwable -> {
+//                    String error = SimpleStringUtil.exceptionToString(throwable);
+//                    System.err.println("流式处理错误: " + throwable.getMessage());
+//                    String error = SimpleStringUtil.exceptionToString(throwable);
+                    if(logger.isErrorEnabled()) {
+                        logger.error(throwable.getMessage(), throwable);
+                    }
+                    // 修改此处，将错误信息作为Flux输出
+                    return Flux.empty();
+                });
+    }
+    public static  void stream(String poolName, String url, Object message , String method, DataCollector dataCollector) {
+        ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+
+
+        String data = null;
+
+        try {
+            CommonStreamDataHandler<String> streamDataHandler = new BaseCommonStreamDataHandler<String>() {
+                /**
+                 * 处理异常，如果数据已经返回完毕，则返回true，指示关闭对话，否则返回false
+                 *
+                 * @param requestBody
+                 * @param throwable   异常
+                 * @param sink        数据行处理结果
+                 * @return
+                 */
+                @Override
+                public void handleException(Object requestBody, Throwable throwable, FluxSink<String> sink) {
+                }
+            };
+            if (message != null) {
+                if (message instanceof String) {
+                    data = (String) message;
+                } else {
+                    data = SimpleStringUtil.object2json(message);
+                }
+            }
+
+            final String _data = data;
+
+            BaseURLResponseHandler responseHandler = new BaseURLResponseHandler<Void>() {
+                @Override
+                public Void handleResponse(ClassicHttpResponse response) throws IOException, ParseException {
+                    streamDataHandler.setHttpUriRequestBase(httpUriRequestBase);
+                    ReactorReponseUtil.handleStreamResponse(url, response, _data, dataCollector, streamDataHandler);
+                    return null;
+
+                }
+            };
+
+            Map header = new LinkedHashMap();
+
+            header.put("Accept", "text/event-stream");
+            header.put("Cache-Control", "no-cache");
+            header.put("Connection", "keep-alive");
+            if(method.equals(HttpMethodName.HTTP_GET)) {
+                HttpRequestProxy.httpGet(clientConfiguration, url, responseHandler);
+            }
+            else if(method.equals(HttpMethodName.HTTP_POST)) {
+                HttpRequestProxy.sendJsonBody(clientConfiguration,  data, url, header, responseHandler);
+            }
+
+//                        HttpRequestProxy.sendJsonBody(clientConfiguration, (String)data, url, header, responseHandler);
+
+        } catch (ReactorCallException e) {
+//                        logger.error("流式请求失败：poolName["+poolName +"],url["+url +"],data:" + data);
+
+//                        sink.error(e);
+        } catch (Exception e) {
+
+//                        sink.error(new ReactorCallException("流式请求失败：poolName["+poolName +"],url["+url +"],", e));
+        }
+        catch (Throwable e) {
+        }
+        finally {
+        }
+
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public static  Flux<String> stream(String poolName,String url,String method) {
+        return stream(  poolName,  url,null ,  method);
+
+    }
+
+
 
 }

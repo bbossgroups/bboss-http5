@@ -1,0 +1,352 @@
+package org.frameworkset.spi.remote.http.template;/*
+ *  Copyright 2008 biaoping.yin
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+import bboss.org.apache.velocity.VelocityContext;
+import com.frameworkset.util.VariableHandler;
+import org.frameworkset.soa.BBossStringWriter;
+import org.frameworkset.spi.remote.http.serial.DSLSerialUtil;
+import org.frameworkset.util.ClassUtil;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Map;
+
+public class DslTemplateHelper {
+	private static String evalNullParamsTemplate(ConfigDSLUtil configDSLUtil, String templateName, DslInfo dslInfo){
+		if(!dslInfo.isTpl()) {
+			return dslInfo.getTemplate();
+		}
+		else{
+            DslTemplate dslTemplate = dslInfo.getEstpl();
+			dslTemplate.process();
+			if (dslInfo.isTpl()) {
+				VelocityContext vcontext = configDSLUtil.buildVelocityContext();//一个context是否可以被同时用于多次运算呢？
+				BBossStringWriter sw = new BBossStringWriter();
+				dslTemplate.merge(vcontext, sw);
+				return sw.toString();
+			}
+			else
+			{
+				return dslInfo.getTemplate();
+			}
+		}
+	}
+
+	public static String evalTemplate(ConfigDSLUtil configDSLUtil, String templateName, Map params)  {
+
+		DslInfo dslInfo = configDSLUtil.getESInfo(templateName);
+		if (dslInfo == null)
+			throw new DslConfigException("Dsl Template [" + templateName + "]@" + configDSLUtil.getRealTemplateFile() + " 未定义.");
+		if (params == null || params.size() == 0) {
+
+			return evalNullParamsTemplate(configDSLUtil,templateName, dslInfo);
+
+		}
+		String template = null;
+		if (dslInfo.isTpl()) {
+			DslTemplate dslTemplate = dslInfo.getEstpl();
+			dslTemplate.process();//识别sql语句是不是真正的velocity sql模板
+			if (dslInfo.isTpl()) {
+				VelocityContext vcontext = configDSLUtil.buildVelocityContext(params);//一个context是否可以被同时用于多次运算呢？,已经被转义处理
+
+				BBossStringWriter sw = new BBossStringWriter();
+				dslTemplate.merge(vcontext, sw);
+//				template = sw.toString();
+				StringBuilder builder = new StringBuilder();
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(sw.toString());
+				template = evalDocumentStruction(configDSLUtil,builder,  struction ,  params,  templateName,  null);
+			} else {
+//				template = esInfo.getTemplate();
+				StringBuilder builder = new StringBuilder();
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+				template = evalDocumentStruction(configDSLUtil,  builder,  struction ,  params,  templateName,  null);
+			}
+
+		} else {
+//			template = esInfo.getTemplate();
+			StringBuilder builder = new StringBuilder();
+			VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+			template = evalDocumentStruction(configDSLUtil, builder,  struction ,  params,  templateName,  null);
+		}
+
+		return template;
+		//return templateName;
+	}
+	public static  Object getId(Object bean){
+		ClassUtil.ClassInfo beanInfo = ClassUtil.getClassInfo(bean.getClass());
+		ClassUtil.PropertieDescription pkProperty = beanInfo.getPkProperty();
+		if(pkProperty == null)
+			return null;
+		return beanInfo.getPropertyValue(bean,pkProperty.getName());
+	}
+	public static String evalTemplate(ConfigDSLUtil configDSLUtil, String templateName) {
+		return evalTemplate(configDSLUtil,templateName,(Object)null);
+	}
+	public static String evalTemplate(ConfigDSLUtil configDSLUtil, String templateName, Object params) {
+		if(params != null && params instanceof Map){
+			return evalTemplate(configDSLUtil,  templateName, (Map) params);
+		}
+		DslInfo dslInfo = configDSLUtil.getESInfo(templateName);
+		if (dslInfo == null)
+			throw new DslConfigException("Dsl Template [" + templateName + "]@" + configDSLUtil.getRealTemplateFile() + " 未定义.");
+		if (params == null) {
+//			return esInfo.getTemplate();
+			return evalNullParamsTemplate(configDSLUtil,templateName, dslInfo);
+		}
+		String template = null;
+		if (dslInfo.isTpl()) {
+			dslInfo.getEstpl().process();//识别sql语句是不是真正的velocity sql模板
+			if (dslInfo.isTpl()) {
+				VelocityContext vcontext = configDSLUtil.buildVelocityContext(params);//一个context是否可以被同时用于多次运算呢？
+
+				BBossStringWriter sw = new BBossStringWriter();
+				dslInfo.getEstpl().merge(vcontext, sw);
+
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(sw.toString());
+				StringBuilder builder = new StringBuilder();
+//				template = evalDocumentStruction(   esUtil,builder,  struction ,  vcontext.getContext(),  templateName,  null,true);
+				template = evalDocumentStruction(configDSLUtil,builder,  struction ,  params,  templateName,  null);
+			} else {
+//				template = esInfo.getTemplate();
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+				StringBuilder builder = new StringBuilder();
+				template = evalDocumentStruction(configDSLUtil, builder,  struction ,  params,  templateName,  null);
+			}
+
+		} else {
+//			template = esInfo.getTemplate();
+			VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+			StringBuilder builder = new StringBuilder();
+			template = evalDocumentStruction(configDSLUtil,  builder,  struction ,  params,  templateName,  null);
+//			template = builder.toString();
+		}
+
+		return template;
+		//return templateName;
+	}
+
+
+	public static  void buildMeta(StringBuilder builder ,String indexType,String indexName, Object params,String action,boolean upper7){
+		Object id = getId(params);
+		if(!upper7) {
+			if (id != null)
+				builder.append("{ \"").append(action).append("\" : { \"_index\" : \"").append(indexName).append("\", \"_type\" : \"").append(indexType).append("\", \"_id\" : \"").append(id).append("\" } }\n");
+			else
+				builder.append("{ \"").append(action).append("\" : { \"_index\" : \"").append(indexName).append("\", \"_type\" : \"").append(indexType).append("\" } }\n");
+		}
+		else{
+			if (id != null)
+				builder.append("{ \"").append(action).append("\" : { \"_index\" : \"").append(indexName).append("\", \"_id\" : \"").append(id).append("\" } }\n");
+			else
+				builder.append("{ \"").append(action).append("\" : { \"_index\" : \"").append(indexName).append("\" } }\n");
+		}
+	}
+	public static  void buildMeta(Writer writer , String indexType, String indexName, Object params, String action,boolean upper7) throws IOException {
+		Object id = getId(params);
+		if(id != null) {
+			writer.write("{ \"");
+			writer.write(action);
+			writer.write("\" : { \"_index\" : \"");
+			writer.write(indexName);
+			if(!upper7) {
+				writer.write("\", \"_type\" : \"");
+				writer.write(indexType);
+			}
+			writer.write("\", \"_id\" : \"");
+			writer.write(String.valueOf(id));
+			writer.write("\" } }\n");
+		}
+		else {
+
+			writer.write("{ \"");
+			writer.write(action);
+			writer.write("\" : { \"_index\" : \"");
+			writer.write(indexName);
+			if(!upper7) {
+				writer.write("\", \"_type\" : \"");
+				writer.write(indexType);
+			}
+			writer.write("\" } }\n");
+		}
+	}
+	public static void evalBuilk( Writer writer,String indexName, String indexType, Object param, String action,boolean upper7) throws IOException {
+
+		if (param != null) {
+			buildMeta(  writer ,  indexType,  indexName,   param,action,  upper7);
+			if(!action.equals("update")) {
+                DSLSerialUtil.object2json(param,writer);
+				writer.write("\n");
+			}
+			else
+			{
+				writer.write("{\"doc\":");
+				DSLSerialUtil.object2json(param,writer);
+				writer.write("}\n");
+			}
+		}
+
+	}
+	public static void evalBuilkTemplate(ConfigDSLUtil configDSLUtil, StringBuilder builder , String indexName, String indexType, String templateName, Object params, String action, boolean upper7) {
+
+		DslInfo dslInfo = configDSLUtil.getESInfo(templateName);
+		if (dslInfo == null)
+			throw new DslConfigException("Dsl Template [" + templateName + "]@" + configDSLUtil.getRealTemplateFile() + " 未定义.");
+		if (params == null) {
+			buildMeta(  builder ,  indexType,  indexName,   params,action,  upper7);
+			String template = DslTemplateHelper.evalNullParamsTemplate(configDSLUtil,templateName, dslInfo);
+			if(!action.equals("update"))
+				builder.append(template).append("\n");
+			else
+			{
+				builder.append("{\"doc\":").append(template).append("}\n");
+			}
+			return;
+		}
+		if (dslInfo.isTpl()) {
+			dslInfo.getEstpl().process();//识别sql语句是不是真正的velocity sql模板
+
+			if (dslInfo.isTpl()) {
+				buildMeta(  builder ,  indexType,  indexName,   params,action,  upper7);
+				VelocityContext vcontext = configDSLUtil.buildVelocityContext(params);//一个context是否可以被同时用于多次运算呢？
+				BBossStringWriter sw = new BBossStringWriter();
+				dslInfo.getEstpl().merge(vcontext, sw);
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(sw.toString());
+				evalStruction(configDSLUtil,  builder,  struction ,  params,  templateName,  action);
+			} else {
+				buildMeta(  builder ,  indexType,  indexName,   params,action,  upper7);
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+				evalStruction(configDSLUtil,  builder,  struction ,  params,  templateName,  action);
+			}
+
+		} else {
+			buildMeta(  builder ,  indexType,  indexName,   params,action,  upper7);
+			VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+			evalStruction(configDSLUtil,builder,  struction ,  params,  templateName,  action);
+		}
+
+		//return templateName;
+	}
+
+	public static String evalDocumentTemplate(ConfigDSLUtil configDSLUtil, StringBuilder builder , String indexType, String indexName, String templateName, Object params, String action) {
+
+		DslInfo dslInfo = configDSLUtil.getESInfo(templateName);
+		if (dslInfo == null)
+			throw new DslConfigException("Dsl Template [" + templateName + "]@" + configDSLUtil.getRealTemplateFile() + " 未定义.");
+		if (params == null) {
+			String template = DslTemplateHelper.evalNullParamsTemplate(configDSLUtil,templateName, dslInfo);
+			return template;
+		}
+		if (dslInfo.isTpl()) {
+			dslInfo.getEstpl().process();//识别sql语句是不是真正的velocity sql模板
+
+			if (dslInfo.isTpl()) {
+
+				VelocityContext vcontext = configDSLUtil.buildVelocityContext(params);//一个context是否可以被同时用于多次运算呢？
+				BBossStringWriter sw = new BBossStringWriter(builder);
+				dslInfo.getEstpl().merge(vcontext, sw);
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(sw.toString());
+				builder.setLength(0);
+				return evalDocumentStruction(configDSLUtil, builder,  struction ,  params,  templateName,  action);
+			} else {
+
+				VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+				return evalDocumentStruction(configDSLUtil, builder,  struction ,  params,  templateName,  action);
+			}
+
+		} else {
+			VariableHandler.URLStruction struction = dslInfo.getTemplateStruction(dslInfo.getTemplate());
+			return evalDocumentStruction(configDSLUtil, builder,  struction ,  params,  templateName,  action);
+		}
+
+		//return templateName;
+	}
+
+	public static void evalStruction(ConfigDSLUtil configDSLUtil, StringBuilder builder, VariableHandler.URLStruction struction , Object params, String templateName, String action){
+		if(!struction.hasVars()) {
+			if(!action.equals("update"))
+				builder.append(struction.getUrl()).append("\n");
+			else
+			{
+				builder.append("{\"doc\":").append(struction.getUrl()).append("}\n");
+			}
+		}
+		else
+		{
+			if(!action.equals("update")) {
+				configDSLUtil.evalStruction(builder,struction,params,templateName);
+				builder.append("\n");
+			}
+			else
+			{
+				builder.append("{\"doc\":");
+				configDSLUtil.evalStruction(builder,struction,params,templateName);
+				builder.append("}\n");
+			}
+
+		}
+	}
+	public static void evalStruction(ConfigDSLUtil configDSLUtil, StringBuilder builder, VariableHandler.URLStruction struction , Map params, String templateName, String action){
+		if(!struction.hasVars()) {
+			if(!action.equals("update"))
+				builder.append(struction.getUrl()).append("\n");
+			else
+			{
+				builder.append("{\"doc\":").append(struction.getUrl()).append("}\n");
+			}
+		}
+		else
+		{
+			if(!action.equals("update")) {
+				configDSLUtil.evalStruction(builder,struction,params,templateName);
+				builder.append("\n");
+			}
+			else
+			{
+				builder.append("{\"doc\":");
+				configDSLUtil.evalStruction(builder,struction,params,templateName);
+				builder.append("}\n");
+			}
+
+		}
+	}
+
+	public static String evalDocumentStruction(ConfigDSLUtil configDSLUtil, StringBuilder builder, VariableHandler.URLStruction struction , Map params, String templateName, String action){
+		if(!struction.hasVars()) {
+
+			return struction.getUrl();
+
+		}
+		else
+		{
+			configDSLUtil.evalStruction(builder,struction,params,templateName);
+			return builder.toString();
+		}
+	}
+	public static String evalDocumentStruction(ConfigDSLUtil configDSLUtil, StringBuilder builder, VariableHandler.URLStruction struction , Object params, String templateName, String action){
+		if(!struction.hasVars()) {
+
+			return struction.getUrl();
+
+		}
+		else
+		{
+			configDSLUtil.evalStruction(builder,struction,params,templateName);
+			return builder.toString();
+		}
+	}
+
+
+}

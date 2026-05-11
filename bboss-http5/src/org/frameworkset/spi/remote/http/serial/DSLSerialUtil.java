@@ -1,0 +1,190 @@
+package org.frameworkset.spi.remote.http.serial;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.frameworkset.json.Jackson2ObjectMapper;
+import org.frameworkset.util.annotations.DateFormateMeta;
+
+import java.io.Writer;
+
+public class DSLSerialUtil {
+    public static boolean FAIL_ON_UNKNOWN_PROPERTIES = false;
+	protected static ObjectMapper normaMapper = null;
+    protected static ObjectMapper disableCloseAndFlushMapper = null;
+	protected static ObjectMapper esBaseDataFilterMapper = null;
+	protected static ObjectMapper esIdFilterMapper = null;
+	protected static DateFormateMeta dateFormateMeta;
+
+    private static ClassLoader moduleClassLoader = DSLSerialUtil.class.getClassLoader();
+
+	static {
+		dateFormateMeta = DateFormateMeta.buildDateFormateMeta("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",null,"Etc/UTC");
+
+		init(dateFormateMeta);
+	}
+	public static DateFormateMeta getDateFormateMeta(){
+		return dateFormateMeta;
+	}
+
+//
+//
+//    private static void registerWellKnownModulesIfAvailable(ObjectMapper objectMapper) {
+//        // Java 7 java.nio.file.Path class present?
+//        if (ClassUtils.isPresent("java.nio.file.Path", moduleClassLoader)) {
+//            try {
+//                Class<? extends Module> jdk7Module = (Class<? extends Module>)
+//                        ClassUtils.forName("com.fasterxml.jackson.datatype.jdk7.Jdk7Module", moduleClassLoader);
+//                objectMapper.registerModule(BeanUtils.instantiate(jdk7Module));
+//            }
+//            catch (ClassNotFoundException ex) {
+//                // jackson-datatype-jdk7 not available
+//            }
+//        }
+//
+//        // Java 8 java.util.Optional class present?
+//        if (ClassUtils.isPresent("java.util.Optional", moduleClassLoader)) {
+//            try {
+//                Class<? extends Module> jdk8Module = (Class<? extends Module>)
+//                        ClassUtils.forName("com.fasterxml.jackson.datatype.jdk8.Jdk8Module", moduleClassLoader);
+//                objectMapper.registerModule(BeanUtils.instantiate(jdk8Module));
+//            }
+//            catch (ClassNotFoundException ex) {
+//                // jackson-datatype-jdk8 not available
+//            }
+//        }
+//
+//        // Java 8 java.time package present?
+//        if (ClassUtils.isPresent("java.time.LocalDate", moduleClassLoader)) {
+//            try {
+//                Class<? extends Module> javaTimeModule = (Class<? extends Module>)
+//                        ClassUtils.forName("com.fasterxml.jackson.datatype.jsr310.JavaTimeModule", moduleClassLoader);
+//                objectMapper.registerModule(BeanUtils.instantiate(javaTimeModule));
+////               JavaTimeModule javaTimeModule = new JavaTimeModule();
+////                LocalDateTimeDeserializer localDateTimeDeserializer = new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'"));
+////                LocalDateTimeSerializer localDateTimeSerializer = new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'"));
+////
+////                javaTimeModule.addSerializer(LocalDateTime.class,localDateTimeSerializer);
+////                javaTimeModule.addDeserializer(LocalDateTime.class,localDateTimeDeserializer);
+////
+////
+////                objectMapper.registerModule(javaTimeModule);
+//            }
+//            catch (Exception ex) {
+//                // jackson-datatype-jsr310 not available or older than 2.6
+//                try {
+//                    Class<? extends Module> jsr310Module = (Class<? extends Module>)
+//                            ClassUtils.forName("com.fasterxml.jackson.datatype.jsr310.JSR310Module", moduleClassLoader);
+//                    objectMapper.registerModule(BeanUtils.instantiate(jsr310Module));
+//                }
+//                catch (ClassNotFoundException ex2) {
+//                    // OK, jackson-datatype-jsr310 not available at all...
+//                }
+//            }
+//        }
+//
+//        // Joda-Time present?
+//        if (ClassUtils.isPresent("org.joda.time.LocalDate", moduleClassLoader)) {
+//            try {
+//                Class<? extends Module> jodaModule = (Class<? extends Module>)
+//                        ClassUtils.forName("com.fasterxml.jackson.datatype.joda.JodaModule", moduleClassLoader);
+//                objectMapper.registerModule(BeanUtils.instantiate(jodaModule));
+//            }
+//            catch (ClassNotFoundException ex) {
+//                // jackson-datatype-joda not available
+//            }
+//        }
+//    }
+
+    public static void init(DateFormateMeta dateFormateMeta){
+		normaMapper = new ObjectMapper();
+		//反序列化时，属性不存在时忽略属性
+		normaMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, FAIL_ON_UNKNOWN_PROPERTIES);
+		normaMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		normaMapper.setDateFormat(dateFormateMeta.toDateFormat());
+
+        Jackson2ObjectMapper.registerWellKnownModulesIfAvailable(normaMapper);
+
+
+
+
+        
+        
+	}
+	public static String object2json(Object bean){
+		try {
+//			Class<?> beanClass = bean.getClass();
+//			if(ESBaseData.class.isAssignableFrom(beanClass) ) {
+//				String value = esBaseDataFilterMapper.writeValueAsString(bean);
+//				return value;
+//			}
+//			else if(ESId.class.isAssignableFrom(beanClass) ) {
+//				String value = esIdFilterMapper.writeValueAsString(bean);
+//				return value;
+//			}
+//			else{
+//				String value = normaMapper.writeValueAsString(bean);
+//				return value;
+//			}
+            String value = normaMapper.writeValueAsString(bean);
+            return value;
+
+
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Error JSON serialization operation",e);
+		}
+	}
+
+	public  static void object2json(Object bean, Writer writer) {
+		try {
+//			Class<?> beanClass = bean.getClass();
+//			if(ESBaseData.class.isAssignableFrom(beanClass) ) {
+//				 esBaseDataFilterMapper.writeValue(writer,bean);
+//
+//			}
+//			else if(ESId.class.isAssignableFrom(beanClass) ) {
+//				 esIdFilterMapper.writeValue(writer,bean);
+//			}
+//			else{
+//				 normaMapper.writeValue(writer,bean);
+//			}
+            normaMapper.writeValue(writer,bean);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Error JSON serialization operation",e);
+		}
+
+
+
+
+	}
+
+    /**
+     * 将对象转换为json写入writer后不会关闭writer，也不会flushwriter
+     * @param bean
+     * @param writer
+     */
+    public  static void object2jsonDisableCloseAndFlush(Object bean, Writer writer) {
+        try {
+
+            disableCloseAndFlushMapper.writeValue(writer,bean);
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error JSON serialization operation",e);
+        }
+    }
+
+    /**
+     * 将对象转换为json写入writer后会关闭writer（慎用）
+     * @param bean
+     * @param writer
+     */
+	public  static void normalObject2json(Object bean, Writer writer) {
+		try {
+
+			normaMapper.writeValue(writer,bean);
+
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Error JSON serialization operation",e);
+		}
+	}
+}

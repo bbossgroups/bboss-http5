@@ -40,7 +40,10 @@ dependencies {
 
     )
     api group: 'org.apache.httpcomponents.core5', name: 'httpcore5-h2', version: httpcore5version
-   
+
+
+    api([group: 'io.projectreactor', name: 'reactor-core', version: reactor])
+
 
 }
 
