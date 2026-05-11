@@ -92,7 +92,8 @@ public class ConfigHttpRequestProxyHelperTest {
         Map params = new HashMap();
         params.put("message","介绍bboss");
 
-        Flux<String> flux = client.stream("bootdemo","/demoproject/reactor/deepseekChat.api","queryChat",params);
+        //在数据源bootdemo上执行流式查询
+        Flux<String> flux = client.streamDefaultDS("/demoproject/reactor/deepseekChat.api","queryChat",params);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         flux
                 .doOnSubscribe(subscription -> logger.info("开始订阅流..."))

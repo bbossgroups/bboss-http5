@@ -27,18 +27,21 @@ public class ConfigHttpRequestProxy {
     protected String configFile;
     protected ConfigDSLUtil configDSLUtil;
     private ClientConfiguration clientConfiguration;
+    private String datasource;
     private ConfigHolder configHolder = null;
     public ConfigHttpRequestProxy(String poolName,ConfigHolder configHolder, String configFile){
         this.configHolder = configHolder;
         this.configFile = configFile;
         configDSLUtil = configHolder.getConfigDSLUtil(configFile);
         clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+        this.datasource = poolName;
         
     }
     public ConfigHttpRequestProxy(String poolName,ConfigHolder configHolder, BaseDslTemplateContainerImpl templateContainer){
         templateContainer.setConfigHolder(configHolder);
         configDSLUtil = configHolder.getConfigDSLUtil(templateContainer);
         clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+        this.datasource = poolName;
     }
 
     public ConfigHttpRequestProxy(ConfigHolder configHolder, String configFile){
@@ -309,7 +312,7 @@ public class ConfigHttpRequestProxy {
     }
 
     /**
-     * 创建流式调用的Flux,在指定的数据源上执行
+     * 创建流式调用的Flux,在指定的数据源poolName上执行
      */
     public   Flux<String> stream(String poolName, String url, String queryDslName,Object params  ) {
         String requestBody = this.evalTemplate(queryDslName,params);
@@ -319,7 +322,16 @@ public class ConfigHttpRequestProxy {
         return HttpRequestProxy.stream(  poolName,   url, requestBody ,   HttpMethodName.HTTP_POST) ;
 
     }
- 
+
+    /**
+     *  在指定的数据源poolName上执行,通过dataCollector收集数据
+     * @param poolName
+     * @param url
+     * @param queryDslName
+     * @param params
+     * @param method
+     * @param dataCollector
+     */
     public    void stream(String poolName, String url, String queryDslName,Object params , String method, DataCollector dataCollector) {
         String requestBody = this.evalTemplate(queryDslName,params);
         if(logger.isInfoEnabled() && clientConfiguration.isShowDsl()){
@@ -330,6 +342,14 @@ public class ConfigHttpRequestProxy {
 
     }
 
+    /**
+     *  在指定的数据源poolName上执行,通过dataCollector收集数据
+     * @param poolName
+     * @param url
+     * @param queryDslName
+     * @param params
+     * @param dataCollector
+     */
     public    void stream(String poolName, String url, String queryDslName,Object params ,   DataCollector dataCollector) {
         String requestBody = this.evalTemplate(queryDslName,params);
         if(logger.isInfoEnabled() && clientConfiguration.isShowDsl()){
@@ -341,7 +361,7 @@ public class ConfigHttpRequestProxy {
     }
 
     /**
-     * 创建流式调用的Flux,在指定的数据源上执行
+     * 创建流式调用的Flux,在指定的数据源poolName上执行
      */
     public  Flux<String> stream(String poolName,String url,String method) {
         return HttpRequestProxy.stream(  poolName,  url,  method);
@@ -349,10 +369,61 @@ public class ConfigHttpRequestProxy {
     }
 
     /**
-     * 创建流式调用的Flux,在指定的数据源上执行
+     * 创建流式调用的Flux,在指定的数据源poolName上执行
      */
     public  Flux<String> stream(String poolName,String url ) {
         return HttpRequestProxy.stream(  poolName,  url,  HttpMethodName.HTTP_POST);
+
+    }
+    
+    
+    //------------------------------//
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源poolName上执行
+     */
+    public   Flux<String> streamDefaultDS(  String url, String queryDslName,Object params  ) {
+        String requestBody = this.evalTemplate(queryDslName,params);
+        if(logger.isInfoEnabled() && clientConfiguration.isShowDsl()){
+            logger.info(requestBody);
+        }
+        return HttpRequestProxy.stream(  datasource,   url, requestBody ,   HttpMethodName.HTTP_POST) ;
+
+    }
+
+    public    void streamDefaultDS(  String url, String queryDslName,Object params , String method, DataCollector dataCollector) {
+        String requestBody = this.evalTemplate(queryDslName,params);
+        if(logger.isInfoEnabled() && clientConfiguration.isShowDsl()){
+            logger.info(requestBody);
+        }
+        HttpRequestProxy.stream(  datasource,   url, requestBody,   method, dataCollector) ;
+
+
+    }
+
+    public    void streamDefaultDS(  String url, String queryDslName,Object params ,   DataCollector dataCollector) {
+        String requestBody = this.evalTemplate(queryDslName,params);
+        if(logger.isInfoEnabled() && clientConfiguration.isShowDsl()){
+            logger.info(requestBody);
+        }
+        HttpRequestProxy.stream(  datasource,   url, requestBody,   HttpMethodName.HTTP_POST, dataCollector) ;
+
+
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public  Flux<String> streamDefaultDS( String url,String method) {
+        return HttpRequestProxy.stream(  datasource,  url,  method);
+
+    }
+
+    /**
+     * 创建流式调用的Flux,在指定的数据源上执行
+     */
+    public  Flux<String> streamDefaultDS(String url ) {
+        return HttpRequestProxy.stream(  this.datasource,  url,  HttpMethodName.HTTP_POST);
 
     }
 

@@ -884,7 +884,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     /**
      * http.dslfileRefreshInterval = 5000
      * @param propertiesContainer
-     * @return
      */
     public static void initDslfileRefreshInterval(PropertiesContainer propertiesContainer){
         if(ClientConfiguration.dslfileMappingDir == null) {
