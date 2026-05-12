@@ -871,7 +871,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     /**
      * http.dslfileRefreshInterval = 5000
      * @param propertiesContainer
-     * @return
      */
     public static void initDslfileRefreshInterval(GetProperties propertiesContainer){
         if(ClientConfiguration.dslfileRefreshInterval == null) {
@@ -906,7 +905,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     /**
      * http.dslfileMappingDir = c:/ddddd
      * @param propertiesContainer
-     * @return
      */
     public static void initDslfileMappingDir(PropertiesContainer propertiesContainer){
         if(ClientConfiguration.dslfileMappingDir == null) {
@@ -929,7 +927,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
     /**
      * http.dslfileMappingDir = c:/ddddd
      * @param propertiesContainer
-     * @return
      */
     public static void initDslfileMappingDir(GetProperties propertiesContainer){
         if(ClientConfiguration.dslfileMappingDir == null) {
