@@ -360,7 +360,6 @@ public class FeishuHelper {
 //        logger.info(accessToken);
 //        String url = "/open-apis/bitable/v1/apps/N0tMboDHOaSWAwsXh0ucIoARnnc/tables/tblCzBSEvUXKYMTI/records";
         //多维表格地址
-        //https://asiainfo.feishu.cn/base/N0tMboDHOaSWAwsXh0ucIoARnnc?table=tblCzBSEvUXKYMTI&view=vewFoeaJxt
 
 //        Map headers = buildHeaders(accessToken);
         Map message_ = HttpRequestProxy.sendJsonBody(feishuDatasource,record,url,Map.class);
