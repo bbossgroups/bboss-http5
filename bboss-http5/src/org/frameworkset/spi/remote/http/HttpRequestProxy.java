@@ -2484,7 +2484,7 @@ public class HttpRequestProxy {
                     break;
                 } catch (HttpHostConnectException ex) { // 1
                     httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
+                    e = new HttpProxyRequestException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2494,7 +2494,7 @@ public class HttpRequestProxy {
 
                 } catch (UnknownHostException ex) { // 2
                     httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
+                    e = new HttpProxyRequestException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2505,7 +2505,7 @@ public class HttpRequestProxy {
                 }
                 catch (NoRouteToHostException ex) { // 3
                     httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
+                    e = new HttpProxyRequestException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2516,7 +2516,7 @@ public class HttpRequestProxy {
                 }
                 catch (NoHttpResponseException ex) { // 4
                     httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
+                    e = new HttpProxyRequestException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2546,6 +2546,12 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (NoHttpServerException ex){  // 8
+                    e = new HttpProxyRequestException(ex);
+
+                    break;
+                }
+
+                catch (HttpProxyRequestException ex){  // 8
                     e = ex;
 
                     break;
