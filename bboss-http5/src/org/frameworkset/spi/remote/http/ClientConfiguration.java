@@ -40,6 +40,8 @@ import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.remote.http.auth.*;
+import org.frameworkset.spi.remote.http.callback.ClientConfigurationHttpRequestInterceptor;
+import org.frameworkset.spi.remote.http.callback.ClientConfigurationHttpResponseInterceptor;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 import org.frameworkset.spi.remote.http.kerberos.*;
 import org.frameworkset.spi.remote.http.kerberos.serverrealm.ServerRealmRequestKerberosUrlUtils;
@@ -2205,14 +2207,22 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
                    if(httpRequestInterceptors != null) {
                        for (String i : httpRequestInterceptors) {
                            HttpRequestInterceptor httpRequestInterceptor = (HttpRequestInterceptor) Class.forName(i.trim()).getDeclaredConstructor().newInstance();
-                           builder.addRequestInterceptorLast(httpRequestInterceptor);
+                           if(httpRequestInterceptor instanceof ClientConfigurationHttpRequestInterceptor){
+							   ClientConfigurationHttpRequestInterceptor configHttpRequestInterceptor = (ClientConfigurationHttpRequestInterceptor) httpRequestInterceptor;
+							   configHttpRequestInterceptor.setClientConfiguration(clientConfiguration);
+						   }
+						   builder.addRequestInterceptorLast(httpRequestInterceptor);
 //                        builder.addInterceptorLast(httpRequestInterceptor);
                        }
                    }
                    if(httpResponseInterceptors != null) {
                        for (String i : httpResponseInterceptors) {
                            HttpResponseInterceptor httpResponseInterceptor = (HttpResponseInterceptor) Class.forName(i.trim()).getDeclaredConstructor().newInstance();
-                           builder.addResponseInterceptorLast(httpResponseInterceptor);
+                           if(httpResponseInterceptor instanceof ClientConfigurationHttpResponseInterceptor){
+							   ClientConfigurationHttpResponseInterceptor configHttpResponseInterceptor = (ClientConfigurationHttpResponseInterceptor) httpResponseInterceptor;
+							   configHttpResponseInterceptor.setClientConfiguration(clientConfiguration);
+						   }
+						   builder.addResponseInterceptorLast(httpResponseInterceptor);
 //                        builder.addInterceptorLast(httpRequestInterceptor);
                        }
                    }
