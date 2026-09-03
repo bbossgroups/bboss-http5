@@ -206,7 +206,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
         clazz = "org.frameworkset.spi.ai.adapter.AgentAdapterFactory";
         try {
             Class<?> modelClazz = Class.forName(clazz);
-            registerAgentAdapter = modelClazz.getDeclaredMethod("registerAgentAdapter",String.class,String.class);
+            registerAgentAdapter = modelClazz.getDeclaredMethod("registerAgentAdapter",ClientConfiguration.class,String.class,String.class);
         } catch (NoSuchMethodException e) {
 
         } catch (Exception e) {
@@ -1307,45 +1307,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
             String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
             clientConfiguration.setHosts(hosts);
             log.append(",http.hosts=").append(hosts);
-            String modelType = ClientConfiguration._getStringValue(name, "http.modelType", context, null);
             
-
-            String realModelType = modelType;
-            if(modelType == null || modelType.equals("")){
-                log.append(",http.modelType=").append(modelType);
-                if(getModelTypeByUrl != null){
-                    modelType = (String)getModelTypeByUrl.invoke(null,hosts);
-                    
-//                    log.append(",http.modelType=").append(modelType);
-                }
-                
-            }
-            else{
-                log.append(",http.modelType=").append(modelType);
-            }
-            if(modelType != null && !modelType.equals("")) {
-                clientConfiguration.setModelType(modelType);
-            }
-           
-            String agentAdapter = ClientConfiguration._getStringValue(name, "http.agentAdapter", context, null);
-            log.append(",http.agentAdapter=").append(agentAdapter);
-
-            if(agentAdapter != null && !agentAdapter.equals("")) {
-                clientConfiguration.setAgentAdapter(agentAdapter);
-                if(registerAgentAdapter != null){
-                    if(realModelType != null && !realModelType.equals("")) {
-                        registerAgentAdapter.invoke(null, realModelType, agentAdapter);
-                    }
-                    else{                     
-                        
-                         
-                        registerAgentAdapter.invoke(null, hosts, agentAdapter);//直接用自定义maas平台地址注册适配器
-                        //将hosts设置为模型类型
-                        clientConfiguration.setModelType(hosts);
-                        logger.info("Register agent adapter for MAAS:{} and modelType also set to:{}",hosts,hosts);
-                    }
-                }
-            }
             
             String apiKeySecret = ClientConfiguration._getStringValue(name, "http.apiKeySecret", context, null);
             if(apiKeySecret != null && !apiKeySecret.equals("")){
@@ -1513,10 +1475,51 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 
 
             clientConfiguration.setSupportedProtocols(supportedProtocols);
+			
 //			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
 //			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
 //			log.append(",http.evictExpiredConnections=").append(evictExpiredConnections);
 			clientConfiguration.setBeanName(rname(healthPoolname,name));
+			
+			String modelType = ClientConfiguration._getStringValue(name, "http.modelType", context, null);
+			
+			
+			String realModelType = modelType;
+			if(modelType == null || modelType.equals("")){
+				log.append(",http.modelType=").append(modelType);
+				if(getModelTypeByUrl != null){
+					modelType = (String)getModelTypeByUrl.invoke(null,hosts);
+
+//                    log.append(",http.modelType=").append(modelType);
+				}
+				
+			}
+			else{
+				log.append(",http.modelType=").append(modelType);
+			}
+			if(modelType != null && !modelType.equals("")) {
+				clientConfiguration.setModelType(modelType);
+			}
+			
+			String agentAdapter = ClientConfiguration._getStringValue(name, "http.agentAdapter", context, null);
+			log.append(",http.agentAdapter=").append(agentAdapter);
+			
+			if(agentAdapter != null && !agentAdapter.equals("")) {
+				clientConfiguration.setAgentAdapter(agentAdapter);
+				if(registerAgentAdapter != null){
+					if(realModelType != null && !realModelType.equals("")) {
+						registerAgentAdapter.invoke(null, clientConfiguration,realModelType, agentAdapter);
+					}
+					else{
+						
+						
+						registerAgentAdapter.invoke(null,clientConfiguration, hosts, agentAdapter);//直接用自定义maas平台地址注册适配器
+						//将hosts设置为模型类型
+						clientConfiguration.setModelType(hosts);
+						logger.info("Register agent adapter for MAAS:{} and modelType also set to:{}",hosts,hosts);
+					}
+				}
+			}
 			HttpServiceHosts httpServiceHosts = null;
 			if(healthPoolname == null) {
 				httpServiceHosts = new HttpServiceHosts();
