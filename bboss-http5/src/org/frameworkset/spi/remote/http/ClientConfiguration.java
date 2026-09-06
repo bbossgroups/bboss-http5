@@ -214,6 +214,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
         }catch (Throwable e) {
 
         }
+		if(registerAgentAdapter != null) {
+			logger.info("Find RegisterAgentAdapter: true");
+		}
+		else{
+			logger.info("Find RegisterAgentAdapter: false");
+		}
     }
 
     public static String getDslfileMappingDir() {
@@ -1506,17 +1512,19 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware,Http
 			
 			if(agentAdapter != null && !agentAdapter.equals("")) {
 				clientConfiguration.setAgentAdapter(agentAdapter);
+				
 				if(registerAgentAdapter != null){
+					
 					if(realModelType != null && !realModelType.equals("")) {
+						logger.info("Register agent adapter for MAAS:{} and modelType:{}",clientConfiguration.getBeanName(),realModelType);
 						registerAgentAdapter.invoke(null, clientConfiguration,realModelType, agentAdapter);
 					}
 					else{
-						
-						
+						logger.info("Register agent adapter for MAAS:{} and modelType:{}",clientConfiguration.getBeanName(),hosts);
 						registerAgentAdapter.invoke(null,clientConfiguration, hosts, agentAdapter);//直接用自定义maas平台地址注册适配器
 						//将hosts设置为模型类型
 						clientConfiguration.setModelType(hosts);
-						logger.info("Register agent adapter for MAAS:{} and modelType also set to:{}",hosts,hosts);
+//						logger.info("Register agent adapter for MAAS:{} and modelType also set to:{}",clientConfiguration.getBeanName(),hosts);
 					}
 				}
 			}
