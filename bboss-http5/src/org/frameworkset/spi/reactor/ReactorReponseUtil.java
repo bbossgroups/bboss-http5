@@ -97,12 +97,14 @@ public class ReactorReponseUtil {
                         .append(url).append(",error,").append("status=")
                         .append(status).append(":")
                         .append(EntityUtils.toString(entity))
-                        .append(",\r\n use message:").append( data).toString());
+                        .append(",\r\n use message:").append( data).toString())
+						.setErrorCode(status);
 //                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
             }
             else {
                 throw new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status)
-                        .append(",\r\n use message:").append( data).toString());
+                        .append(",\r\n use message:").append( data).toString())
+						.setErrorCode(status);
 //                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
             }
         }
@@ -172,12 +174,14 @@ public class ReactorReponseUtil {
                         .append(url).append(",error,").append("status=")
                         .append(status).append(":")
                         .append(EntityUtils.toString(entity))
-                        .append(",\r\n use message:").append( data).toString());
+                        .append(",\r\n use message:").append( data).toString())
+						.setErrorCode(status);
 //                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString()));
             }
             else {
                 throw new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status)
-                        .append(",\r\n use message:").append( data).toString());
+                        .append(",\r\n use message:").append( data).toString())
+						.setErrorCode(status);
 //                sink.error(new ReactorCallException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append(status).toString()));
             }
         }

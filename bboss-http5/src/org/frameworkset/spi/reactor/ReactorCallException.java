@@ -20,6 +20,7 @@ package org.frameworkset.spi.reactor;
  * @Date 2025/10/10
  */
 public class ReactorCallException extends RuntimeException{
+	private Integer errorCode;
     /**
      * Constructs a new runtime exception with {@code null} as its
      * detail message.  The cause is not initialized, and may subsequently be
@@ -92,4 +93,12 @@ public class ReactorCallException extends RuntimeException{
     public ReactorCallException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
+	
+	public Integer getErrorCode() {
+		return errorCode;
+	}
+	public ReactorCallException setErrorCode(Integer errorCode) {
+		this.errorCode = errorCode;
+		return this;
+	}
 }

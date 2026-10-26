@@ -23,6 +23,7 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.impl.io.EmptyInputStream;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.frameworkset.spi.reactor.ReactorCallException;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
@@ -434,5 +435,23 @@ public class ResponseUtil {
 			inputStream.close();
 		}
 
+	}
+	
+	public static Integer getHttpReponseStatusCodeFromThrowable(Throwable throwable){
+		if(throwable == null){
+			return null;
+		}
+		if(throwable instanceof HttpProxyRequestException){
+			HttpProxyRequestException httpProxyRequestException = (HttpProxyRequestException)throwable;
+			if(httpProxyRequestException.getHttpStatusCode() > 0){
+				return httpProxyRequestException.getHttpStatusCode();
+			}
+			Throwable cause = httpProxyRequestException.getCause();
+			if(cause != null && cause instanceof ReactorCallException && ((ReactorCallException)cause).getErrorCode() > 0){
+				return ((ReactorCallException)cause).getErrorCode();
+				
+			}
+		}
+		return null; 
 	}
 }
