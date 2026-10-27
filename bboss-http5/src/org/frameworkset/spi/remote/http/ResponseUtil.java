@@ -27,6 +27,7 @@ import org.frameworkset.spi.reactor.ReactorCallException;
 import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.spi.remote.http.proxy.InvokeContext;
+import org.frameworkset.util.RetryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -436,22 +437,103 @@ public class ResponseUtil {
 		}
 
 	}
-	
+	public static String getMessageFromThrowable(Throwable throwable){
+		if(throwable == null){
+			return null;
+		}
+		if(throwable instanceof ReactorCallException){
+			ReactorCallException reactoCallException = (ReactorCallException)throwable;
+			return reactoCallException.getMessage();
+		}
+		else if(throwable instanceof RetryException){
+			RetryException retryException = (RetryException)throwable;
+			Throwable cause = retryException.getCause();
+			if(cause != null ){
+				return getMessageFromThrowable(cause);
+			}
+			else{
+				return null;
+			}
+		}
+		else if(throwable instanceof HttpProxyRequestException){
+			HttpProxyRequestException httpProxyRequestException = (HttpProxyRequestException)throwable;
+			 
+			Throwable cause = httpProxyRequestException.getCause();
+			return getMessageFromThrowable(cause);
+//			if(cause != null && cause instanceof ReactorCallException && ((ReactorCallException)cause).getErrorCode() > 0){
+//				return ((ReactorCallException)cause).getErrorCode();
+//				
+//			}
+		}
+		return null;
+	}
 	public static Integer getHttpReponseStatusCodeFromThrowable(Throwable throwable){
 		if(throwable == null){
 			return null;
 		}
-		if(throwable instanceof HttpProxyRequestException){
+		if(throwable instanceof ReactorCallException){
+			ReactorCallException reactoCallException = (ReactorCallException)throwable;
+			if(reactoCallException.getErrorCode() > 0){
+				return reactoCallException.getErrorCode();
+			}
+			else{
+				return null;
+			}
+		}
+		else if(throwable instanceof RetryException){
+			RetryException retryException = (RetryException)throwable;
+			Throwable cause = retryException.getCause();
+			if(cause != null ){
+				return getHttpReponseStatusCodeFromThrowable(cause);
+			}
+			else{
+				return null;
+			}
+		}
+		else if(throwable instanceof HttpProxyRequestException){
 			HttpProxyRequestException httpProxyRequestException = (HttpProxyRequestException)throwable;
 			if(httpProxyRequestException.getHttpStatusCode() > 0){
 				return httpProxyRequestException.getHttpStatusCode();
 			}
 			Throwable cause = httpProxyRequestException.getCause();
-			if(cause != null && cause instanceof ReactorCallException && ((ReactorCallException)cause).getErrorCode() > 0){
-				return ((ReactorCallException)cause).getErrorCode();
-				
-			}
+			return getHttpReponseStatusCodeFromThrowable(cause);
+//			if(cause != null && cause instanceof ReactorCallException && ((ReactorCallException)cause).getErrorCode() > 0){
+//				return ((ReactorCallException)cause).getErrorCode();
+//				
+//			}
 		}
 		return null; 
+	}
+	
+	public static Throwable getRealThrowableFromThrowable(Throwable throwable){
+		if(throwable == null){
+			return null;
+		}
+		if(throwable instanceof ReactorCallException){
+			return throwable;
+		}
+		else if(throwable instanceof RetryException){
+			RetryException retryException = (RetryException)throwable;
+			Throwable cause = retryException.getCause();
+			if(cause != null ){
+				return getRealThrowableFromThrowable(cause);
+			}
+			else{
+				return retryException;
+			}
+		}
+		else if(throwable instanceof HttpProxyRequestException){
+			HttpProxyRequestException httpProxyRequestException = (HttpProxyRequestException)throwable;
+			 
+			Throwable cause = httpProxyRequestException.getCause();
+			if(cause == null )
+				return throwable;
+			return getRealThrowableFromThrowable(cause);
+//			if(cause != null && cause instanceof ReactorCallException && ((ReactorCallException)cause).getErrorCode() > 0){
+//				return ((ReactorCallException)cause).getErrorCode();
+//				
+//			}
+		}
+		return throwable;
 	}
 }
